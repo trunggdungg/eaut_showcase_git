@@ -226,23 +226,8 @@
                                 </div>
 
 
-                            <div class="uikick-tab-content" data-tab="Rewards">
-                                <h2 class="uikick-section-title">Tính năng</h2>
-                                <div class="uikick-reward-list">
-                                    <t t-foreach="reward_tiers" t-as="tier">
-                                        <div class="uikick-reward-card">
-                                            <div class="uikick-reward-head">
-                                                  <div class="uikick-reward-title"><t t-esc="tier.title"/></div>
-                                            </div>
-                                            <p class="uikick-reward-desc"><t t-esc="tier.description"/></p>
-                                            <div class="uikick-reward-meta">    <span>Dự kiến hoàn thiện: <t t-esc="tier.estimated"/></span>                                            </div>
-                                        </div>
-                                    </t>
-                                </div>
-                            </div>
-
                             <t t-foreach="tabs" t-as="tab">
-                                <t t-if="tab not in ('Campaign', 'Rewards')">
+                                <t t-if="tab != 'Campaign'">
                                     <div class="uikick-tab-content" t-att-data-tab="tab">
                                         <div class="uikick-tab-placeholder">
                                             <div class="uikick-tab-placeholder-icon">📋</div>

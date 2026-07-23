@@ -19,10 +19,6 @@ class UikickProject(models.Model):
     )
     location = fields.Char(string='Location')
     days_left = fields.Integer(string='Days Left')
-    percent_funded = fields.Integer(string='Percent Funded')
-    amount_raised = fields.Integer(string='Amount Raised (US$)')
-    backers = fields.Integer(string='Backers')
-    goal = fields.Integer(string='Goal (US$)')
     views = fields.Integer(string='View Count', default=0)
     image = fields.Char(string='Ảnh thumbnail (URL)')
     video_url = fields.Char(string='Video URL')
@@ -32,8 +28,6 @@ class UikickProject(models.Model):
         default=lambda self: self.env['eaut_showcase.status'].search([], limit=1, order='sequence, id'),
     )
     campaign_number = fields.Integer(string='Campaign Number')
-    total_raised = fields.Char(string='Total Raised (all campaigns)')
-    total_backers = fields.Char(string='Total Backers (all campaigns)')
     active = fields.Boolean(default=True)
     interest_ids = fields.One2many('eaut_showcase.interest', 'project_id', string='Người quan tâm')
     interest_count = fields.Integer(

@@ -1,9 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_eaut_showcase_project_user,eaut_showcase.project.user,model_eaut_showcase_project,base.group_user,1,0,0,0
 access_eaut_showcase_project_manager,eaut_showcase.project.manager,model_eaut_showcase_project,base.group_system,1,1,1,1
-access_eaut_showcase_reward_tier_user,eaut_showcase.reward.tier.user,model_eaut_showcase_reward_tier,base.group_user,1,0,0,0
-
-access_eaut_showcase_reward_tier_manager,eaut_showcase.reward.tier.manager,model_eaut_showcase_reward_tier,base.group_system,1,1,1,1
 access_eaut_showcase_category_user,eaut_showcase.category.user,model_eaut_showcase_category,base.group_user,1,0,0,0
 access_eaut_showcase_category_manager,eaut_showcase.category.manager,model_eaut_showcase_category,base.group_system,1,1,1,1
 access_eaut_showcase_status_user,eaut_showcase.status.user,model_eaut_showcase_status,base.group_user,1,0,0,0
