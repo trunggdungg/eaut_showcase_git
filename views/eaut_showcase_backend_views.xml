@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- eaut_showcase.project backend views                                  -->
+    <!-- ============================================================ -->
+    <record id="view_uikick_project_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.project.list</field>
+        <field name="model">eaut_showcase.project</field>
+        <field name="arch" type="xml">
+            <list string="UIKick Projects">
+                <field name="sequence" widget="handle"/>
+                <field name="project_code"/>
+                <field name="title"/>
+                <field name="category_id"/>
+                <field name="status_id" widget="badge"/>
+                <field name="views"/>
+                <field name="amount_raised"/>
+                <field name="goal"/>
+                <field name="backers"/>
+                <field name="percent_funded"/>
+                <field name="interest_count"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_uikick_project_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.project.form</field>
+        <field name="model">eaut_showcase.project</field>
+        <field name="arch" type="xml">
+            <form string="UIKick Project">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_interests" type="object"
+                                class="oe_stat_button" icon="fa-users">
+                            <field name="interest_count" widget="statinfo" string="Quan tâm"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="title"/>
+                        <h1>
+                            <field name="title" placeholder="Project title"/>
+                        </h1>
+                        <field name="subtitle" placeholder="Phụ đề bài đăng..."/>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="project_code"/>
+                            <field name="creator"/>
+                            <field name="category_id"/>
+                            <field name="status_id"/>
+                            <field name="location"/>
+                            <!--                            <field name="status"/>-->
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="views"/>
+                            <field name="goal"/>
+                            <field name="amount_raised"/>
+                            <field name="percent_funded"/>
+                            <field name="backers"/>
+                            <field name="days_left"/>
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                    <group string="Media">
+                          <field name="image" placeholder="Ảnh thumbnail (URL)"/>
+                        <field name="video_url"/>
+                    </group>
+                      <group string="Mô tả giới thiệu">
+                        <field name="description" widget="html" nolabel="1"/>
+                    </group>
+                    <group string="All-time campaign stats (optional)">
+                        <field name="campaign_number"/>
+                        <field name="total_raised"/>
+                        <field name="total_backers"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_uikick_project" model="ir.actions.act_window">
+        <field name="name">Projects</field>
+        <field name="res_model">eaut_showcase.project</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- eaut_showcase.reward.tier backend views                              -->
+    <!-- ============================================================ -->
+    <record id="view_uikick_reward_tier_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.reward.tier.list</field>
+        <field name="model">eaut_showcase.reward.tier</field>
+        <field name="arch" type="xml">
+            <list string="UIKick Reward Tiers">
+                <field name="sequence" widget="handle"/>
+                <field name="title"/>
+                <field name="amount"/>
+                <field name="estimated"/>
+                <field name="backers"/>
+                <field name="limited"/>
+                <field name="remaining"/>
+                <field name="active" column_invisible="1"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_uikick_reward_tier_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.reward.tier.form</field>
+        <field name="model">eaut_showcase.reward.tier</field>
+        <field name="arch" type="xml">
+            <form string="UIKick Reward Tier">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="title"/>
+                        <h1>
+                            <field name="title" placeholder="Reward title"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="amount"/>
+                            <field name="estimated"/>
+                            <field name="backers"/>
+                            <field name="active"/>
+                        </group>
+                        <group>
+                            <field name="limited"/>
+                            <field name="remaining" invisible="not limited"/>
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                     <group string="Mô tả giới thiệu">
+                        <field name="description" widget="html" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_uikick_reward_tier" model="ir.actions.act_window">
+        <field name="name">Reward Tiers</field>
+        <field name="res_model">eaut_showcase.reward.tier</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Menu                                                          -->
+    <!-- ============================================================ -->
+    <menuitem id="menu_uikick_root" name="UIKick" sequence="100"/>
+    <menuitem id="menu_uikick_projects" name="Projects" parent="menu_uikick_root"
+              action="action_uikick_project" sequence="10"/>
+    <menuitem id="menu_uikick_reward_tiers" name="Reward Tiers" parent="menu_uikick_root"
+              action="action_uikick_reward_tier" sequence="20"/>
+     <menuitem id="menu_uikick_interest" name="Người quan tâm" parent="menu_uikick_root"
+              action="action_eaut_showcase_interest" sequence="30"/>
+
+    <menuitem id="menu_uikick_config" name="Cấu hình" parent="menu_uikick_root" sequence="90"/>
+    <menuitem id="menu_uikick_category" name="Danh mục" parent="menu_uikick_config"
+              action="action_eaut_showcase_category" sequence="10"/>
+    <menuitem id="menu_uikick_status" name="Trạng thái" parent="menu_uikick_config"
+              action="action_eaut_showcase_status" sequence="20"/>
+
+</odoo>

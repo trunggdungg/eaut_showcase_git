@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ============================================================ -->
+    <!-- CATEGORIES (cấu hình danh mục)                                -->
+    <!-- ============================================================ -->
+    <record id="cat_camera_equipment" model="eaut_showcase.category">
+        <field name="name">Camera Equipment</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="cat_apps" model="eaut_showcase.category">
+        <field name="name">Apps</field>
+        <field name="sequence">20</field>
+    </record>
+    <record id="cat_technology" model="eaut_showcase.category">
+        <field name="name">Technology</field>
+        <field name="sequence">30</field>
+    </record>
+    <record id="cat_design" model="eaut_showcase.category">
+        <field name="name">Design</field>
+        <field name="sequence">40</field>
+    </record>
+    <record id="cat_health_fitness" model="eaut_showcase.category">
+        <field name="name">Health &amp; Fitness</field>
+        <field name="sequence">50</field>
+    </record>
+    <record id="cat_product_design" model="eaut_showcase.category">
+        <field name="name">Product Design</field>
+        <field name="sequence">60</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- STATUSES (cấu hình trạng thái bài đăng)                       -->
+    <!-- ============================================================ -->
+    <record id="status_live" model="eaut_showcase.status">
+        <field name="name">Live</field>
+        <field name="sequence">10</field>
+    </record>
+    <record id="status_upcoming" model="eaut_showcase.status">
+        <field name="name">Upcoming</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- PROJECTS (migrated from src/data/projects.ts)                 -->
+    <!-- ============================================================ -->
+    <record id="uikick_project_1" model="eaut_showcase.project">
+        <field name="sequence">10</field>
+        <field name="project_code">1</field>
+        <field name="title">Meet Beni, Your First All-Terrain Camera Robot</field>
+        <field name="creator">Moxian Robots</field>
+        <field name="category_id" ref="cat_camera_equipment"/>
+        <field name="location">Palo Alto, CA</field>
+        <field name="days_left">41</field>
+        <field name="percent_funded">100</field>
+        <field name="amount_raised">394711</field>
+        <field name="backers">1842</field>
+        <field name="goal">50000</field>
+        <field name="views">3120</field>
+        <field name="image">https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4</field>
+        <field name="description">&lt;p&gt;4K Imaging | Smart Auto-following | 119 MPH Max Speed | Obstacle-avoiding | Auto-stitch highlights&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+        <field name="campaign_number">3</field>
+        <field name="total_raised">$1,200,000+</field>
+        <field name="total_backers">8,400+</field>
+    </record>
+
+    <record id="uikick_project_2" model="eaut_showcase.project">
+        <field name="sequence">20</field>
+        <field name="project_code">2</field>
+        <field name="title">Paperclip: The Social Accountability App</field>
+        <field name="creator">Paperclip Team</field>
+        <field name="category_id" ref="cat_apps"/>
+        <field name="location">San Francisco, CA</field>
+        <field name="days_left">23</field>
+        <field name="percent_funded">65</field>
+        <field name="amount_raised">32500</field>
+        <field name="backers">892</field>
+        <field name="goal">50000</field>
+         <field name="views">1560</field>
+        <field name="image">https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4</field>
+        <field name="description">&lt;p&gt;Build better habits with social accountability and real community support&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_3" model="eaut_showcase.project">
+        <field name="sequence">30</field>
+        <field name="project_code">3</field>
+        <field name="title">NanoKVM-Go: World's First All Native CH32V USB-C KVM</field>
+        <field name="creator">Sipeed</field>
+        <field name="category_id" ref="cat_technology"/>
+        <field name="location">Shenzhen, China</field>
+        <field name="days_left">16</field>
+        <field name="percent_funded">441</field>
+        <field name="amount_raised">220500</field>
+        <field name="backers">3241</field>
+        <field name="goal">50000</field>
+            <field name="views">5230</field>
+        <field name="image">https://images.unsplash.com/photo-1518770660439-4636190af475?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4</field>
+        <field name="description">&lt;p&gt;Control any computer remotely via USB-C — plug in, no software needed&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_4" model="eaut_showcase.project">
+        <field name="sequence">40</field>
+        <field name="project_code">4</field>
+        <field name="title">Laverne R9 Dynamic Ergonomic Chair</field>
+        <field name="creator">Laverne Design</field>
+        <field name="category_id" ref="cat_design"/>
+        <field name="location">Berlin, Germany</field>
+        <field name="days_left">28</field>
+        <field name="percent_funded">234</field>
+        <field name="amount_raised">117000</field>
+        <field name="backers">567</field>
+        <field name="goal">50000</field>
+          <field name="views">980</field>
+        <field name="image">https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4</field>
+        <field name="description">&lt;p&gt;Premium ergonomic chair that dynamically adapts to your posture throughout the day&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_5" model="eaut_showcase.project">
+        <field name="sequence">50</field>
+        <field name="project_code">5</field>
+        <field name="title">Disk Pro 2 | Ultimate Choice Cooling Hub for EDC Devices</field>
+        <field name="creator">SHARGE Tech</field>
+        <field name="category_id" ref="cat_technology"/>
+        <field name="location">Shenzhen, China</field>
+        <field name="days_left">26</field>
+        <field name="percent_funded">828</field>
+        <field name="amount_raised">414371</field>
+        <field name="backers">4194</field>
+        <field name="goal">50000</field>
+           <field name="views">6800</field>
+        <field name="image">https://images.unsplash.com/photo-1601524909162-ae8725290836?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4</field>
+        <field name="description">&lt;h2&gt;Tổng quan sản phẩm&lt;/h2&gt;&lt;p&gt;8-ports | Ice-storm Cooler | Magnetic Attachment | Pocket Size | 4 Control Chips | Max 8TB Swappable SSD | 10Gbps | HDMI 2.1 | Lanyard Cable&lt;/p&gt;&lt;h2&gt;Thiết kế dựa trên tri thức&lt;/h2&gt;&lt;p&gt;Được tối ưu từ phản hồi của hàng nghìn người dùng thử nghiệm.&lt;/p&gt;&lt;h2&gt;Tản nhiệt thế hệ 3&lt;/h2&gt;&lt;p&gt;Hệ thống ice-storm cooler giữ nhiệt độ ổn định khi truyền tải tốc độ cao.&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+        <field name="campaign_number">16</field>
+        <field name="total_raised">$7,500,000+</field>
+        <field name="total_backers">50,600+</field>
+    </record>
+
+    <record id="uikick_project_6" model="eaut_showcase.project">
+        <field name="sequence">60</field>
+        <field name="project_code">6</field>
+        <field name="title">Lumys: Track Your Heart Disease Risk with Style</field>
+        <field name="creator">Lumys Health</field>
+        <field name="category_id" ref="cat_health_fitness"/>
+        <field name="location">Austin, TX</field>
+        <field name="days_left">19</field>
+        <field name="percent_funded">178</field>
+        <field name="amount_raised">89000</field>
+        <field name="backers">1234</field>
+        <field name="goal">50000</field>
+             <field name="views">2100</field>
+        <field name="image">https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4</field>
+        <field name="description">&lt;p&gt;Smart health tracker monitoring cardiovascular risk in real-time with clinical accuracy&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_7" model="eaut_showcase.project">
+        <field name="sequence">70</field>
+        <field name="project_code">7</field>
+        <field name="title">Health Tracker Pro: Advanced Biometric Monitoring</field>
+        <field name="creator">BioTech Labs</field>
+        <field name="category_id" ref="cat_health_fitness"/>
+        <field name="location">Boston, MA</field>
+        <field name="days_left">33</field>
+        <field name="percent_funded">145</field>
+        <field name="amount_raised">72500</field>
+        <field name="backers">987</field>
+        <field name="goal">50000</field>
+          <field name="views">8900</field>
+        <field name="image">https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4</field>
+        <field name="description">&lt;p&gt;Track blood oxygen, heart rate, sleep, and stress in one elegant wearable device&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_8" model="eaut_showcase.project">
+        <field name="sequence">80</field>
+        <field name="project_code">8</field>
+        <field name="title">100Gbps Transfer Speed Portable SSD Enclosure</field>
+        <field name="creator">SpeedTech Solutions</field>
+        <field name="category_id" ref="cat_technology"/>
+        <field name="location">Taipei, Taiwan</field>
+        <field name="days_left">12</field>
+        <field name="percent_funded">892</field>
+        <field name="amount_raised">446000</field>
+        <field name="backers">5678</field>
+        <field name="goal">50000</field>
+        <field name="views">640</field>
+        <field name="image">https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4</field>
+        <field name="description">&lt;p&gt;Revolutionary SSD enclosure achieving true 100Gbps transfer speeds in your pocket&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_9" model="eaut_showcase.project">
+        <field name="sequence">90</field>
+        <field name="project_code">9</field>
+        <field name="title">Mini DTG: Wearable Air Quality Monitor</field>
+        <field name="creator">AirSense Technologies</field>
+        <field name="category_id" ref="cat_technology"/>
+        <field name="location">Seoul, South Korea</field>
+        <field name="days_left">45</field>
+        <field name="percent_funded">67</field>
+        <field name="amount_raised">33500</field>
+        <field name="backers">423</field>
+        <field name="goal">50000</field>
+        <field name="views">1290</field>
+        <field name="image">https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4</field>
+        <field name="description">&lt;h2&gt;Tổng quan sản phẩm&lt;/h2&gt;&lt;p&gt;Pocket-sized air quality sensor with real-time PM2.5, CO2, and VOC monitoring.&lt;/p&gt;&lt;h2&gt;Lợi ích: Tính di động&lt;/h2&gt;&lt;p&gt;Bỏ vừa túi áo, mang theo mọi lúc mọi nơi.&lt;/p&gt;</field>
+        <field name="status_id" ref="status_upcoming"/>
+    </record>
+
+    <record id="uikick_project_10" model="eaut_showcase.project">
+        <field name="sequence">100</field>
+        <field name="project_code">10</field>
+        <field name="title">MagBlade: World's Thinnest Wireless Charger</field>
+        <field name="creator">Chroma Tech</field>
+        <field name="category_id" ref="cat_technology"/>
+        <field name="location">Tokyo, Japan</field>
+        <field name="days_left">38</field>
+        <field name="percent_funded">312</field>
+        <field name="amount_raised">156000</field>
+        <field name="backers">2891</field>
+        <field name="goal">50000</field>
+             <field name="views">510</field>
+        <field name="image">https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4</field>
+        <field name="description">&lt;p&gt;1.2mm ultra-thin 15W MagSafe compatible wireless charger — stick it anywhere&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_11" model="eaut_showcase.project">
+        <field name="sequence">110</field>
+        <field name="project_code">11</field>
+        <field name="title">FlowDesk Standing Desk Converter Pro</field>
+        <field name="creator">Flow Workspace</field>
+        <field name="category_id" ref="cat_design"/>
+        <field name="location">Portland, OR</field>
+        <field name="days_left">21</field>
+        <field name="percent_funded">189</field>
+        <field name="amount_raised">94500</field>
+        <field name="backers">743</field>
+        <field name="goal">50000</field>
+             <field name="views">510</field>
+        <field name="image">https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4</field>
+        <field name="description">&lt;p&gt;Transform any desk into a sit-stand workstation in under 5 seconds&lt;/p&gt;</field>
+        <field name="status_id" ref="status_live"/>
+    </record>
+
+    <record id="uikick_project_12" model="eaut_showcase.project">
+        <field name="sequence">120</field>
+        <field name="project_code">12</field>
+        <field name="title">EcoBottle: Smart Self-Cleaning Water Bottle</field>
+        <field name="creator">PureLife Systems</field>
+        <field name="category_id" ref="cat_product_design"/>
+        <field name="location">Amsterdam, Netherlands</field>
+        <field name="days_left">52</field>
+        <field name="percent_funded">43</field>
+        <field name="amount_raised">21500</field>
+        <field name="backers">289</field>
+        <field name="goal">50000</field>
+             <field name="views">510</field>
+        <field name="image">https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
+        <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4</field>
+        <field name="description">&lt;p&gt;UV-C LED self-sterilization, temperature display, and 72-hour insulation&lt;/p&gt;</field>
+        <field name="status_id" ref="status_upcoming"/>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- REWARD TIERS (migrated from DetailPage.tsx REWARD_TIERS)      -->
+    <!-- ============================================================ -->
+    <record id="uikick_reward_tier_1" model="eaut_showcase.reward.tier">
+        <field name="sequence">10</field>
+        <field name="title">Early Bird Special</field>
+        <field name="amount">79</field>
+        <field name="description">Disk Pro 2 × 1 unit. Save 20% off retail price.</field>
+        <field name="estimated">January 2026</field>
+        <field name="backers">1203</field>
+        <field name="limited" eval="True"/>
+        <field name="remaining">47</field>
+    </record>
+
+    <record id="uikick_reward_tier_2" model="eaut_showcase.reward.tier">
+        <field name="sequence">20</field>
+        <field name="title">Standard Pledge</field>
+        <field name="amount">99</field>
+        <field name="description">Disk Pro 2 × 1 unit with lanyard cable included.</field>
+        <field name="estimated">January 2026</field>
+        <field name="backers">2104</field>
+        <field name="limited" eval="False"/>
+    </record>
+
+    <record id="uikick_reward_tier_3" model="eaut_showcase.reward.tier">
+        <field name="sequence">30</field>
+        <field name="title">Duo Pack</field>
+        <field name="amount">185</field>
+        <field name="description">Disk Pro 2 × 2 units. Perfect for home + office.</field>
+        <field name="estimated">January 2026</field>
+        <field name="backers">487</field>
+        <field name="limited" eval="False"/>
+    </record>
+
+    <record id="uikick_reward_tier_4" model="eaut_showcase.reward.tier">
+        <field name="sequence">40</field>
+        <field name="title">Pro Bundle</field>
+        <field name="amount">249</field>
+        <field name="description">Disk Pro 2 × 2 units + 2TB NVMe SSD. Ready to use out of the box.</field>
+        <field name="estimated">February 2026</field>
+        <field name="backers">298</field>
+        <field name="limited" eval="False"/>
+    </record>
+
+</odoo>

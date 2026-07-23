@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- HOME PAGE (danh sách project + sidebar filter)                -->
+    <!-- ============================================================ -->
+    <template id="home_page" name="UIKick - Discover">
+        <t t-call="web.frontend_layout">
+            <t t-set="title" t-value="(header_label or '') + ' — Kickstarter'"/>
+            <div id="wrap" class="uikick">
+
+                <div class="uikick-body">
+                    <!-- Sidebar filters -->
+                    <button type="button" id="uikick-filter-toggle" class="uikick-filter-toggle">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12h12M3 6h18M9 18h6"/>
+                        </svg>
+                        Filter by
+                        <svg class="uikick-filter-toggle-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <form method="get" action="/uikick" id="uikick-filter-form" class="uikick-sidebar">
+                        <p class="uikick-sidebar-title">Filter by</p>
+                        <input type="hidden" name="categories_submitted" value="1"/>
+
+                        <div class="uikick-filter-group">
+                            <h3>Category</h3>
+                            <div class="uikick-category-list">
+                                <t t-foreach="categories" t-as="cat">
+                                    <label class="uikick-check-row uikick-cat-check-row">
+                                        <span>
+                                            <input type="checkbox" name="category" t-att-value="cat.name"
+                                                   t-att-checked="'checked' if cat.name in filters['categories'] else None"/>
+                                            <t t-esc="cat.name"/>
+                                        </span>
+                                    </label>
+                                </t>
+                            </div>
+                        </div>
+
+                        <hr/>
+
+                        <div class="uikick-filter-group">
+                            <h3>Project status</h3>
+                            <t t-foreach="all_statuses" t-as="st">
+                                <label class="uikick-check-row uikick-check-row-single">
+                                    <input type="checkbox" name="status" t-att-value="st.name"
+                                           t-att-checked="'checked' if st.name in filters['status'] else None"/>
+                                    <t t-esc="st.name"/>
+                                </label>
+                            </t>
+                        </div>
+
+                        <hr/>
+
+                        <div class="uikick-filter-group">
+                            <h3>Location</h3>
+                            <input type="text" name="location" placeholder="Search by city, state, country..."
+                                   class="uikick-input" t-att-value="filters['location']"/>
+                            <select class="uikick-select">
+                                <option>Anywhere</option>
+                                <option>Vietnam</option>
+                                <option>Hanoi, Viet Nam</option>
+                                <option>United States</option>
+                                <option>United Kingdom</option>
+                                <option>Canada</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-sm rounded-pill uikick-btn-block uikick-filter-apply">Apply filters</button>
+                    </form>
+
+                    <!-- Main content -->
+                    <main class="uikick-main">
+                        <div class="uikick-main-header">
+                            <div>
+                                <h1><t t-esc="header_label"/></h1>
+                                <p><t t-esc="len(projects)"/> projects</p>
+                            </div>
+                            <div class="uikick-sort">
+                                <span>Sort by</span>
+                                <select class="uikick-select" id="uikick-sort-select" name="sort" form="uikick-filter-form">
+                                    <t t-foreach="sort_options" t-as="opt">
+                                        <option t-att-value="opt" t-att-selected="'selected' if filters['sort'] == opt else None">
+                                            <t t-esc="opt"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="uikick-grid">
+                            <t t-foreach="projects" t-as="project">
+                                <a t-att-href="'/uikick/project/' + project.project_code" class="uikick-card">
+                                    <div class="uikick-card-media">
+                                        <img t-att-src="project.image" t-att-alt="project.title"
+                                             class="uikick-card-img"/>
+                                        <video t-att-src="project.video_url" muted="muted" loop="loop"
+                                               playsinline="playsinline" preload="metadata"
+                                               class="uikick-card-video"/>
+                                        <t t-if="project.status_id">
+                                            <span class="uikick-badge"><t t-esc="project.status_id.name"/></span>
+                                        </t>
+                                    </div>
+                                    <div class="uikick-card-body">
+                                        <p class="uikick-card-category"><t t-esc="project.category_id.name"/></p>
+                                        <h3 class="uikick-card-title"><t t-esc="project.title"/></h3>
+                                        <p class="uikick-card-creator">by <span><t t-esc="project.creator"/></span></p>
+
+
+                                        <div class="uikick-card-location">
+                                            <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                                      d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
+                                            </svg>
+                                            <span><t t-esc="project.location"/></span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </t>
+                            <t t-if="not projects">
+                                <p class="uikick-empty">No projects match these filters.</p>
+                            </t>
+                        </div>
+                    </main>
+                </div>
+            </div>
+        </t>
+    </template>
+
+</odoo>
