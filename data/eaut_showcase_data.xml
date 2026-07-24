@@ -2,6 +2,17 @@
 <odoo noupdate="1">
 
     <!-- ============================================================ -->
+    <!-- SEQUENCES (sinh tự động project_code)                         -->
+    <!-- ============================================================ -->
+    <record id="seq_eaut_showcase_project" model="ir.sequence">
+        <field name="name">UIKick Project Code</field>
+        <field name="code">eaut_showcase.project</field>
+        <field name="padding">0</field>
+        <field name="number_next">13</field>
+        <field name="number_increment">1</field>
+    </record>
+
+    <!-- ============================================================ -->
     <!-- CATEGORIES (cấu hình danh mục)                                -->
     <!-- ============================================================ -->
     <record id="cat_camera_equipment" model="eaut_showcase.category">
@@ -51,9 +62,7 @@
         <field name="creator">Moxian Robots</field>
         <field name="category_id" ref="cat_camera_equipment"/>
         <field name="location">Palo Alto, CA</field>
-        <field name="days_left">41</field>
         <field name="views">3120</field>
-        <field name="image">https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4</field>
         <field name="description">&lt;p&gt;4K Imaging | Smart Auto-following | 119 MPH Max Speed | Obstacle-avoiding | Auto-stitch highlights&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -67,9 +76,7 @@
         <field name="creator">Paperclip Team</field>
         <field name="category_id" ref="cat_apps"/>
         <field name="location">San Francisco, CA</field>
-        <field name="days_left">23</field>
          <field name="views">1560</field>
-        <field name="image">https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4</field>
         <field name="description">&lt;p&gt;Build better habits with social accountability and real community support&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -82,9 +89,7 @@
         <field name="creator">Sipeed</field>
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Shenzhen, China</field>
-        <field name="days_left">16</field>
             <field name="views">5230</field>
-        <field name="image">https://images.unsplash.com/photo-1518770660439-4636190af475?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4</field>
         <field name="description">&lt;p&gt;Control any computer remotely via USB-C — plug in, no software needed&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -97,9 +102,7 @@
         <field name="creator">Laverne Design</field>
         <field name="category_id" ref="cat_design"/>
         <field name="location">Berlin, Germany</field>
-        <field name="days_left">28</field>
           <field name="views">980</field>
-        <field name="image">https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4</field>
         <field name="description">&lt;p&gt;Premium ergonomic chair that dynamically adapts to your posture throughout the day&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -112,9 +115,7 @@
         <field name="creator">SHARGE Tech</field>
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Shenzhen, China</field>
-        <field name="days_left">26</field>
            <field name="views">6800</field>
-        <field name="image">https://images.unsplash.com/photo-1601524909162-ae8725290836?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4</field>
         <field name="description">&lt;h2&gt;Tổng quan sản phẩm&lt;/h2&gt;&lt;p&gt;8-ports | Ice-storm Cooler | Magnetic Attachment | Pocket Size | 4 Control Chips | Max 8TB Swappable SSD | 10Gbps | HDMI 2.1 | Lanyard Cable&lt;/p&gt;&lt;h2&gt;Thiết kế dựa trên tri thức&lt;/h2&gt;&lt;p&gt;Được tối ưu từ phản hồi của hàng nghìn người dùng thử nghiệm.&lt;/p&gt;&lt;h2&gt;Tản nhiệt thế hệ 3&lt;/h2&gt;&lt;p&gt;Hệ thống ice-storm cooler giữ nhiệt độ ổn định khi truyền tải tốc độ cao.&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -128,9 +129,7 @@
         <field name="creator">Lumys Health</field>
         <field name="category_id" ref="cat_health_fitness"/>
         <field name="location">Austin, TX</field>
-        <field name="days_left">19</field>
              <field name="views">2100</field>
-        <field name="image">https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4</field>
         <field name="description">&lt;p&gt;Smart health tracker monitoring cardiovascular risk in real-time with clinical accuracy&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -143,9 +142,7 @@
         <field name="creator">BioTech Labs</field>
         <field name="category_id" ref="cat_health_fitness"/>
         <field name="location">Boston, MA</field>
-        <field name="days_left">33</field>
           <field name="views">8900</field>
-        <field name="image">https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4</field>
         <field name="description">&lt;p&gt;Track blood oxygen, heart rate, sleep, and stress in one elegant wearable device&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -158,9 +155,7 @@
         <field name="creator">SpeedTech Solutions</field>
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Taipei, Taiwan</field>
-        <field name="days_left">12</field>
         <field name="views">640</field>
-        <field name="image">https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4</field>
         <field name="description">&lt;p&gt;Revolutionary SSD enclosure achieving true 100Gbps transfer speeds in your pocket&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -173,9 +168,7 @@
         <field name="creator">AirSense Technologies</field>
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Seoul, South Korea</field>
-        <field name="days_left">45</field>
         <field name="views">1290</field>
-        <field name="image">https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4</field>
         <field name="description">&lt;h2&gt;Tổng quan sản phẩm&lt;/h2&gt;&lt;p&gt;Pocket-sized air quality sensor with real-time PM2.5, CO2, and VOC monitoring.&lt;/p&gt;&lt;h2&gt;Lợi ích: Tính di động&lt;/h2&gt;&lt;p&gt;Bỏ vừa túi áo, mang theo mọi lúc mọi nơi.&lt;/p&gt;</field>
         <field name="status_id" ref="status_upcoming"/>
@@ -188,9 +181,7 @@
         <field name="creator">Chroma Tech</field>
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Tokyo, Japan</field>
-        <field name="days_left">38</field>
              <field name="views">510</field>
-        <field name="image">https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4</field>
         <field name="description">&lt;p&gt;1.2mm ultra-thin 15W MagSafe compatible wireless charger — stick it anywhere&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -203,9 +194,7 @@
         <field name="creator">Flow Workspace</field>
         <field name="category_id" ref="cat_design"/>
         <field name="location">Portland, OR</field>
-        <field name="days_left">21</field>
              <field name="views">510</field>
-        <field name="image">https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4</field>
         <field name="description">&lt;p&gt;Transform any desk into a sit-stand workstation in under 5 seconds&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
@@ -218,9 +207,7 @@
         <field name="creator">PureLife Systems</field>
         <field name="category_id" ref="cat_product_design"/>
         <field name="location">Amsterdam, Netherlands</field>
-        <field name="days_left">52</field>
              <field name="views">510</field>
-        <field name="image">https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4</field>
         <field name="description">&lt;p&gt;UV-C LED self-sterilization, temperature display, and 72-hour insulation&lt;/p&gt;</field>
         <field name="status_id" ref="status_upcoming"/>

@@ -33,6 +33,7 @@
                             <field name="interest_count" widget="statinfo" string="Quan tâm"/>
                         </button>
                     </div>
+                    <field name="image" widget="image" class="oe_avatar"/>
                     <div class="oe_title">
                         <label for="title"/>
                         <h1>
@@ -52,12 +53,10 @@
                         </group>
                         <group>
                             <field name="views"/>
-                            <field name="days_left"/>
                             <field name="sequence"/>
                         </group>
                     </group>
                     <group string="Media">
-                          <field name="image" placeholder="Ảnh thumbnail (URL)"/>
                         <field name="video_url"/>
                     </group>
                       <group string="Mô tả giới thiệu">

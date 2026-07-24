@@ -21,11 +21,10 @@ TAB_LABELS = {
 
 
 
-SORT_OPTIONS = ["Relevance", "Most viewed", "Newest", "End date"]
+SORT_OPTIONS = ["Relevance", "Most viewed", "Newest"]
 ORDER_BY_SORT = {
     "Most viewed": "views desc",
     "Newest": "create_date desc",
-    "End date": "days_left asc",
 }
 
 class UikickController(http.Controller):
@@ -109,6 +108,17 @@ class UikickController(http.Controller):
             'error': error,
         }
         return request.render('eaut_showcase.detail_page', values)
+
+    @http.route(['/uikick/project/<string:project_id>/thumbnail'],
+                type='http', auth='public', website=True, sitemap=False)
+    def project_thumbnail(self, project_id, **kw):
+        project = request.env['eaut_showcase.project'].sudo().search(
+            [('project_code', '=', project_id)], limit=1)
+        if not project:
+            return request.not_found()
+        return request.env['ir.binary']._get_image_stream_from(
+            project, field_name='image'
+        ).get_response()
 
 
  # ============ SUBMIT FORM "QUAN TÂM" ============
