@@ -94,8 +94,10 @@
                             <t t-foreach="projects" t-as="project">
                                 <a t-att-href="'/uikick/project/' + project.project_code" class="uikick-card">
                                     <div class="uikick-card-media">
-                                        <img t-att-src="project.image" t-att-alt="project.title"
-                                             class="uikick-card-img"/>
+<!--                                        <img t-att-src="project.image" t-att-alt="project.title"-->
+<!--                                             class="uikick-card-img"/>-->
+                                           <img t-att-src="'/uikick/project/' + project.project_code + '/thumbnail'"
+                                             t-att-alt="project.title" class="uikick-card-img"/>
                                         <video t-att-src="project.video_url" muted="muted" loop="loop"
                                                playsinline="playsinline" preload="metadata"
                                                class="uikick-card-video"/>
