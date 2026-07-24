@@ -57,8 +57,9 @@
                     <group string="Media">
                         <field name="video_url"/>
                     </group>
-                      <group string="Mô tả giới thiệu">
-                        <field name="description" widget="html" nolabel="1"/>
+                      <group string="Mô tả giới thiệu" col="1">
+                        <field name="description" widget="html" nolabel="1"
+                               style="width: 100%; min-height: 300px;"/>
                     </group>
                     <group string="All-time campaign stats (optional)">
                         <field name="campaign_number"/>
