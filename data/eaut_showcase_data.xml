@@ -52,18 +52,12 @@
         <field name="category_id" ref="cat_camera_equipment"/>
         <field name="location">Palo Alto, CA</field>
         <field name="days_left">41</field>
-        <field name="percent_funded">100</field>
-        <field name="amount_raised">394711</field>
-        <field name="backers">1842</field>
-        <field name="goal">50000</field>
         <field name="views">3120</field>
         <field name="image">https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4</field>
         <field name="description">&lt;p&gt;4K Imaging | Smart Auto-following | 119 MPH Max Speed | Obstacle-avoiding | Auto-stitch highlights&lt;/p&gt;</field>
         <field name="status_id" ref="status_live"/>
         <field name="campaign_number">3</field>
-        <field name="total_raised">$1,200,000+</field>
-        <field name="total_backers">8,400+</field>
     </record>
 
     <record id="uikick_project_2" model="eaut_showcase.project">
@@ -74,10 +68,7 @@
         <field name="category_id" ref="cat_apps"/>
         <field name="location">San Francisco, CA</field>
         <field name="days_left">23</field>
-        <field name="percent_funded">65</field>
-        <field name="amount_raised">32500</field>
-        <field name="backers">892</field>
-        <field name="goal">50000</field>
+
          <field name="views">1560</field>
         <field name="image">https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4</field>
@@ -93,10 +84,7 @@
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Shenzhen, China</field>
         <field name="days_left">16</field>
-        <field name="percent_funded">441</field>
-        <field name="amount_raised">220500</field>
-        <field name="backers">3241</field>
-        <field name="goal">50000</field>
+
             <field name="views">5230</field>
         <field name="image">https://images.unsplash.com/photo-1518770660439-4636190af475?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4</field>
@@ -112,10 +100,7 @@
         <field name="category_id" ref="cat_design"/>
         <field name="location">Berlin, Germany</field>
         <field name="days_left">28</field>
-        <field name="percent_funded">234</field>
-        <field name="amount_raised">117000</field>
-        <field name="backers">567</field>
-        <field name="goal">50000</field>
+
           <field name="views">980</field>
         <field name="image">https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4</field>
@@ -131,10 +116,7 @@
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Shenzhen, China</field>
         <field name="days_left">26</field>
-        <field name="percent_funded">828</field>
-        <field name="amount_raised">414371</field>
-        <field name="backers">4194</field>
-        <field name="goal">50000</field>
+
            <field name="views">6800</field>
         <field name="image">https://images.unsplash.com/photo-1601524909162-ae8725290836?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4</field>
@@ -153,10 +135,7 @@
         <field name="category_id" ref="cat_health_fitness"/>
         <field name="location">Austin, TX</field>
         <field name="days_left">19</field>
-        <field name="percent_funded">178</field>
-        <field name="amount_raised">89000</field>
-        <field name="backers">1234</field>
-        <field name="goal">50000</field>
+
              <field name="views">2100</field>
         <field name="image">https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4</field>
@@ -172,10 +151,7 @@
         <field name="category_id" ref="cat_health_fitness"/>
         <field name="location">Boston, MA</field>
         <field name="days_left">33</field>
-        <field name="percent_funded">145</field>
-        <field name="amount_raised">72500</field>
-        <field name="backers">987</field>
-        <field name="goal">50000</field>
+
           <field name="views">8900</field>
         <field name="image">https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4</field>
@@ -191,10 +167,7 @@
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Taipei, Taiwan</field>
         <field name="days_left">12</field>
-        <field name="percent_funded">892</field>
-        <field name="amount_raised">446000</field>
-        <field name="backers">5678</field>
-        <field name="goal">50000</field>
+
         <field name="views">640</field>
         <field name="image">https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4</field>
@@ -210,10 +183,7 @@
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Seoul, South Korea</field>
         <field name="days_left">45</field>
-        <field name="percent_funded">67</field>
-        <field name="amount_raised">33500</field>
-        <field name="backers">423</field>
-        <field name="goal">50000</field>
+
         <field name="views">1290</field>
         <field name="image">https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4</field>
@@ -229,10 +199,7 @@
         <field name="category_id" ref="cat_technology"/>
         <field name="location">Tokyo, Japan</field>
         <field name="days_left">38</field>
-        <field name="percent_funded">312</field>
-        <field name="amount_raised">156000</field>
-        <field name="backers">2891</field>
-        <field name="goal">50000</field>
+
              <field name="views">510</field>
         <field name="image">https://images.unsplash.com/photo-1512054502232-10a0a035d672?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4</field>
@@ -248,10 +215,7 @@
         <field name="category_id" ref="cat_design"/>
         <field name="location">Portland, OR</field>
         <field name="days_left">21</field>
-        <field name="percent_funded">189</field>
-        <field name="amount_raised">94500</field>
-        <field name="backers">743</field>
-        <field name="goal">50000</field>
+
              <field name="views">510</field>
         <field name="image">https://images.unsplash.com/photo-1593642632559-0c6d3fc62b89?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4</field>
@@ -267,10 +231,7 @@
         <field name="category_id" ref="cat_product_design"/>
         <field name="location">Amsterdam, Netherlands</field>
         <field name="days_left">52</field>
-        <field name="percent_funded">43</field>
-        <field name="amount_raised">21500</field>
-        <field name="backers">289</field>
-        <field name="goal">50000</field>
+
              <field name="views">510</field>
         <field name="image">https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=560&amp;h=315&amp;fit=crop&amp;auto=format</field>
         <field name="video_url">https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4</field>
@@ -278,48 +239,6 @@
         <field name="status_id" ref="status_upcoming"/>
     </record>
 
-    <!-- ============================================================ -->
-    <!-- REWARD TIERS (migrated from DetailPage.tsx REWARD_TIERS)      -->
-    <!-- ============================================================ -->
-    <record id="uikick_reward_tier_1" model="eaut_showcase.reward.tier">
-        <field name="sequence">10</field>
-        <field name="title">Early Bird Special</field>
-        <field name="amount">79</field>
-        <field name="description">Disk Pro 2 × 1 unit. Save 20% off retail price.</field>
-        <field name="estimated">January 2026</field>
-        <field name="backers">1203</field>
-        <field name="limited" eval="True"/>
-        <field name="remaining">47</field>
-    </record>
 
-    <record id="uikick_reward_tier_2" model="eaut_showcase.reward.tier">
-        <field name="sequence">20</field>
-        <field name="title">Standard Pledge</field>
-        <field name="amount">99</field>
-        <field name="description">Disk Pro 2 × 1 unit with lanyard cable included.</field>
-        <field name="estimated">January 2026</field>
-        <field name="backers">2104</field>
-        <field name="limited" eval="False"/>
-    </record>
-
-    <record id="uikick_reward_tier_3" model="eaut_showcase.reward.tier">
-        <field name="sequence">30</field>
-        <field name="title">Duo Pack</field>
-        <field name="amount">185</field>
-        <field name="description">Disk Pro 2 × 2 units. Perfect for home + office.</field>
-        <field name="estimated">January 2026</field>
-        <field name="backers">487</field>
-        <field name="limited" eval="False"/>
-    </record>
-
-    <record id="uikick_reward_tier_4" model="eaut_showcase.reward.tier">
-        <field name="sequence">40</field>
-        <field name="title">Pro Bundle</field>
-        <field name="amount">249</field>
-        <field name="description">Disk Pro 2 × 2 units + 2TB NVMe SSD. Ready to use out of the box.</field>
-        <field name="estimated">February 2026</field>
-        <field name="backers">298</field>
-        <field name="limited" eval="False"/>
-    </record>
 
 </odoo>

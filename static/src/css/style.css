@@ -228,15 +228,6 @@
 .uikick-lead-field textarea { min-height: 90px; resize: vertical; }
 .uikick-lead-form-note { font-size: 12px; color: var(--bs-secondary-color, #9ca3af); text-align: center; margin: 10px 0 0; }
 
-/* Rewards */
-.uikick-reward-list { display: flex; flex-direction: column; gap: 16px; }
-.uikick-reward-card { border: 1px solid var(--bs-border-color, #e5e7eb); border-radius: 2px; padding: 20px; transition: border-color .15s; }
-.uikick-reward-card:hover { border-color: var(--bs-primary, #05ce78); }
-.uikick-reward-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
-.uikick-reward-title { font-size: 16px; font-weight: 600; color: var(--bs-body-color, #1f2937); margin-top: 2px; }
-
-.uikick-reward-desc { font-size: 14px; color: var(--bs-body-color, #4b5563); margin: 0 0 12px; }
-.uikick-reward-meta { display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--bs-secondary-color, #9ca3af); }
 
 
 /* Right sidebar */

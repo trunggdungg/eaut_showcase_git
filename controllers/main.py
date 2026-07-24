@@ -9,7 +9,7 @@ _logger = logging.getLogger(__name__)
 # Internal ids used for data-tab matching/JS — the visible label is translated
 # separately via TAB_LABELS so the tab-switching logic doesn't have to compare
 # against Vietnamese strings.
-TABS = ["Campaign", "Rewards", "Creator", "FAQ", "Updates", "Comments", "Community"]
+TABS = ["Campaign", "Creator", "FAQ", "Updates", "Comments", "Community"]
 TAB_LABELS = {
     "Campaign": "Giới thiệu",
     "Rewards": "Tính năng",
@@ -102,12 +102,11 @@ class UikickController(http.Controller):
 
         if project:
             project.views += 1
-        reward_tiers = request.env['eaut_showcase.reward.tier'].sudo().search([], order='sequence, id')
+        # reward_tiers = request.env['eaut_showcase.reward.tier'].sudo().search([], order='sequence, id')
         values = {
             'project': project,
             'tabs': TABS,
             'tab_labels': TAB_LABELS,
-            'reward_tiers': reward_tiers,
             'submitted': submitted,
             'error': error,
         }
