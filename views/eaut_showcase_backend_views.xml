@@ -10,7 +10,6 @@
         <field name="arch" type="xml">
             <list string="UIKick Projects">
                 <field name="sequence" widget="handle"/>
-                <field name="project_code"/>
                 <field name="title"/>
                 <field name="category_id"/>
                 <field name="status_id" widget="badge"/>
@@ -43,7 +42,6 @@
                     </div>
                     <group>
                         <group>
-                            <field name="project_code"/>
                             <field name="creator"/>
                             <field name="category_id"/>
                             <field name="status_id"/>
