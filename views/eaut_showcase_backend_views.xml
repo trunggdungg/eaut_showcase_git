@@ -54,16 +54,18 @@
                             <field name="sequence"/>
                         </group>
                     </group>
-                    <group string="Media">
-                        <field name="video_url"/>
-                    </group>
-                      <group string="Mô tả giới thiệu" col="1">
-                        <field name="description" widget="html" nolabel="1"
-                               style="width: 100%; min-height: 300px;"/>
-                    </group>
-                    <group string="All-time campaign stats (optional)">
-                        <field name="campaign_number"/>
-                    </group>
+                    <notebook>
+                        <page string="Mô tả giới thiệu" name="description">
+                            <field name="description" widget="html" nolabel="1"
+                                   style="width: 100%; min-height: 300px;"/>
+                        </page>
+                        <page string="Media" name="media">
+                            <field name="video_url"/>
+                        </page>
+                        <page string="Thống kê (optional)" name="stats">
+                            <field name="campaign_number"/>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
