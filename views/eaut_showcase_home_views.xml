@@ -12,11 +12,13 @@
                 <div class="uikick-body">
                     <!-- Sidebar filters -->
                     <button type="button" id="uikick-filter-toggle" class="uikick-filter-toggle">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"
+                             viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M6 12h12M3 6h18M9 18h6"/>
                         </svg>
                         Filter by
-                        <svg class="uikick-filter-toggle-chevron" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <svg class="uikick-filter-toggle-chevron" width="12" height="12" fill="none"
+                             stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
@@ -68,21 +70,31 @@
                             </select>
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-sm rounded-pill uikick-btn-block uikick-filter-apply">Apply filters</button>
+                        <button type="submit"
+                                class="btn btn-primary btn-sm rounded-pill uikick-btn-block uikick-filter-apply">Apply
+                            filters
+                        </button>
                     </form>
 
                     <!-- Main content -->
                     <main class="uikick-main">
                         <div class="uikick-main-header">
                             <div>
-                                <h1><t t-esc="header_label"/></h1>
-                                <p><t t-esc="len(projects)"/> projects</p>
+                                <h1>
+                                    <t t-esc="header_label"/>
+                                </h1>
+                                <p>
+                                    <t t-esc="len(projects)"/>
+                                    projects
+                                </p>
                             </div>
                             <div class="uikick-sort">
                                 <span>Sort by</span>
-                                <select class="uikick-select" id="uikick-sort-select" name="sort" form="uikick-filter-form">
+                                <select class="uikick-select" id="uikick-sort-select" name="sort"
+                                        form="uikick-filter-form">
                                     <t t-foreach="sort_options" t-as="opt">
-                                        <option t-att-value="opt" t-att-selected="'selected' if filters['sort'] == opt else None">
+                                        <option t-att-value="opt"
+                                                t-att-selected="'selected' if filters['sort'] == opt else None">
                                             <t t-esc="opt"/>
                                         </option>
                                     </t>
@@ -94,23 +106,40 @@
                             <t t-foreach="projects" t-as="project">
                                 <a t-att-href="'/uikick/project/' + project.project_code" class="uikick-card">
                                     <div class="uikick-card-media">
-<!--                                        <img t-att-src="project.image" t-att-alt="project.title"-->
-<!--                                             class="uikick-card-img"/>-->
-                                           <img t-att-src="'/uikick/project/' + project.project_code + '/thumbnail'"
+                                        <!--                                        <img t-att-src="project.image" t-att-alt="project.title"-->
+                                        <!--                                             class="uikick-card-img"/>-->
+                                        <img t-att-src="'/uikick/project/' + project.project_code + '/thumbnail'"
                                              t-att-alt="project.title" class="uikick-card-img"/>
-                                         <t t-if="not project.video_embed_url">
-                                            <video t-att-src="project.video_url" muted="muted" loop="loop"
+                                        <t t-if="project.video_embed_url">
+                                            <!-- Video YouTube: preload src rỗng, home.js chỉ gán
+                                                 data-src (tự phát/tắt tiếng/lặp) khi hover vào card. -->
+                                            <iframe t-att-data-src="project.video_preview_embed_url"
+                                                    class="uikick-card-video-frame" title="" frameborder="0"
+                                                    allow="autoplay; encrypted-media" tabindex="-1"/>
+                                        </t>
+                                        <t t-else="">
+                                              <video t-att-src="project.video_play_src" muted="muted" loop="loop"
                                                    playsinline="playsinline" preload="metadata"
                                                    class="uikick-card-video"/>
                                         </t>
                                         <t t-if="project.status_id">
-                                            <span class="uikick-badge"><t t-esc="project.status_id.name"/></span>
+                                            <span class="uikick-badge">
+                                                <t t-esc="project.status_id.name"/>
+                                            </span>
                                         </t>
                                     </div>
                                     <div class="uikick-card-body">
-                                        <p class="uikick-card-category"><t t-esc="project.category_id.name"/></p>
-                                        <h3 class="uikick-card-title"><t t-esc="project.title"/></h3>
-                                        <p class="uikick-card-creator">by <span><t t-esc="project.creator"/></span></p>
+                                        <p class="uikick-card-category">
+                                            <t t-esc="project.category_id.name"/>
+                                        </p>
+                                        <h3 class="uikick-card-title">
+                                            <t t-esc="project.title"/>
+                                        </h3>
+                                        <p class="uikick-card-creator">by
+                                            <span>
+                                                <t t-esc="project.creator"/>
+                                            </span>
+                                        </p>
 
 
                                         <div class="uikick-card-location">
@@ -118,7 +147,9 @@
                                                 <path fill-rule="evenodd" clip-rule="evenodd"
                                                       d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
                                             </svg>
-                                            <span><t t-esc="project.location"/></span>
+                                            <span>
+                                                <t t-esc="project.location"/>
+                                            </span>
                                         </div>
                                     </div>
                                 </a>
