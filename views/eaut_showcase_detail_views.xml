@@ -103,7 +103,10 @@
 
                             <div class="uikick-hero-meta-group">
                                 <h4>Danh mục</h4>
-                            <span class="uikick-category-badge"><t t-esc="project.category_id.name"/></span>
+                            <span class="uikick-category-badge"
+                                  t-att-style="('background-color: %s; color: #fff;' % project.category_id.color_hex) if project.category_id.color_hex else None">
+                                <t t-esc="project.category_id.name"/>
+                            </span>
                             </div>
                             <div class="uikick-hero-meta-group">
                                 <h4>Địa điểm</h4>
