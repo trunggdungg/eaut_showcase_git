@@ -25,12 +25,18 @@
             } else if (frame) {
                 // Video YouTube: không có thẻ <video> để play()/pause() được, nên
                 // gán/xoá src của iframe để bắt đầu và dừng hẳn việc phát khi hover.
+                // Chỉ ẩn thumbnail (thêm is-playing) sau khi iframe đã load xong nội
+                // dung — nếu ẩn ngay lúc gán src thì trong lúc iframe đang tải sẽ có
+                // một khoảng trống (thấy nền trắng/đen) trước khi video hiện ra.
                 card.addEventListener("mouseenter", function () {
                     frame.src = frame.dataset.src;
-                    card.classList.add("is-playing");
+                    frame.onload = function () {
+                        card.classList.add("is-playing");
+                    };
                 });
 
                 card.addEventListener("mouseleave", function () {
+                    frame.onload = null;
                     card.classList.remove("is-playing");
                     frame.src = "";
                 });
