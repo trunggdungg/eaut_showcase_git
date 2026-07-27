@@ -79,7 +79,8 @@ class UikickProject(models.Model):
             )
             project.video_preview_embed_url = (
                 'https://www.youtube-nocookie.com/embed/%s'
-                '?autoplay=1&mute=1&loop=1&playlist=%s&controls=0&modestbranding=1&rel=0&playsinline=1'
+                '?autoplay=1&mute=1&loop=1&playlist=%s&controls=0&modestbranding=1&rel=0'
+                '&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&cc_load_policy=0'
                 % (video_id, video_id) if video_id else False
             )
 
