@@ -1,4 +1,15 @@
+import re
+
 from odoo import fields, models, api
+
+# Nhận diện link chia sẻ YouTube (youtu.be/..., youtube.com/watch?v=..., /embed/..., /shorts/...)
+# để chuyển sang URL nhúng iframe — thẻ <video> không phát được các link này vì
+# đó là trang xem video, không phải file/luồng media trực tiếp.
+YOUTUBE_URL_RE = re.compile(
+    r'(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|v/))'
+    r'([A-Za-z0-9_-]{11})'
+)
+
 
 class UikickProject(models.Model):
     _name = 'eaut_showcase.project'
@@ -23,6 +34,11 @@ class UikickProject(models.Model):
     views = fields.Integer(string='View Count', default=0)
     image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920)
     video_url = fields.Char(string='Video URL')
+    video_embed_url = fields.Char(
+        string='Video Embed URL', compute='_compute_video_embed_url',
+        help="URL nhúng iframe khi video_url là link chia sẻ YouTube. Trống nếu "
+             "video_url là file/luồng video phát trực tiếp được (mp4, m3u8...).",
+    )
     description = fields.Html(string='Mô tả giới thiệu', sanitize=True)
     status_id = fields.Many2one(
         'eaut_showcase.status', string='Trạng thái', required=True,
@@ -39,6 +55,14 @@ class UikickProject(models.Model):
     def _compute_interest_count(self):
         for project in self:
             project.interest_count = len(project.interest_ids)
+
+    @api.depends('video_url')
+    def _compute_video_embed_url(self):
+        for project in self:
+            match = YOUTUBE_URL_RE.search(project.video_url or '')
+            project.video_embed_url = (
+                'https://www.youtube-nocookie.com/embed/%s' % match.group(1) if match else False
+            )
 
     def action_view_interests(self):
         self.ensure_one()
