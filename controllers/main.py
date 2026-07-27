@@ -157,6 +157,18 @@ class UikickController(http.Controller):
             creator, field_name='avatar'
         ).get_response()
 
+    @http.route(['/uikick/creator/<int:creator_id>'],
+                type='http', auth='public', website=True, sitemap=True)
+    def creator_detail(self, creator_id, **kw):
+        creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
+        if not creator:
+            return request.not_found()
+        values = {
+            'creator': creator,
+            'projects': creator.project_ids,
+        }
+        return request.render('eaut_showcase.creator_detail_page', values)
+
  # ============ SUBMIT FORM "QUAN TÂM" ============
     @http.route(['/uikick/project/<string:project_id>/interest'],
                 type='http', auth='public', website=True,

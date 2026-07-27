@@ -266,7 +266,9 @@
                                             <div class="uikick-creator-avatar"><t t-esc="(creator.name or '')[:1]"/></div>
                                         </t>
                                         <div>
-                                            <div class="uikick-creator-name"><t t-esc="creator.name"/></div>
+                                            <a t-attf-href="/uikick/creator/#{creator.id}" class="uikick-creator-name">
+                                                <t t-esc="creator.name"/>
+                                            </a>
                                             <div class="uikick-creator-role"><t t-esc="creator.role or 'Tác giả sản phẩm'"/></div>
                                         </div>
                                     </div>

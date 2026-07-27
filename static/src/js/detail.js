@@ -143,8 +143,12 @@
     }
 
     onReady(function () {
-        if (!document.querySelector(".uikick-detail")) return; // chỉ chạy trên trang detail
-        initTabs();
+        // initTabs dùng chung cho mọi trang có khối tab (trang chi tiết dự án
+        // và trang tác giả); các phần còn lại chỉ áp dụng cho trang chi tiết.
+        if (document.querySelector(".uikick-tabs")) {
+            initTabs();
+        }
+        if (!document.querySelector(".uikick-detail")) return;
         initHeroVideo();
         initDescriptionToc();
         initRemindMe();
