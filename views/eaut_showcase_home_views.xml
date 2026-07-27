@@ -98,9 +98,11 @@
 <!--                                             class="uikick-card-img"/>-->
                                            <img t-att-src="'/uikick/project/' + project.project_code + '/thumbnail'"
                                              t-att-alt="project.title" class="uikick-card-img"/>
-                                        <video t-att-src="project.video_url" muted="muted" loop="loop"
-                                               playsinline="playsinline" preload="metadata"
-                                               class="uikick-card-video"/>
+                                         <t t-if="not project.video_embed_url">
+                                            <video t-att-src="project.video_url" muted="muted" loop="loop"
+                                                   playsinline="playsinline" preload="metadata"
+                                                   class="uikick-card-video"/>
+                                        </t>
                                         <t t-if="project.status_id">
                                             <span class="uikick-badge"><t t-esc="project.status_id.name"/></span>
                                         </t>

@@ -34,26 +34,42 @@
                     <div class="uikick-container uikick-hero-row">
                         <div class="uikick-hero-video-col">
                             <div class="uikick-hero-video" id="uikick-hero-video">
-                                <video t-att-src="project.video_url" muted="muted" loop="loop" playsinline="playsinline"
-                                       class="uikick-hero-video-el"/>
-                                <div class="uikick-hero-play-overlay">
-                                    <div class="uikick-hero-play-circle">
-                                        <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                                    </div>
-                                </div>
-                                <div class="uikick-hero-pause-overlay">
-                                    <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                </div>
-                                <div class="uikick-hero-text-overlay">
-                                    <t t-if="project.campaign_number">
-                                        <div class="uikick-hero-campaign-num">
-                                            SẢN PHẨM THỨ <t t-esc="str(project.campaign_number)"/>.
+                                  <t t-if="project.video_embed_url">
+                                    <!-- Link chia sẻ YouTube: không thể phát bằng thẻ video, nhúng iframe player
+                                         chính chủ (đã có sẵn thumbnail + nút play + thanh điều khiển riêng). -->
+                                    <iframe t-att-src="project.video_embed_url" class="uikick-hero-video-iframe"
+                                            title="Video giới thiệu" frameborder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            allowfullscreen="allowfullscreen" loading="lazy"/>
+                                </t>
+                                <t t-else="">
+                                    <img t-att-src="'/uikick/project/' + (project.project_code or '') + '/thumbnail'"
+                                         t-att-alt="project.title" class="uikick-hero-video-img"/>
+                                    <video t-att-src="project.video_url" loop="loop" playsinline="playsinline"
+                                           controls="controls" preload="auto" class="uikick-hero-video-el"/>
+                                    <div class="uikick-hero-play-overlay">
+                                        <div class="uikick-hero-play-circle">
+                                            <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                                         </div>
-                                    </t>
-                                    <div class="uikick-hero-total">
-                                         <t t-esc="'{:,}'.format(project.views or 0).replace(',', '.')"/> lượt xem bài đăng này.
                                     </div>
-                                </div>
+
+                               <div class="uikick-hero-pause-overlay">
+                                        <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                                    </div>
+                                </t>
+<!--                                <div class="uikick-hero-pause-overlay">-->
+<!--                                    <svg width="14" height="14" fill="white" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>-->
+<!--                                </div>-->
+<!--                                <div class="uikick-hero-text-overlay">-->
+<!--                                    <t t-if="project.campaign_number">-->
+<!--                                        <div class="uikick-hero-campaign-num">-->
+<!--                                            SẢN PHẨM THỨ <t t-esc="str(project.campaign_number)"/>.-->
+<!--                                        </div>-->
+<!--                                    </t>-->
+<!--                                    <div class="uikick-hero-total">-->
+<!--                                         <t t-esc="'{:,}'.format(project.views or 0).replace(',', '.')"/> lượt xem bài đăng này.-->
+<!--                                    </div>-->
+<!--                                </div>-->
                             </div>
                             <div class="uikick-hero-tags">
                                 <span class="uikick-hero-tag">

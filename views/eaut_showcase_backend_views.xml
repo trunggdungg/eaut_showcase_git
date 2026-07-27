@@ -10,7 +10,7 @@
         <field name="arch" type="xml">
             <list string="UIKick Projects">
                 <field name="sequence" widget="handle"/>
-                <field name="project_code"/>
+
                 <field name="title"/>
                 <field name="category_id"/>
                 <field name="status_id" widget="badge"/>
@@ -43,7 +43,7 @@
                     </div>
                     <group>
                         <group>
-                            <field name="project_code"/>
+
                             <field name="creator"/>
                             <field name="category_id"/>
                             <field name="status_id"/>
@@ -60,13 +60,20 @@
                     <group string="Media">
                         <field name="video_url"/>
                     </group>
-                      <group string="Mô tả giới thiệu">
-                        <field name="description" widget="html" nolabel="1"/>
-                    </group>
-                    <group string="All-time campaign stats (optional)">
-                        <field name="campaign_number"/>
+                      <notebook>
+                        <page string="Mô tả giới thiệu" name="description">
+                            <field name="description" widget="html" nolabel="1"
+                                   style="width: 100%; "/>
+                        </page>
 
-                    </group>
+                        <page string="Thống kê " name="stats">
+                            <field name="campaign_number"/>
+                        </page>
+                    </notebook>
+<!--                    <group string="All-time campaign stats (optional)">-->
+<!--                        <field name="campaign_number"/>-->
+
+<!--                    </group>-->
                 </sheet>
             </form>
         </field>
