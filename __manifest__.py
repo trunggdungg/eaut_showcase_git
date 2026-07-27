@@ -9,7 +9,7 @@
     """,
     'category': 'Website',
     'author': 'Trugn Dugn',
-    'depends': ['website'],
+    'depends': ['website', 'mail'],
     'data': [
         'security/ir.model.access.csv',
         'data/eaut_showcase_data.xml',

@@ -13,6 +13,7 @@ YOUTUBE_URL_RE = re.compile(
 
 class UikickProject(models.Model):
     _name = 'eaut_showcase.project'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'UIKick Crowdfunding Project'
     _rec_name = 'title'
     _order = 'sequence, id'
