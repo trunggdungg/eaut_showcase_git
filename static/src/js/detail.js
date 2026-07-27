@@ -26,20 +26,22 @@
         var hero = document.getElementById("uikick-hero-video");
         if (!hero) return;
         var video = hero.querySelector(".uikick-hero-video-el");
-        if (!video) return;
+        var playOverlay = hero.querySelector(".uikick-hero-play-overlay");
+        if (!video || !playOverlay) return;
 
-        hero.addEventListener("click", function () {
-            if (hero.classList.contains("is-playing")) {
-                video.pause();
-                hero.classList.remove("is-playing");
-            } else {
-                video.play().then(function () {
-                    hero.classList.add("is-playing", "has-played");
-                }).catch(function () {
-                    /* autoplay blocked, ignore */
-                });
-            }
+        // Overlay chỉ dùng để bắt đầu phát lần đầu (che thumbnail). Sau khi đã
+        // phát, overlay biến mất vĩnh viễn (class has-played) để không che
+        // thanh điều khiển gốc của video (tua, âm lượng, play/pause...).
+        playOverlay.addEventListener("click", function () {
+            video.play().then(function () {
+                hero.classList.add("is-playing", "has-played");
+            }).catch(function () {
+                /* autoplay blocked, ignore */
+            });
         });
+
+        video.addEventListener("play", function () { hero.classList.add("is-playing"); });
+        video.addEventListener("pause", function () { hero.classList.remove("is-playing"); });
     }
 
     function initRemindMe() {

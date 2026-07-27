@@ -185,7 +185,7 @@
     display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s;
 }
 .uikick-hero-video:hover .uikick-hero-pause-overlay { opacity: 1; }
-.uikick-hero-video.is-playing .uikick-hero-play-overlay { display: none; }
+.uikick-hero-video.has-played .uikick-hero-play-overlay { display: none; }
 .uikick-hero-video:not(.is-playing) .uikick-hero-pause-overlay { display: none; }
 .uikick-hero-text-overlay {
     position: absolute; left: 0; right: 0; bottom: 0; padding: 32px;

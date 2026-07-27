@@ -36,8 +36,8 @@
                             <div class="uikick-hero-video" id="uikick-hero-video">
                                 <img t-att-src="'/uikick/project/' + (project.project_code or '') + '/thumbnail'"
                                      t-att-alt="project.title" class="uikick-hero-video-img"/>
-                                <video t-att-src="project.video_url" muted="muted" loop="loop" playsinline="playsinline"
-                                       preload="metadata" class="uikick-hero-video-el"/>
+                                <video t-att-src="project.video_url" loop="loop" playsinline="playsinline"
+                                       controls="controls" preload="metadata" class="uikick-hero-video-el"/>
                                 <div class="uikick-hero-play-overlay">
                                     <div class="uikick-hero-play-circle">
                                         <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
