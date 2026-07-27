@@ -253,27 +253,38 @@
                             </t>
                         </main>
 
-                        <!-- Right: creator + share -->
+                        <!-- Right: creator (mỗi tác giả 1 khối riêng) + share -->
                         <aside class="uikick-detail-side">
-                            <div class="uikick-creator-card">
-                                <div class="uikick-creator-head">
-                                    <div class="uikick-creator-avatar"><t t-esc="(project.creator_names or '')[:1]"/></div>
-                                    <div>
-                                        <div class="uikick-creator-name"><t t-esc="project.creator_names"/></div>
-                                        <div class="uikick-creator-role">Tác giả sản phẩm</div>
+                            <t t-foreach="project.creator_ids" t-as="creator">
+                                <div class="uikick-creator-card">
+                                    <div class="uikick-creator-head">
+                                        <t t-if="creator.avatar">
+                                            <img t-attf-src="/uikick/creator/#{creator.id}/avatar"
+                                                 t-att-alt="creator.name" class="uikick-creator-avatar"/>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="uikick-creator-avatar"><t t-esc="(creator.name or '')[:1]"/></div>
+                                        </t>
+                                        <div>
+                                            <div class="uikick-creator-name"><t t-esc="creator.name"/></div>
+                                            <div class="uikick-creator-role"><t t-esc="creator.role or 'Tác giả sản phẩm'"/></div>
+                                        </div>
                                     </div>
+                                    <div class="uikick-creator-meta">
+                                        <span><t t-esc="creator.project_count"/> dự án đã đăng</span>
+                                        <t t-if="creator.location_id">
+                                            <span>•</span>
+                                            <span><t t-esc="creator.location_id.name"/></span>
+                                        </t>
+                                    </div>
+                                    <p class="uikick-creator-bio">
+                                        <t t-if="creator.bio"><t t-esc="creator.bio"/></t>
+                                        <t t-else=""><t t-esc="creator.name"/> là đội ngũ kỹ sư và nhà thiết kế đam mê tạo ra những sản phẩm khiến bạn phải ngạc nhiên.</t>
+                                    </p>
+                                    <a t-if="creator.email" t-attf-href="mailto:#{creator.email}" class="btn btn-link p-0 uikick-link-btn">Liên hệ tác giả</a>
+                                    <button t-else="" class="btn btn-link p-0 uikick-link-btn">Liên hệ tác giả</button>
                                 </div>
-                                <div class="uikick-creator-meta">
-                                    <span><t t-esc="project.campaign_number or 1"/> sản phẩm đã đăng</span>
-                                    <span>•</span>
-                                    <span><t t-esc="project.location_id.name"/></span>
-                                </div>
-                                <p class="uikick-creator-bio">
-                                    <t t-esc="project.creator_names"/> là đội ngũ kỹ sư và nhà thiết kế đam mê tạo ra những sản phẩm
-                                    khiến bạn phải ngạc nhiên.
-                                </p>
-                                <button class="btn btn-link p-0 uikick-link-btn">Liên hệ tác giả</button>
-                            </div>
+                            </t>
 
                             <div class="uikick-support-box">
                                 <h3>Chia sẻ sản phẩm</h3>

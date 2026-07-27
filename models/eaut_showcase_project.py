@@ -27,8 +27,9 @@ class UikickProject(models.Model):
     title = fields.Char(string='Title', required=True)
     subtitle = fields.Char(string='Phụ đề')
     creator_ids = fields.Many2many(
-        'res.partner', string='Tác giả', required=True,
-        help="Một hoặc nhiều tác giả/nhóm thực hiện sản phẩm này, chọn từ danh bạ liên hệ.",
+        'eaut_showcase.creator', 'eaut_showcase_project_creator_rel',
+        'project_id', 'creator_id', string='Tác giả', required=True,
+        help="Một hoặc nhiều tác giả/nhóm thực hiện sản phẩm này.",
     )
     creator_names = fields.Char(
         string='Tên tác giả (hiển thị)', compute='_compute_creator_names', store=True,

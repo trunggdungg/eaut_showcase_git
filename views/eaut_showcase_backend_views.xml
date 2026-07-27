@@ -89,6 +89,8 @@
     <menuitem id="menu_uikick_root" name="UIKick" sequence="100"/>
     <menuitem id="menu_uikick_projects" name="Projects" parent="menu_uikick_root"
               action="action_uikick_project" sequence="10"/>
+    <menuitem id="menu_uikick_creator" name="Tác giả" parent="menu_uikick_root"
+              action="action_eaut_showcase_creator" sequence="20"/>
      <menuitem id="menu_uikick_interest" name="Người quan tâm" parent="menu_uikick_root"
               action="action_eaut_showcase_interest" sequence="30"/>
 

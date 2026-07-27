@@ -147,6 +147,16 @@ class UikickController(http.Controller):
             project, field_name='video_file', filename=project.video_filename,
         ).get_response()
 
+    @http.route(['/uikick/creator/<int:creator_id>/avatar'],
+                type='http', auth='public', website=True, sitemap=False)
+    def creator_avatar(self, creator_id, **kw):
+        creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
+        if not creator:
+            return request.not_found()
+        return request.env['ir.binary']._get_image_stream_from(
+            creator, field_name='avatar'
+        ).get_response()
+
  # ============ SUBMIT FORM "QUAN TÂM" ============
     @http.route(['/uikick/project/<string:project_id>/interest'],
                 type='http', auth='public', website=True,

@@ -48,55 +48,55 @@
     </record>
 
     <!-- ============================================================ -->
-    <!-- CREATORS (demo res.partner dùng cho trường creator_ids)       -->
+    <!-- CREATORS (demo eaut_showcase.creator dùng cho trường creator_ids) -->
     <!-- ============================================================ -->
-    <record id="partner_moxian_robots" model="res.partner">
+    <record id="creator_moxian_robots" model="eaut_showcase.creator">
         <field name="name">Moxian Robots</field>
-        <field name="is_company">1</field>
+        <field name="bio">Đội ngũ robot học đam mê chế tạo camera robot địa hình.</field>
     </record>
-    <record id="partner_paperclip_team" model="res.partner">
+    <record id="creator_paperclip_team" model="eaut_showcase.creator">
         <field name="name">Paperclip Team</field>
-        <field name="is_company">1</field>
+        <field name="bio">Nhóm phát triển ứng dụng tập trung vào thói quen và trách nhiệm xã hội.</field>
     </record>
-    <record id="partner_sipeed" model="res.partner">
+    <record id="creator_sipeed" model="eaut_showcase.creator">
         <field name="name">Sipeed</field>
-        <field name="is_company">1</field>
+        <field name="bio">Nhà sản xuất phần cứng nhúng và công cụ phát triển phần cứng mở.</field>
     </record>
-    <record id="partner_laverne_design" model="res.partner">
+    <record id="creator_laverne_design" model="eaut_showcase.creator">
         <field name="name">Laverne Design</field>
-        <field name="is_company">1</field>
+        <field name="bio">Studio thiết kế nội thất công thái học.</field>
     </record>
-    <record id="partner_sharge_tech" model="res.partner">
+    <record id="creator_sharge_tech" model="eaut_showcase.creator">
         <field name="name">SHARGE Tech</field>
-        <field name="is_company">1</field>
+        <field name="bio">Đội ngũ kỹ sư chuyên về phụ kiện sạc và tản nhiệt di động.</field>
     </record>
-    <record id="partner_lumys_health" model="res.partner">
+    <record id="creator_lumys_health" model="eaut_showcase.creator">
         <field name="name">Lumys Health</field>
-        <field name="is_company">1</field>
+        <field name="bio">Nhóm phát triển thiết bị theo dõi sức khoẻ tim mạch.</field>
     </record>
-    <record id="partner_biotech_labs" model="res.partner">
+    <record id="creator_biotech_labs" model="eaut_showcase.creator">
         <field name="name">BioTech Labs</field>
-        <field name="is_company">1</field>
+        <field name="bio">Phòng lab nghiên cứu thiết bị đo sinh trắc học đeo tay.</field>
     </record>
-    <record id="partner_speedtech_solutions" model="res.partner">
+    <record id="creator_speedtech_solutions" model="eaut_showcase.creator">
         <field name="name">SpeedTech Solutions</field>
-        <field name="is_company">1</field>
+        <field name="bio">Đội ngũ kỹ sư phần cứng lưu trữ tốc độ cao.</field>
     </record>
-    <record id="partner_airsense_technologies" model="res.partner">
+    <record id="creator_airsense_technologies" model="eaut_showcase.creator">
         <field name="name">AirSense Technologies</field>
-        <field name="is_company">1</field>
+        <field name="bio">Nhóm phát triển cảm biến chất lượng không khí di động.</field>
     </record>
-    <record id="partner_chroma_tech" model="res.partner">
+    <record id="creator_chroma_tech" model="eaut_showcase.creator">
         <field name="name">Chroma Tech</field>
-        <field name="is_company">1</field>
+        <field name="bio">Đội ngũ thiết kế phụ kiện sạc không dây siêu mỏng.</field>
     </record>
-    <record id="partner_flow_workspace" model="res.partner">
+    <record id="creator_flow_workspace" model="eaut_showcase.creator">
         <field name="name">Flow Workspace</field>
-        <field name="is_company">1</field>
+        <field name="bio">Studio thiết kế nội thất văn phòng linh hoạt.</field>
     </record>
-    <record id="partner_purelife_systems" model="res.partner">
+    <record id="creator_purelife_systems" model="eaut_showcase.creator">
         <field name="name">PureLife Systems</field>
-        <field name="is_company">1</field>
+        <field name="bio">Nhóm phát triển sản phẩm sống xanh, bền vững.</field>
     </record>
 
     <!-- ============================================================ -->
@@ -106,7 +106,7 @@
         <field name="sequence">10</field>
         <field name="project_code">1</field>
         <field name="title">Meet Beni, Your First All-Terrain Camera Robot</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_moxian_robots')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_moxian_robots')])]"/>
         <field name="category_id" ref="cat_camera_equipment"/>
 
         <field name="views">3120</field>
@@ -121,7 +121,7 @@
         <field name="sequence">20</field>
         <field name="project_code">2</field>
         <field name="title">Paperclip: The Social Accountability App</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_paperclip_team')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_paperclip_team')])]"/>
         <field name="category_id" ref="cat_apps"/>
 
          <field name="views">1560</field>
@@ -135,7 +135,7 @@
         <field name="sequence">30</field>
         <field name="project_code">3</field>
         <field name="title">NanoKVM-Go: World's First All Native CH32V USB-C KVM</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_sipeed')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_sipeed')])]"/>
         <field name="category_id" ref="cat_technology"/>
 
             <field name="views">5230</field>
@@ -149,7 +149,7 @@
         <field name="sequence">40</field>
         <field name="project_code">4</field>
         <field name="title">Laverne R9 Dynamic Ergonomic Chair</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_laverne_design')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_laverne_design')])]"/>
         <field name="category_id" ref="cat_design"/>
 
           <field name="views">980</field>
@@ -163,7 +163,7 @@
         <field name="sequence">50</field>
         <field name="project_code">5</field>
         <field name="title">Disk Pro 2 | Ultimate Choice Cooling Hub for EDC Devices</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_sharge_tech')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_sharge_tech')])]"/>
         <field name="category_id" ref="cat_technology"/>
 
            <field name="views">6800</field>
@@ -178,7 +178,7 @@
         <field name="sequence">60</field>
         <field name="project_code">6</field>
         <field name="title">Lumys: Track Your Heart Disease Risk with Style</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_lumys_health')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_lumys_health')])]"/>
         <field name="category_id" ref="cat_health_fitness"/>
 
              <field name="views">2100</field>
@@ -192,7 +192,7 @@
         <field name="sequence">70</field>
         <field name="project_code">7</field>
         <field name="title">Health Tracker Pro: Advanced Biometric Monitoring</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_biotech_labs')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_biotech_labs')])]"/>
         <field name="category_id" ref="cat_health_fitness"/>
 
           <field name="views">8900</field>
@@ -206,7 +206,7 @@
         <field name="sequence">80</field>
         <field name="project_code">8</field>
         <field name="title">100Gbps Transfer Speed Portable SSD Enclosure</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_speedtech_solutions')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_speedtech_solutions')])]"/>
         <field name="category_id" ref="cat_technology"/>
 
         <field name="views">640</field>
@@ -220,7 +220,7 @@
         <field name="sequence">90</field>
         <field name="project_code">9</field>
         <field name="title">Mini DTG: Wearable Air Quality Monitor</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_airsense_technologies')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_airsense_technologies')])]"/>
         <field name="category_id" ref="cat_technology"/>
 
         <field name="views">1290</field>
@@ -234,7 +234,7 @@
         <field name="sequence">100</field>
         <field name="project_code">10</field>
         <field name="title">MagBlade: World's Thinnest Wireless Charger</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_chroma_tech')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_chroma_tech')])]"/>
         <field name="category_id" ref="cat_technology"/>
 
              <field name="views">510</field>
@@ -248,7 +248,7 @@
         <field name="sequence">110</field>
         <field name="project_code">11</field>
         <field name="title">FlowDesk Standing Desk Converter Pro</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_flow_workspace')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_flow_workspace')])]"/>
         <field name="category_id" ref="cat_design"/>
 
              <field name="views">510</field>
@@ -262,7 +262,7 @@
         <field name="sequence">120</field>
         <field name="project_code">12</field>
         <field name="title">EcoBottle: Smart Self-Cleaning Water Bottle</field>
-        <field name="creator_ids" eval="[(6, 0, [ref('partner_purelife_systems')])]"/>
+        <field name="creator_ids" eval="[(6, 0, [ref('creator_purelife_systems')])]"/>
         <field name="category_id" ref="cat_product_design"/>
 
              <field name="views">510</field>
