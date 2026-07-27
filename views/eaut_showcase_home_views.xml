@@ -117,7 +117,7 @@
                                     <div class="uikick-card-body">
                                         <p class="uikick-card-category"><t t-esc="project.category_id.name"/></p>
                                         <h3 class="uikick-card-title"><t t-esc="project.title"/></h3>
-                                        <p class="uikick-card-creator">by <span><t t-esc="project.creator"/></span></p>
+                                        <p class="uikick-card-creator">by <span><t t-esc="project.creator_names"/></span></p>
 
 
                                         <div class="uikick-card-location">
@@ -125,7 +125,7 @@
                                                 <path fill-rule="evenodd" clip-rule="evenodd"
                                                       d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
                                             </svg>
-                                            <span><t t-esc="project.location"/></span>
+                                            <span><t t-esc="project.location_id.name"/></span>
                                         </div>
                                     </div>
                                 </a>

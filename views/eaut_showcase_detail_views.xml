@@ -85,7 +85,7 @@
                                         <path fill-rule="evenodd" clip-rule="evenodd"
                                               d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
                                     </svg>
-                                    <t t-esc="project.location"/>
+                                    <t t-esc="project.location_id.name"/>
                                 </span>
                             </div>
                         </div>
@@ -112,7 +112,7 @@
                                         <path fill-rule="evenodd" clip-rule="evenodd"
                                               d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
                                     </svg>
-                                    <t t-esc="project.location"/>
+                                    <t t-esc="project.location_id.name"/>
                                 </div>
                             </div>
 
@@ -254,19 +254,19 @@
                         <aside class="uikick-detail-side">
                             <div class="uikick-creator-card">
                                 <div class="uikick-creator-head">
-                                    <div class="uikick-creator-avatar"><t t-esc="(project.creator or '')[:1]"/></div>
+                                    <div class="uikick-creator-avatar"><t t-esc="(project.creator_names or '')[:1]"/></div>
                                     <div>
-                                        <div class="uikick-creator-name"><t t-esc="project.creator"/></div>
+                                        <div class="uikick-creator-name"><t t-esc="project.creator_names"/></div>
                                         <div class="uikick-creator-role">Tác giả sản phẩm</div>
                                     </div>
                                 </div>
                                 <div class="uikick-creator-meta">
                                     <span><t t-esc="project.campaign_number or 1"/> sản phẩm đã đăng</span>
                                     <span>•</span>
-                                    <span><t t-esc="project.location"/></span>
+                                    <span><t t-esc="project.location_id.name"/></span>
                                 </div>
                                 <p class="uikick-creator-bio">
-                                    <t t-esc="project.creator"/> là đội ngũ kỹ sư và nhà thiết kế đam mê tạo ra những sản phẩm
+                                    <t t-esc="project.creator_names"/> là đội ngũ kỹ sư và nhà thiết kế đam mê tạo ra những sản phẩm
                                     khiến bạn phải ngạc nhiên.
                                 </p>
                                 <button class="btn btn-link p-0 uikick-link-btn">Liên hệ tác giả</button>

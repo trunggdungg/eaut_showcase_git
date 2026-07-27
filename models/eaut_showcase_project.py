@@ -25,11 +25,22 @@ class UikickProject(models.Model):
 
     title = fields.Char(string='Title', required=True)
     subtitle = fields.Char(string='Phụ đề')
-    creator = fields.Char(string='Creator', required=True)
+    creator_ids = fields.Many2many(
+        'res.partner', string='Tác giả', required=True,
+        help="Một hoặc nhiều tác giả/nhóm thực hiện sản phẩm này, chọn từ danh bạ liên hệ.",
+    )
+    creator_names = fields.Char(
+        string='Tên tác giả (hiển thị)', compute='_compute_creator_names', store=True,
+        help="Tên các tác giả nối bằng dấu phẩy, dùng để hiển thị trên trang web.",
+    )
     category_id = fields.Many2one(
         'eaut_showcase.category', string='Danh mục', required=True, index=True,
     )
-    location = fields.Char(string='Location')
+    location_id = fields.Many2one(
+        'res.country.state', string='Địa điểm',
+        domain="[('country_id.code', '=', 'VN')]",
+        help="Tỉnh/thành phố — dữ liệu tỉnh/thành Việt Nam có sẵn trong Odoo.",
+    )
 
     views = fields.Integer(string='View Count', default=0)
     image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920)
@@ -77,6 +88,11 @@ class UikickProject(models.Model):
     def _compute_interest_count(self):
         for project in self:
             project.interest_count = len(project.interest_ids)
+
+    @api.depends('creator_ids.name')
+    def _compute_creator_names(self):
+        for project in self:
+            project.creator_names = ', '.join(project.creator_ids.mapped('name'))
 
     @api.depends('video_url', 'video_file', 'project_code')
     def _compute_video_embed_url(self):

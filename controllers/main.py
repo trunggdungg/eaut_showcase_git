@@ -63,7 +63,7 @@ class UikickController(http.Controller):
 
         location = (kw.get('location') or '').strip()
         if location:
-            domain.append(('location', 'ilike', location))
+            domain.append(('location_id.name', 'ilike', location))
 
         sort = kw.get('sort') or 'Relevance'
         order = ORDER_BY_SORT.get(sort, 'sequence asc, id asc')
