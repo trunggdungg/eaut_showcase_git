@@ -44,6 +44,11 @@ class UikickProject(models.Model):
         help="Ảnh thumbnail lấy tự động từ YouTube khi video_url là link YouTube. "
              "Chỉ dùng làm ảnh dự phòng khi trường Ảnh thumbnail chưa được chọn.",
     )
+    video_preview_embed_url = fields.Char(
+        string='Video Preview Embed URL (YouTube)', compute='_compute_video_embed_url',
+        help="URL nhúng YouTube tự động phát/tắt tiếng/lặp lại, dùng cho preview "
+             "khi hover vào card ở trang chủ.",
+    )
     description = fields.Html(string='Mô tả giới thiệu', sanitize=True)
     status_id = fields.Many2one(
         'eaut_showcase.status', string='Trạng thái', required=True,
@@ -71,6 +76,11 @@ class UikickProject(models.Model):
             )
             project.video_thumbnail_url = (
                 'https://img.youtube.com/vi/%s/hqdefault.jpg' % video_id if video_id else False
+            )
+            project.video_preview_embed_url = (
+                'https://www.youtube-nocookie.com/embed/%s'
+                '?autoplay=1&mute=1&loop=1&playlist=%s&controls=0&modestbranding=1&rel=0&playsinline=1'
+                % (video_id, video_id) if video_id else False
             )
 
     def action_view_interests(self):

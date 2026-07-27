@@ -5,22 +5,36 @@
     function initCardVideos() {
         document.querySelectorAll(".uikick-card").forEach(function (card) {
             var video = card.querySelector(".uikick-card-video");
-            if (!video) return;
+            var frame = card.querySelector(".uikick-card-video-frame");
 
-            card.addEventListener("mouseenter", function () {
-                video.currentTime = 0;
-                video.play().then(function () {
-                    card.classList.add("is-playing");
-                }).catch(function () {
-                    /* autoplay blocked, ignore */
+            if (video) {
+                card.addEventListener("mouseenter", function () {
+                    video.currentTime = 0;
+                    video.play().then(function () {
+                        card.classList.add("is-playing");
+                    }).catch(function () {
+                        /* autoplay blocked, ignore */
+                    });
                 });
-            });
 
-            card.addEventListener("mouseleave", function () {
-                card.classList.remove("is-playing");
-                video.pause();
-                video.currentTime = 0;
-            });
+                card.addEventListener("mouseleave", function () {
+                    card.classList.remove("is-playing");
+                    video.pause();
+                    video.currentTime = 0;
+                });
+            } else if (frame) {
+                // Video YouTube: không có thẻ <video> để play()/pause() được, nên
+                // gán/xoá src của iframe để bắt đầu và dừng hẳn việc phát khi hover.
+                card.addEventListener("mouseenter", function () {
+                    frame.src = frame.dataset.src;
+                    card.classList.add("is-playing");
+                });
+
+                card.addEventListener("mouseleave", function () {
+                    card.classList.remove("is-playing");
+                    frame.src = "";
+                });
+            }
         });
     }
 

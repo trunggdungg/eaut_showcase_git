@@ -98,7 +98,14 @@
 <!--                                             class="uikick-card-img"/>-->
                                            <img t-att-src="'/uikick/project/' + project.project_code + '/thumbnail'"
                                              t-att-alt="project.title" class="uikick-card-img"/>
-                                        <t t-if="not project.video_embed_url">
+                                        <t t-if="project.video_embed_url">
+                                            <!-- Video YouTube: preload src rỗng, home.js chỉ gán
+                                                 data-src (tự phát/tắt tiếng/lặp) khi hover vào card. -->
+                                            <iframe t-att-data-src="project.video_preview_embed_url"
+                                                    class="uikick-card-video-frame" title="" frameborder="0"
+                                                    allow="autoplay; encrypted-media" tabindex="-1"/>
+                                        </t>
+                                        <t t-else="">
                                             <video t-att-src="project.video_url" muted="muted" loop="loop"
                                                    playsinline="playsinline" preload="metadata"
                                                    class="uikick-card-video"/>
