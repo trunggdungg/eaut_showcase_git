@@ -11,11 +11,9 @@ _logger = logging.getLogger(__name__)
 # Internal ids used for data-tab matching/JS — the visible label is translated
 # separately via TAB_LABELS so the tab-switching logic doesn't have to compare
 # against Vietnamese strings.
-TABS = ["Campaign", "Creator", "FAQ", "Updates", "Comments", "Community"]
+TABS = ["Campaign", "FAQ", "Updates", "Comments", "Community"]
 TAB_LABELS = {
     "Campaign": "Giới thiệu",
-    "Rewards": "Tính năng",
-    "Creator": "Tác giả",
     "FAQ": "FAQ",
     "Updates": "Cập nhật",
     "Comments": "Bình luận",
