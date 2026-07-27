@@ -5,6 +5,8 @@ from odoo.http import request
 import logging
 import urllib.parse
 
+import werkzeug
+
 _logger = logging.getLogger(__name__)
 # Internal ids used for data-tab matching/JS — the visible label is translated
 # separately via TAB_LABELS so the tab-switching logic doesn't have to compare
@@ -119,6 +121,10 @@ class UikickController(http.Controller):
             [('project_code', '=', project_id)], limit=1)
         if not project:
             return request.not_found()
+        # Chưa chọn ảnh thumbnail riêng nhưng video là link YouTube -> dùng
+        # tạm ảnh thumbnail có sẵn của YouTube thay vì để trống.
+        if not project.image and project.video_thumbnail_url:
+            return werkzeug.utils.redirect(project.video_thumbnail_url, code=302)
         return request.env['ir.binary']._get_image_stream_from(
             project, field_name='image'
         ).get_response()
