@@ -34,7 +34,7 @@
                 hero.classList.remove("is-playing");
             } else {
                 video.play().then(function () {
-                    hero.classList.add("is-playing");
+                    hero.classList.add("is-playing", "has-played");
                 }).catch(function () {
                     /* autoplay blocked, ignore */
                 });
