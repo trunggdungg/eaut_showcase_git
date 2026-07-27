@@ -129,6 +129,26 @@ class UikickController(http.Controller):
             project, field_name='image'
         ).get_response()
 
+    @http.route(['/uikick/project/<string:project_id>/video'],
+                type='http', auth='public', website=True, sitemap=False)
+    def project_video_file(self, project_id, **kw):
+        project = request.env['eaut_showcase.project'].sudo().search(
+            [('project_code', '=', project_id)], limit=1)
+        if not project:
+            return request.not_found()
+        # Tránh đọc trực tiếp project.video_file chỉ để kiểm tra tồn tại (sẽ tải
+        # cả file video vào bộ nhớ) — chỉ cần biết attachment có tồn tại hay không.
+        has_file = request.env['ir.attachment'].sudo().search_count([
+            ('res_model', '=', 'eaut_showcase.project'),
+            ('res_field', '=', 'video_file'),
+            ('res_id', '=', project.id),
+        ])
+        if not has_file:
+            return request.not_found()
+        return request.env['ir.binary']._get_stream_from(
+            project, field_name='video_file', filename=project.video_filename,
+        ).get_response()
+
  # ============ SUBMIT FORM "QUAN TÂM" ============
     @http.route(['/uikick/project/<string:project_id>/interest'],
                 type='http', auth='public', website=True,

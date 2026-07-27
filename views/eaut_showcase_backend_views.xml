@@ -58,7 +58,10 @@
                         </group>
                     </group>
                     <group string="Media">
-                        <field name="video_url"/>
+                        <field name="video_url" placeholder="Link YouTube hoặc link video trực tiếp (mp4, m3u8...)"/>
+                        <field name="video_file" filename="video_filename"
+                               help="Upload file video trực tiếp — nếu chọn file ở đây thì sẽ ưu tiên phát file này thay vì Video URL."/>
+                        <field name="video_filename" invisible="1"/>
                     </group>
                       <group string="Mô tả giới thiệu">
                         <field name="description" widget="html" nolabel="1"/>

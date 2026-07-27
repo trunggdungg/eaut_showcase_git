@@ -106,7 +106,7 @@
                                                     allow="autoplay; encrypted-media" tabindex="-1"/>
                                         </t>
                                         <t t-else="">
-                                            <video t-att-src="project.video_url" muted="muted" loop="loop"
+                                            <video t-att-src="project.video_play_src" muted="muted" loop="loop"
                                                    playsinline="playsinline" preload="metadata"
                                                    class="uikick-card-video"/>
                                         </t>

@@ -34,10 +34,22 @@ class UikickProject(models.Model):
     views = fields.Integer(string='View Count', default=0)
     image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920)
     video_url = fields.Char(string='Video URL')
+    video_file = fields.Binary(
+        string='Video (upload)', attachment=True,
+        help="Upload file video trực tiếp thay vì dán URL. Nếu có file ở đây thì "
+             "luôn được ưu tiên phát thay cho Video URL.",
+    )
+    video_filename = fields.Char(string='Tên file video')
     video_embed_url = fields.Char(
         string='Video Embed URL', compute='_compute_video_embed_url',
         help="URL nhúng iframe khi video_url là link chia sẻ YouTube. Trống nếu "
-             "video_url là file/luồng video phát trực tiếp được (mp4, m3u8...).",
+             "có file video upload, hoặc video_url là file/luồng video phát "
+             "trực tiếp được (mp4, m3u8...).",
+    )
+    video_play_src = fields.Char(
+        string='Video Play Source', compute='_compute_video_embed_url',
+        help="URL thực dùng cho thẻ <video>: ưu tiên file đã upload, nếu không "
+             "có thì dùng video_url (khi video_url không phải link YouTube).",
     )
     video_thumbnail_url = fields.Char(
         string='Video Thumbnail URL (YouTube)', compute='_compute_video_embed_url',
@@ -66,9 +78,26 @@ class UikickProject(models.Model):
         for project in self:
             project.interest_count = len(project.interest_ids)
 
-    @api.depends('video_url')
+    @api.depends('video_url', 'video_file', 'project_code')
     def _compute_video_embed_url(self):
+        # Kiểm tra sự tồn tại của file qua ir.attachment thay vì đọc trực tiếp
+        # project.video_file — tránh phải tải toàn bộ nội dung video (có thể
+        # rất nặng) vào bộ nhớ chỉ để biết "có file hay không".
+        has_file_ids = set(self.env['ir.attachment'].search([
+            ('res_model', '=', self._name),
+            ('res_field', '=', 'video_file'),
+            ('res_id', 'in', self.ids),
+        ]).mapped('res_id'))
+
         for project in self:
+            # Có file upload -> luôn ưu tiên phát file đó, bỏ qua video_url hoàn toàn.
+            if project.id in has_file_ids:
+                project.video_embed_url = False
+                project.video_thumbnail_url = False
+                project.video_preview_embed_url = False
+                project.video_play_src = '/uikick/project/%s/video' % (project.project_code or '')
+                continue
+
             match = YOUTUBE_URL_RE.search(project.video_url or '')
             video_id = match.group(1) if match else False
             project.video_embed_url = (
@@ -83,6 +112,7 @@ class UikickProject(models.Model):
                 '&playsinline=1&disablekb=1&fs=0&iv_load_policy=3&cc_load_policy=0'
                 % (video_id, video_id) if video_id else False
             )
+            project.video_play_src = project.video_url if not video_id else False
 
     def action_view_interests(self):
         self.ensure_one()
