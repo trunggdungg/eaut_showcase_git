@@ -66,6 +66,17 @@
                       <group string="Mô tả giới thiệu">
                         <field name="description" widget="html" nolabel="1"/>
                     </group>
+                    <notebook>
+                        <page string="FAQ" name="faq">
+                            <field name="faq_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="question"/>
+                                    <field name="answer"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
                     <group string="All-time campaign stats (optional)">
                         <field name="campaign_number"/>
 

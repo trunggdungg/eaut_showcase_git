@@ -88,6 +88,7 @@ class UikickProject(models.Model):
     )
     campaign_number = fields.Integer(string='Campaign Number')
     active = fields.Boolean(default=True, tracking=True)
+    faq_ids = fields.One2many('eaut_showcase.faq', 'project_id', string='FAQ')
     interest_ids = fields.One2many('eaut_showcase.interest', 'project_id', string='Người quan tâm')
     interest_count = fields.Integer(
         string='Số lượt quan tâm', compute='_compute_interest_count', store=True, tracking=True,

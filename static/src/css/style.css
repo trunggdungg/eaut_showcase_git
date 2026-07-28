@@ -167,6 +167,20 @@
 .uikick-tab-placeholder { padding: 48px 0; text-align: center; color: var(--bs-secondary-color, #9ca3af); }
 .uikick-tab-placeholder-icon { font-size: 36px; margin-bottom: 12px; }
 
+/* FAQ accordion */
+.uikick-faq-list { border-top: 1px solid var(--bs-border-color, #e5e7eb); }
+.uikick-faq-item { border-bottom: 1px solid var(--bs-border-color, #e5e7eb); }
+.uikick-faq-question {
+    width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 18px 4px; background: none; border: none; text-align: left; cursor: pointer;
+    font-size: 15px; font-weight: 600; color: var(--bs-dark, #111827);
+}
+.uikick-faq-chevron { flex-shrink: 0; transition: transform .2s; color: var(--bs-secondary-color, #9ca3af); }
+.uikick-faq-item.is-open .uikick-faq-chevron { transform: rotate(180deg); }
+.uikick-faq-answer { display: none; padding: 0 4px 18px; }
+.uikick-faq-item.is-open .uikick-faq-answer { display: block; }
+.uikick-faq-answer p { font-size: 14px; line-height: 1.7; color: var(--bs-body-color, #4b5563); margin: 0; white-space: pre-line; }
+
 /* Campaign hero video */
 .uikick-hero-video {
     position: relative; background: var(--bs-dark, #111827); color: var(--bs-white, #fff); border-radius: 2px; overflow: hidden;
