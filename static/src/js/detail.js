@@ -158,8 +158,10 @@
     }
 
     onReady(function () {
-        if (!document.querySelector(".uikick-detail")) return; // chỉ chạy trên trang detail
-        initTabs();
+       if (document.querySelector(".uikick-tabs")) {
+            initTabs();
+        }
+        if (!document.querySelector(".uikick-detail")) return;
         initHeroVideo();
         initDescriptionToc();
         initRemindMe();

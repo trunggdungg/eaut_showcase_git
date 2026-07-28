@@ -5,28 +5,25 @@ from odoo.http import request
 import logging
 import urllib.parse
 import werkzeug
+
 _logger = logging.getLogger(__name__)
 # Internal ids used for data-tab matching/JS — the visible label is translated
 # separately via TAB_LABELS so the tab-switching logic doesn't have to compare
 # against Vietnamese strings.
-TABS = ["Campaign", "Creator", "FAQ", "Updates", "Comments", "Community"]
+TABS = ["Campaign", "FAQ", "Comments", "Community"]
 TAB_LABELS = {
     "Campaign": "Giới thiệu",
-    "Rewards": "Tính năng",
-    "Creator": "Tác giả",
     "FAQ": "FAQ",
-    "Updates": "Cập nhật",
     "Comments": "Bình luận",
     "Community": "Cộng đồng",
 }
-
-
 
 SORT_OPTIONS = ["Relevance", "Most viewed", "Newest"]
 ORDER_BY_SORT = {
     "Most viewed": "views desc",
     "Newest": "create_date desc",
 }
+
 
 class UikickController(http.Controller):
 
@@ -63,7 +60,7 @@ class UikickController(http.Controller):
 
         location = (kw.get('location') or '').strip()
         if location:
-            domain.append(('location', 'ilike', location))
+            domain.append(('location_id.name', 'ilike', location))
 
         sort = kw.get('sort') or 'Relevance'
         order = ORDER_BY_SORT.get(sort, 'sequence asc, id asc')
@@ -111,7 +108,6 @@ class UikickController(http.Controller):
         }
         return request.render('eaut_showcase.detail_page', values)
 
-
     @http.route(['/uikick/project/<string:project_id>/thumbnail'],
                 type='http', auth='public', website=True, sitemap=False)
     def project_thumbnail(self, project_id, **kw):
@@ -126,7 +122,29 @@ class UikickController(http.Controller):
             project, field_name='image'
         ).get_response()
 
- # ============ SUBMIT FORM "QUAN TÂM" ============
+    @http.route(['/uikick/creator/<int:creator_id>/avatar'],
+                type='http', auth='public', website=True, sitemap=False)
+    def creator_avatar(self, creator_id, **kw):
+        creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
+        if not creator:
+            return request.not_found()
+        return request.env['ir.binary']._get_image_stream_from(
+            creator, field_name='avatar'
+        ).get_response()
+
+    @http.route(['/uikick/creator/<int:creator_id>'],
+                type='http', auth='public', website=True, sitemap=True)
+    def creator_detail(self, creator_id, **kw):
+        creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
+        if not creator:
+            return request.not_found()
+        values = {
+            'creator': creator,
+            'projects': creator.project_ids,
+        }
+        return request.render('eaut_showcase.creator_detail_page', values)
+
+    # ============ SUBMIT FORM "QUAN TÂM" ============
     @http.route(['/uikick/project/<string:project_id>/interest'],
                 type='http', auth='public', website=True,
                 methods=['POST'], csrf=True)
@@ -161,23 +179,3 @@ class UikickController(http.Controller):
             return request.redirect(f'/uikick/project/{project_id}?error={error}')
 
         return request.redirect(f'/uikick/project/{project_id}?submitted=1')
-
-    @http.route(['/uikick/project/<string:project_id>/video'],
-                type='http', auth='public', website=True, sitemap=False)
-    def project_video_file(self, project_id, **kw):
-        project = request.env['eaut_showcase.project'].sudo().search(
-            [('project_code', '=', project_id)], limit=1)
-        if not project:
-            return request.not_found()
-        # Tránh đọc trực tiếp project.video_file chỉ để kiểm tra tồn tại (sẽ tải
-        # cả file video vào bộ nhớ) — chỉ cần biết attachment có tồn tại hay không.
-        has_file = request.env['ir.attachment'].sudo().search_count([
-            ('res_model', '=', 'eaut_showcase.project'),
-            ('res_field', '=', 'video_file'),
-            ('res_id', '=', project.id),
-        ])
-        if not has_file:
-            return request.not_found()
-        return request.env['ir.binary']._get_stream_from(
-            project, field_name='video_file', filename=project.video_filename,
-        ).get_response()
