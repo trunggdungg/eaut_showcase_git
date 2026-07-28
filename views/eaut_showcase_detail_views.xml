@@ -235,6 +235,10 @@
                                         <label>Ghi chú / Câu hỏi</label>
                                         <textarea name="lead_note" placeholder="Tôi quan tâm đến sản phẩm này vì..."/>
                                     </div>
+                                    <label class="uikick-lead-checkbox">
+                                        <input type="checkbox" name="public_display" value="1"/>
+                                        Đồng ý hiển thị tên của tôi công khai ở tab Cộng đồng
+                                    </label>
                                     <button type="submit" class="btn btn-primary btn-sm rounded-pill uikick-btn-block">Gửi thông tin</button>
                                     <p class="uikick-lead-form-note">Thông tin của bạn được bảo mật và chỉ dùng để liên hệ về sản phẩm này.</p>
                                 </form>
@@ -266,6 +270,32 @@
                                             <div class="uikick-tab-placeholder">
                                                 <div class="uikick-tab-placeholder-icon">📋</div>
                                                 <p>Chưa có câu hỏi thường gặp nào cho sản phẩm này.</p>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </t>
+                                <t t-elif="tab == 'Community'">
+                                    <div class="uikick-tab-content" t-att-data-tab="tab">
+                                        <p class="uikick-community-total">
+                                            <t t-esc="project.interest_count"/> người đang quan tâm sản phẩm này.
+                                        </p>
+                                        <t t-if="community_members">
+                                            <div class="uikick-community-list">
+                                                <t t-foreach="community_members" t-as="member">
+                                                    <div class="uikick-community-item">
+                                                        <div class="uikick-community-avatar"><t t-esc="(member['name'] or '')[:1]"/></div>
+                                                        <div>
+                                                            <div class="uikick-community-name"><t t-esc="member['name']"/></div>
+                                                            <div class="uikick-community-time"><t t-esc="member['time_ago']"/></div>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="uikick-tab-placeholder">
+                                                <div class="uikick-tab-placeholder-icon">📋</div>
+                                                <p>Chưa có ai đồng ý hiển thị công khai trong cộng đồng.</p>
                                             </div>
                                         </t>
                                     </div>

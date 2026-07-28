@@ -11,6 +11,7 @@
                 <field name="email"/>
                 <field name="phone"/>
                 <field name="project_id"/>
+                <field name="public_display" widget="boolean_toggle" string="Công khai"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'new'"
                        decoration-success="state == 'contacted'"
@@ -38,6 +39,7 @@
                         </group>
                         <group>
                             <field name="state" widget="radio"/>
+                            <field name="public_display"/>
                         </group>
                     </group>
                     <group string="Lời nhắn">
