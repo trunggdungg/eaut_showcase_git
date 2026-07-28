@@ -9,6 +9,17 @@
             <t t-set="title" t-value="(creator.name or '') + ' — Kickstarter'"/>
             <div id="wrap" class="uikick uikick-creator-page">
 
+                <!-- Breadcrumb -->
+                <nav class="uikick-breadcrumb">
+                    <div class="uikick-container">
+                        <a href="/uikick">Khám phá</a>
+                        <span class="uikick-breadcrumb-sep">›</span>
+                        <span>Tác giả</span>
+                        <span class="uikick-breadcrumb-sep">›</span>
+                        <span class="uikick-breadcrumb-current"><t t-esc="creator.name"/></span>
+                    </div>
+                </nav>
+
                 <div class="uikick-creator-page-hero">
                     <div class="uikick-creator-page-avatar">
                         <t t-if="creator.avatar">
