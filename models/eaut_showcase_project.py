@@ -20,39 +20,46 @@ class UikickProject(models.Model):
 
     sequence = fields.Integer(default=10)
     project_code = fields.Char(
-        string='Project Code', required=True, index=True, copy=False, readonly=True,
+        string='Project Code', required=True, index=True, copy=False, readonly=True, tracking=True,
         help="Stable slug used in the public URL /uikick/project/<project_code>. "
              "Tự động sinh khi tạo dự án mới.",)
 
-    title = fields.Char(string='Title', required=True)
-    subtitle = fields.Char(string='Phụ đề')
+    title = fields.Char(string='Title', required=True, tracking=True)
+    subtitle = fields.Char(string='Phụ đề', tracking=True)
     creator_ids = fields.Many2many(
         'eaut_showcase.creator', 'eaut_showcase_project_creator_rel',
         'project_id', 'creator_id', string='Tác giả', required=True,
         help="Một hoặc nhiều tác giả/nhóm thực hiện sản phẩm này.",
     )
     creator_names = fields.Char(
-        string='Tên tác giả (hiển thị)', compute='_compute_creator_names', store=True,
+        string='Tên tác giả (hiển thị)', compute='_compute_creator_names', store=True, tracking=True,
         help="Tên các tác giả nối bằng dấu phẩy, dùng để hiển thị trên trang web.",
     )
     category_id = fields.Many2one(
         'eaut_showcase.category', string='Danh mục', required=True, index=True,
     )
     location_id = fields.Many2one(
-        'res.country.state', string='Địa điểm',
+        'res.country.state', string='Địa điểm', tracking=True,
         domain="[('country_id.code', '=', 'VN')]",
         help="Tỉnh/thành phố — dữ liệu tỉnh/thành Việt Nam có sẵn trong Odoo.",
     )
 
     views = fields.Integer(string='View Count', default=0)
+    # Lưu ý: KHÔNG bật tracking=True cho field này — Image/Binary không được
+    # mail.thread hỗ trợ tracking, bật lên sẽ crash y hệt lỗi field description
+    # (HTML) trước đây, mỗi khi thumbnail được thay đổi.
     image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920)
-    video_url = fields.Char(string='Video URL')
+    video_url = fields.Char(string='Video URL', tracking=True)
     video_file = fields.Binary(
         string='Video (upload)', attachment=True,
         help="Upload file video trực tiếp thay vì dán URL. Nếu có file ở đây thì "
              "luôn được ưu tiên phát thay cho Video URL.",
     )
     video_filename = fields.Char(string='Tên file video')
+    # 4 field bên dưới đều là compute không lưu (store=False) suy ra hoàn toàn từ
+    # video_url/video_file — KHÔNG bật tracking cho chúng: vừa dư thừa (video_url
+    # đã được track), vừa không có ý nghĩa để log vì chúng không phải giá trị
+    # người dùng thật sự nhập vào.
     video_embed_url = fields.Char(
         string='Video Embed URL', compute='_compute_video_embed_url',
         help="URL nhúng iframe khi video_url là link chia sẻ YouTube. Trống nếu "
@@ -80,10 +87,10 @@ class UikickProject(models.Model):
         default=lambda self: self.env['eaut_showcase.status'].search([], limit=1, order='sequence, id'),
     )
     campaign_number = fields.Integer(string='Campaign Number')
-    active = fields.Boolean(default=True)
+    active = fields.Boolean(default=True, tracking=True)
     interest_ids = fields.One2many('eaut_showcase.interest', 'project_id', string='Người quan tâm')
     interest_count = fields.Integer(
-        string='Số lượt quan tâm', compute='_compute_interest_count', store=True,
+        string='Số lượt quan tâm', compute='_compute_interest_count', store=True, tracking=True,
     )
 
     @api.depends('interest_ids')
