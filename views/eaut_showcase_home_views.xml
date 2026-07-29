@@ -5,9 +5,9 @@
     <!-- PROJECT CARD (dùng chung cho trang chủ và trang tác giả)      -->
     <!-- ============================================================ -->
     <template id="project_card" name="UIKick - Project Card">
-        <a t-att-href="'/uikick/project/' + project.project_code" class="uikick-card">
+        <a t-att-href="'/showcase/project/' + project.project_code" class="uikick-card">
             <div class="uikick-card-media">
-                <img t-att-src="'/uikick/project/' + project.project_code + '/thumbnail'"
+                <img t-att-src="'/showcase/project/' + project.project_code + '/thumbnail'"
                      t-att-alt="project.title" class="uikick-card-img"/>
                 <t t-if="project.video_embed_url">
                     <!-- Video YouTube: preload src rỗng, home.js chỉ gán
@@ -59,7 +59,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    <form method="get" action="/uikick" id="uikick-filter-form" class="uikick-sidebar">
+                    <form method="get" action="/showcase" id="uikick-filter-form" class="uikick-sidebar">
                         <p class="uikick-sidebar-title">Filter by</p>
                         <input type="hidden" name="categories_submitted" value="1"/>
 

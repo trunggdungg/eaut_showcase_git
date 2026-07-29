@@ -13,9 +13,9 @@
                 <!-- Breadcrumb -->
                 <nav class="uikick-breadcrumb">
                     <div class="uikick-container">
-                        <a href="/uikick">Khám phá</a>
+                        <a href="/showcase">Khám phá</a>
                         <span class="uikick-breadcrumb-sep">›</span>
-                         <a t-att-href="'/uikick/category/' + (project.category_id.name or '')"><t t-esc="project.category_id.name"/></a>
+                         <a t-att-href="'/showcase/category/' + (project.category_id.name or '')"><t t-esc="project.category_id.name"/></a>
                         <span class="uikick-breadcrumb-sep">›</span>
                         <span class="uikick-breadcrumb-current"><t t-esc="project.title"/></span>
                     </div>
@@ -43,7 +43,7 @@
                                             allowfullscreen="allowfullscreen" loading="lazy"/>
                                 </t>
                                 <t t-else="">
-                                    <img t-att-src="'/uikick/project/' + (project.project_code or '') + '/thumbnail'"
+                                    <img t-att-src="'/showcase/project/' + (project.project_code or '') + '/thumbnail'"
                                          t-att-alt="project.title" class="uikick-hero-video-img"/>
                                     <video t-att-src="project.video_play_src" loop="loop" playsinline="playsinline"
                                            controls="controls" preload="auto" class="uikick-hero-video-el"/>
@@ -207,7 +207,7 @@
                                 <div t-if="error" class="alert alert-danger mt-4" t-out="error"/>
 
                                 <form class="uikick-lead-form"
-                                      t-att-action="'/uikick/project/' + (project.project_code or '') + '/interest'"
+                                      t-att-action="'/showcase/project/' + (project.project_code or '') + '/interest'"
                                       method="post">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <h3>
@@ -305,7 +305,7 @@
                                         </t>
 
                                         <form class="uikick-lead-form" id="uikick-comment-form"
-                                              t-att-action="'/uikick/project/' + (project.project_code or '') + '/comment'"
+                                              t-att-action="'/showcase/project/' + (project.project_code or '') + '/comment'"
                                               method="post">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <h3>Viết bình luận</h3>
@@ -365,14 +365,14 @@
                                 <div class="uikick-creator-card">
                                     <div class="uikick-creator-head">
                                         <t t-if="creator.avatar">
-                                            <img t-attf-src="/uikick/creator/#{creator.id}/avatar"
+                                            <img t-attf-src="/showcase/creator/#{creator.id}/avatar"
                                                  t-att-alt="creator.name" class="uikick-creator-avatar"/>
                                         </t>
                                         <t t-else="">
                                             <div class="uikick-creator-avatar"><t t-esc="(creator.name or '')[:1]"/></div>
                                         </t>
                                         <div>
-                                            <a t-attf-href="/uikick/creator/#{creator.id}" class="uikick-creator-name">
+                                            <a t-attf-href="/showcase/creator/#{creator.id}" class="uikick-creator-name">
                                                 <t t-esc="creator.name"/>
                                             </a>
                                             <div class="uikick-creator-role"><t t-esc="creator.role or 'Tác giả sản phẩm'"/></div>

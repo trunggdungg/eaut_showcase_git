@@ -21,7 +21,7 @@ class UikickProject(models.Model):
     sequence = fields.Integer(default=10)
     project_code = fields.Char(
         string='Project Code', required=True, index=True, copy=False, readonly=True, tracking=True,
-        help="Stable slug used in the public URL /uikick/project/<project_code>. "
+        help="Stable slug used in the public URL /showcase/project/<project_code>. "
              "Tự động sinh khi tạo dự án mới.",)
 
     title = fields.Char(string='Title', required=True, tracking=True)
@@ -130,7 +130,7 @@ class UikickProject(models.Model):
                 project.video_embed_url = False
                 project.video_thumbnail_url = False
                 project.video_preview_embed_url = False
-                project.video_play_src = '/uikick/project/%s/video' % (project.project_code or '')
+                project.video_play_src = '/showcase/project/%s/video' % (project.project_code or '')
                 continue
 
             match = YOUTUBE_URL_RE.search(project.video_url or '')

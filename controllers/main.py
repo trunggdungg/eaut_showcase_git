@@ -55,7 +55,7 @@ ORDER_BY_SORT = {
 
 class UikickController(http.Controller):
 
-    @http.route(['/uikick', '/uikick/category/<string:category>'],
+    @http.route(['/showcase', '/showcase/category/<string:category>'],
                 type='http', auth='public', website=True, sitemap=True)
     def home(self, category=None, **kw):
         Project = request.env['eaut_showcase.project'].sudo()
@@ -116,7 +116,7 @@ class UikickController(http.Controller):
         }
         return request.render('eaut_showcase.home_page', values)
 
-    @http.route(['/uikick/project/<string:project_id>'],
+    @http.route(['/showcase/project/<string:project_id>'],
                 type='http', auth='public', website=True, sitemap=False)
     def detail(self, project_id, submitted=None, error=None, **kw):
         Project = request.env['eaut_showcase.project'].sudo()
@@ -157,7 +157,7 @@ class UikickController(http.Controller):
         return request.render('eaut_showcase.detail_page', values)
 
 
-    @http.route(['/uikick/project/<string:project_id>/thumbnail'],
+    @http.route(['/showcase/project/<string:project_id>/thumbnail'],
                 type='http', auth='public', website=True, sitemap=False)
     def project_thumbnail(self, project_id, **kw):
         project = request.env['eaut_showcase.project'].sudo().search(
@@ -172,7 +172,7 @@ class UikickController(http.Controller):
             project, field_name='image'
         ).get_response()
 
-    @http.route(['/uikick/project/<string:project_id>/video'],
+    @http.route(['/showcase/project/<string:project_id>/video'],
                 type='http', auth='public', website=True, sitemap=False)
     def project_video_file(self, project_id, **kw):
         project = request.env['eaut_showcase.project'].sudo().search(
@@ -192,7 +192,7 @@ class UikickController(http.Controller):
             project, field_name='video_file', filename=project.video_filename,
         ).get_response()
 
-    @http.route(['/uikick/creator/<int:creator_id>/avatar'],
+    @http.route(['/showcase/creator/<int:creator_id>/avatar'],
                 type='http', auth='public', website=True, sitemap=False)
     def creator_avatar(self, creator_id, **kw):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
@@ -202,7 +202,7 @@ class UikickController(http.Controller):
             creator, field_name='avatar'
         ).get_response()
 
-    @http.route(['/uikick/creator/<int:creator_id>'],
+    @http.route(['/showcase/creator/<int:creator_id>'],
                 type='http', auth='public', website=True, sitemap=True)
     def creator_detail(self, creator_id, **kw):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
@@ -215,7 +215,7 @@ class UikickController(http.Controller):
         return request.render('eaut_showcase.creator_detail_page', values)
 
  # ============ SUBMIT FORM "QUAN TÂM" ============
-    @http.route(['/uikick/project/<string:project_id>/interest'],
+    @http.route(['/showcase/project/<string:project_id>/interest'],
                 type='http', auth='public', website=True,
                 methods=['POST'], csrf=True)
     def submit_interest(self, project_id, **post_data):
@@ -223,7 +223,7 @@ class UikickController(http.Controller):
             [('project_code', '=', project_id)], limit=1)
 
         if not project:
-            return request.redirect('/uikick')
+            return request.redirect('/showcase')
 
         name = (post_data.get('lead_name') or '').strip()
         email = (post_data.get('lead_email') or '').strip()
@@ -233,7 +233,7 @@ class UikickController(http.Controller):
 
         if not name or not email:
             error = urllib.parse.quote('Vui lòng nhập đầy đủ Họ tên và Email.')
-            return request.redirect(f'/uikick/project/{project_id}?error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
         try:
             request.env['eaut_showcase.interest'].sudo().create({
@@ -248,12 +248,12 @@ class UikickController(http.Controller):
         except Exception as e:
             _logger.error('Error creating eaut_showcase.interest: %s', str(e), exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
-            return request.redirect(f'/uikick/project/{project_id}?error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
-        return request.redirect(f'/uikick/project/{project_id}?submitted=1')
+        return request.redirect(f'/showcase/project/{project_id}?submitted=1')
 
  # ============ SUBMIT FORM "BÌNH LUẬN" ============
-    @http.route(['/uikick/project/<string:project_id>/comment'],
+    @http.route(['/showcase/project/<string:project_id>/comment'],
                 type='http', auth='public', website=True,
                 methods=['POST'], csrf=True)
     def submit_comment(self, project_id, **post_data):
@@ -261,14 +261,14 @@ class UikickController(http.Controller):
             [('project_code', '=', project_id)], limit=1)
 
         if not project:
-            return request.redirect('/uikick')
+            return request.redirect('/showcase')
 
         name = (post_data.get('comment_name') or '').strip()
         content = (post_data.get('comment_content') or '').strip()
 
         if not name or not content:
             error = urllib.parse.quote('Vui lòng nhập đầy đủ tên và nội dung bình luận.')
-            return request.redirect(f'/uikick/project/{project_id}?comment_error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?comment_error={error}')
 
         try:
             request.env['eaut_showcase.comment'].sudo().create({
@@ -280,6 +280,6 @@ class UikickController(http.Controller):
         except Exception as e:
             _logger.error('Error creating eaut_showcase.comment: %s', str(e), exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
-            return request.redirect(f'/uikick/project/{project_id}?comment_error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?comment_error={error}')
 
-        return request.redirect(f'/uikick/project/{project_id}?comment_submitted=1')
+        return request.redirect(f'/showcase/project/{project_id}?comment_submitted=1')
