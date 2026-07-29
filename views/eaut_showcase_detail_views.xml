@@ -327,6 +327,9 @@
                                         <p class="uikick-community-total">
                                             <t t-esc="project.interest_count"/> người đang quan tâm sản phẩm này.
                                         </p>
+                                        <p t-if="anonymous_interest_count &gt; 0" class="uikick-community-anonymous-note">
+                                            <t t-esc="anonymous_interest_count"/> người ẩn danh đang quan tâm.
+                                        </p>
                                         <t t-if="community_members">
                                             <div class="uikick-community-list">
                                                 <t t-foreach="community_members" t-as="member">

@@ -135,6 +135,9 @@ class UikickController(http.Controller):
                 key=lambda i: i.create_date, reverse=True
             )
         ] if project else []
+        # Chênh lệch giữa tổng số quan tâm và số tên hiện công khai — ghi chú nhỏ
+        # để người xem không tưởng nhầm là thiếu/sai dữ liệu.
+        anonymous_interest_count = (project.interest_count - len(community_members)) if project else 0
 
         # Chỉ hiện bình luận đã được admin duyệt — comment_ids đã sắp mới nhất
         # lên đầu theo _order của model.
@@ -148,6 +151,7 @@ class UikickController(http.Controller):
             'tabs': TABS,
             'tab_labels': TAB_LABELS,
             'community_members': community_members,
+            'anonymous_interest_count': anonymous_interest_count,
             'approved_comments': approved_comments,
             'submitted': submitted,
             'error': error,
