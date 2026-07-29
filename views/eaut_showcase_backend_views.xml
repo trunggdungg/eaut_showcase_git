@@ -8,15 +8,14 @@
         <field name="name">eaut_showcase.project.list</field>
         <field name="model">eaut_showcase.project</field>
         <field name="arch" type="xml">
-            <list string="UIKick Projects">
-                <field name="sequence" widget="handle"/>
-
-                <field name="title"/>
-                <field name="category_id"/>
-                <field name="status_id" widget="badge"/>
-                <field name="views"/>
-                <field name="interest_count"/>
-                <field name="active" column_invisible="1"/>
+            <list string="Dự án EAUT Showcase">
+                <field name="sequence" widget="handle" string="Thứ tự"/>
+                <field name="title" string="Tiêu đề"/>
+                <field name="category_id" string="Danh mục"/>
+                <field name="status_id" widget="badge" string="Trạng thái"/>
+                <field name="views" string="Lượt xem"/>
+                <field name="interest_count" string="Lượt quan tâm"/>
+                <field name="active" string="Hoạt động" column_invisible="1"/>
             </list>
         </field>
     </record>
@@ -25,63 +24,103 @@
         <field name="name">eaut_showcase.project.form</field>
         <field name="model">eaut_showcase.project</field>
         <field name="arch" type="xml">
-            <form string="UIKick Project">
+            <form string="Dự án EAUT Showcase">
                 <sheet>
                     <div class="oe_button_box" name="button_box">
-                        <button name="action_view_interests" type="object"
-                                class="oe_stat_button" icon="fa-users">
-                            <field name="interest_count" widget="statinfo" string="Quan tâm"/>
+                        <button name="action_view_interests"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-users">
+                            <field name="interest_count"
+                                   widget="statinfo"
+                                   string="Quan tâm"/>
                         </button>
                     </div>
-                       <field name="image" widget="image" class="oe_avatar"/>
+
+                    <field name="image"
+                           widget="image"
+                           class="oe_avatar"
+                           string="Ảnh dự án"/>
+
                     <div class="oe_title">
-                        <label for="title"/>
+                        <label for="title" string="Tiêu đề"/>
                         <h1>
-                            <field name="title" placeholder="Project title"/>
+                            <field name="title"
+                                   string="Tiêu đề"
+                                   placeholder="Nhập tiêu đề dự án..."/>
                         </h1>
-                        <field name="subtitle" placeholder="Phụ đề bài đăng..."/>
+
+                        <field name="subtitle"
+                               string="Phụ đề"
+                               placeholder="Phụ đề bài đăng..."/>
                     </div>
+
                     <group>
                         <group>
+                            <field name="creator_ids"
+                                   widget="many2many_tags"
+                                   string="Tác giả"/>
 
-                            <field name="creator_ids" widget="many2many_tags"/>
-                            <field name="category_id"/>
-                            <field name="status_id"/>
-                            <field name="location_id"/>
-                            <!--                            <field name="status"/>-->
-                            <field name="active"/>
+                            <field name="category_id"
+                                   string="Danh mục"/>
+
+                            <field name="status_id"
+                                   string="Trạng thái"/>
+
+                            <field name="location_id"
+                                   string="Địa điểm"/>
+
+                            <field name="active"
+                                   string="Hoạt động"/>
                         </group>
+
                         <group>
-                            <field name="views"/>
+                            <field name="views"
+                                   string="Lượt xem"/>
 
-                            <field name="sequence"/>
+                            <field name="sequence"
+                                   string="Thứ tự"/>
                         </group>
                     </group>
+
                     <group string="Media">
-                        <field name="video_url"/>
+                        <field name="video_url"
+                               string="Đường dẫn video"/>
                     </group>
-                      <notebook>
+
+                    <notebook>
                         <page string="Mô tả giới thiệu" name="description">
-                            <field name="description" widget="html" nolabel="1"
-                                   style="width: 100%; "/>
+                            <field name="description"
+                                   widget="html"
+                                   nolabel="1"
+                                   string="Mô tả giới thiệu"
+                                   style="width: 100%;"/>
                         </page>
 
-                        <page string="Thống kê " name="stats">
-                            <field name="campaign_number"/>
+                        <page string="Thống kê" name="stats">
+                            <field name="campaign_number"
+                                   string="Số liệu chiến dịch"/>
+                        </page>
+
+                         <page string="FAQ" name="faq">
+                            <field name="faq_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="question"/>
+                                    <field name="answer"/>
+                                </list>
+                            </field>
                         </page>
                     </notebook>
-<!--                    <group string="All-time campaign stats (optional)">-->
-<!--                        <field name="campaign_number"/>-->
-
-<!--                    </group>-->
                 </sheet>
-                 <chatter/>
+
+                <chatter/>
             </form>
         </field>
     </record>
 
     <record id="action_uikick_project" model="ir.actions.act_window">
-        <field name="name">Projects</field>
+        <field name="name">Dự án</field>
         <field name="res_model">eaut_showcase.project</field>
         <field name="view_mode">list,form</field>
     </record>
@@ -90,17 +129,22 @@
     <!-- ============================================================ -->
     <!-- Menu                                                          -->
     <!-- ============================================================ -->
-    <menuitem id="menu_uikick_root" name="UIKick" sequence="100"/>
-    <menuitem id="menu_uikick_projects" name="Projects" parent="menu_uikick_root"
+    <menuitem id="menu_uikick_root" name="Eaut Showcase" sequence="100"/>
+
+    <menuitem id="menu_uikick_projects" name="Dự án" parent="menu_uikick_root"
               action="action_uikick_project" sequence="10"/>
+
     <menuitem id="menu_uikick_creator" name="Tác giả" parent="menu_uikick_root"
               action="action_eaut_showcase_creator" sequence="20"/>
-     <menuitem id="menu_uikick_interest" name="Người quan tâm" parent="menu_uikick_root"
+
+    <menuitem id="menu_uikick_interest" name="Người quan tâm" parent="menu_uikick_root"
               action="action_eaut_showcase_interest" sequence="30"/>
 
     <menuitem id="menu_uikick_config" name="Cấu hình" parent="menu_uikick_root" sequence="90"/>
+
     <menuitem id="menu_uikick_category" name="Danh mục" parent="menu_uikick_config"
               action="action_eaut_showcase_category" sequence="10"/>
+
     <menuitem id="menu_uikick_status" name="Trạng thái" parent="menu_uikick_config"
               action="action_eaut_showcase_status" sequence="20"/>
 

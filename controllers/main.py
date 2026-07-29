@@ -5,7 +5,7 @@ from odoo.http import request
 import logging
 import urllib.parse
 import werkzeug
-
+from datetime import datetime
 _logger = logging.getLogger(__name__)
 # Internal ids used for data-tab matching/JS — the visible label is translated
 # separately via TAB_LABELS so the tab-switching logic doesn't have to compare
@@ -24,6 +24,29 @@ ORDER_BY_SORT = {
     "Newest": "create_date desc",
 }
 
+
+
+
+def _relative_time_vi(dt):
+    """Định dạng thời gian dạng "x ngày trước" cho tab Cộng đồng."""
+    if not dt:
+        return ''
+    seconds = (datetime.now() - dt).total_seconds()
+    if seconds < 60:
+        return 'Vừa xong'
+    minutes = int(seconds // 60)
+    if minutes < 60:
+        return '%d phút trước' % minutes
+    hours = int(minutes // 60)
+    if hours < 24:
+        return '%d giờ trước' % hours
+    days = int(hours // 24)
+    if days < 30:
+        return '%d ngày trước' % days
+    months = int(days // 30)
+    if months < 12:
+        return '%d tháng trước' % months
+    return '%d năm trước' % int(months // 12)
 
 class UikickController(http.Controller):
 
@@ -99,10 +122,21 @@ class UikickController(http.Controller):
         if project:
             project.views += 1
         # reward_tiers = request.env['eaut_showcase.reward.tier'].sudo().search([], order='sequence, id')
+
+            # Chỉ những người đã tick "Đồng ý hiển thị công khai" khi gửi form Quan
+            # tâm mới xuất hiện ở tab Cộng đồng — tránh lộ tên khi họ chưa đồng ý.
+        community_members = [
+            {'name': interest.name, 'time_ago': _relative_time_vi(interest.create_date)}
+            for interest in project.interest_ids.filtered('public_display').sorted(
+                    key=lambda i: i.create_date, reverse=True
+            )
+        ] if project else []
+
         values = {
             'project': project,
             'tabs': TABS,
             'tab_labels': TAB_LABELS,
+            'community_members': community_members,
             'submitted': submitted,
             'error': error,
         }
@@ -159,6 +193,7 @@ class UikickController(http.Controller):
         email = (post_data.get('lead_email') or '').strip()
         phone = (post_data.get('lead_phone') or '').strip()
         message = (post_data.get('lead_note') or '').strip()
+        public_display = bool(post_data.get('public_display'))
 
         if not name or not email:
             error = urllib.parse.quote('Vui lòng nhập đầy đủ Họ tên và Email.')
@@ -171,6 +206,7 @@ class UikickController(http.Controller):
                 'email': email,
                 'phone': phone,
                 'message': message,
+                'public_display': public_display,
             })
             _logger.info('New interest for project %s: %s <%s>', project.id, name, email)
         except Exception as e:

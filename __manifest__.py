@@ -1,12 +1,15 @@
 {
-    'name': 'UIKick - Crowdfunding Website',
+    'name': 'EAUT Showcase Website',
     'version': '1.0',
-    'summary': 'Kickstarter-style discovery & campaign page (converted from React)',
+    'summary': 'Website giới thiệu dự án, sản phẩm và năng lực công nghệ của EAUT',
     'description': """
-        Website pages replicating a Kickstarter-like project discovery page
-        and campaign detail page, originally built in React + Tailwind and
-        ported to Odoo QWeb templates.
-    """,
+    EAUT Showcase là module website dùng để giới thiệu các dự án,
+    sản phẩm, giải pháp công nghệ và thành tựu nổi bật của EAUT.
+
+    Module cung cấp các trang danh sách dự án, chi tiết dự án,
+    thông tin tác giả, hình ảnh, video và các nội dung giới thiệu
+    được xây dựng bằng Odoo QWeb.
+""",
     'category': 'Website',
     'author': 'Trugn Dugn',
     'depends': ['website', 'mail'],

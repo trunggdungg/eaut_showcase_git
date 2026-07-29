@@ -22,6 +22,19 @@
         });
     }
 
+      function initFaqAccordion() {
+        var items = document.querySelectorAll(".uikick-faq-item");
+        if (!items.length) return;
+
+        items.forEach(function (item) {
+            var question = item.querySelector(".uikick-faq-question");
+            if (!question) return;
+            question.addEventListener("click", function () {
+                item.classList.toggle("is-open");
+            });
+        });
+    }
+
     function initHeroVideo() {
         var hero = document.getElementById("uikick-hero-video");
         if (!hero) return;
@@ -165,5 +178,6 @@
         initHeroVideo();
         initDescriptionToc();
         initRemindMe();
+        initFaqAccordion();
     });
 })();

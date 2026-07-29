@@ -10,3 +10,5 @@ access_eaut_showcase_interest_user,eaut_showcase.interest.user,model_eaut_showca
 access_eaut_showcase_interest_manager,eaut_showcase.interest.manager,model_eaut_showcase_interest,base.group_system,1,1,1,1
 access_eaut_showcase_creator_user,eaut_showcase.creator.user,model_eaut_showcase_creator,base.group_user,1,1,1,0
 access_eaut_showcase_creator_manager,eaut_showcase.creator.manager,model_eaut_showcase_creator,base.group_system,1,1,1,1
+access_eaut_showcase_faq_user,eaut_showcase.faq.user,model_eaut_showcase_faq,base.group_user,1,1,1,1
+access_eaut_showcase_faq_manager,eaut_showcase.faq.manager,model_eaut_showcase_faq,base.group_system,1,1,1,1

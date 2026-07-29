@@ -28,6 +28,12 @@ class UikickInterest(models.Model):
         ('closed', 'Đã đóng'),
     ], string='Trạng thái', default='new')
 
+    public_display = fields.Boolean(
+        string='Đồng ý hiển thị công khai', default=False,
+        help="Người quan tâm tự tick khi gửi form — nếu bật, tên sẽ hiện công "
+             "khai ở tab Cộng đồng trên trang chi tiết dự án.",
+    )
+
     @api.constrains('email')
     def _check_email(self):
         for rec in self:

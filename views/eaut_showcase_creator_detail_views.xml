@@ -8,7 +8,18 @@
         <t t-call="web.frontend_layout">
             <t t-set="title" t-value="(creator.name or '') + ' — Kickstarter'"/>
             <div id="wrap" class="uikick uikick-creator-page">
-
+                <!-- Breadcrumb -->
+                <nav class="uikick-breadcrumb">
+                    <div class="uikick-container">
+                        <a href="/uikick">Khám phá</a>
+                        <span class="uikick-breadcrumb-sep">›</span>
+                        <span>Tác giả</span>
+                        <span class="uikick-breadcrumb-sep">›</span>
+                        <span class="uikick-breadcrumb-current">
+                            <t t-esc="creator.name"/>
+                        </span>
+                    </div>
+                </nav>
                 <div class="uikick-creator-page-hero">
                     <div class="uikick-creator-page-avatar">
                         <t t-if="creator.avatar">
@@ -18,13 +29,22 @@
                             <t t-esc="(creator.name or '')[:1]"/>
                         </t>
                     </div>
-                    <h1 class="uikick-creator-page-name"><t t-esc="creator.name"/></h1>
-                    <p class="uikick-creator-page-role" t-if="creator.role"><t t-esc="creator.role"/></p>
+                    <h1 class="uikick-creator-page-name">
+                        <t t-esc="creator.name"/>
+                    </h1>
+                    <p class="uikick-creator-page-role" t-if="creator.role">
+                        <t t-esc="creator.role"/>
+                    </p>
                     <p class="uikick-creator-page-meta">
-                        <span><t t-esc="creator.project_count"/> dự án đã đăng</span>
+                        <span>
+                            <t t-esc="creator.project_count"/>
+                            dự án đã đăng
+                        </span>
                         <t t-if="creator.location_id">
                             <span>•</span>
-                            <span><t t-esc="creator.location_id.name"/></span>
+                            <span>
+                                <t t-esc="creator.location_id.name"/>
+                            </span>
                         </t>
                     </p>
                 </div>
@@ -34,7 +54,10 @@
                         <nav class="uikick-tabs" id="uikick-tabs">
                             <a href="#" data-tab="About" class="uikick-tab active">Giới thiệu</a>
                             <a href="#" data-tab="Created" class="uikick-tab">
-                                Dự án đã đăng <span class="uikick-tab-count"><t t-esc="len(projects)"/></span>
+                                Dự án đã đăng
+                                <span class="uikick-tab-count">
+                                    <t t-esc="len(projects)"/>
+                                </span>
                             </a>
                         </nav>
                     </div>
@@ -45,14 +68,18 @@
                         <div class="uikick-creator-about">
                             <div class="uikick-creator-about-label">Giới thiệu</div>
                             <div class="uikick-creator-about-text">
-                                <t t-if="creator.bio"><t t-esc="creator.bio"/></t>
+                                <t t-if="creator.bio">
+                                    <t t-esc="creator.bio"/>
+                                </t>
                                 <t t-else="">Tác giả chưa cập nhật phần giới thiệu.</t>
                             </div>
                         </div>
                         <div class="uikick-creator-about" t-if="creator.email">
                             <div class="uikick-creator-about-label">Email</div>
                             <div class="uikick-creator-about-text">
-                                <a t-attf-href="mailto:#{creator.email}"><t t-esc="creator.email"/></a>
+                                <a t-attf-href="mailto:#{creator.email}">
+                                    <t t-esc="creator.email"/>
+                                </a>
                             </div>
                         </div>
                         <div class="uikick-creator-about" t-if="creator.website_url">
