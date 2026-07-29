@@ -17,6 +17,7 @@
         'views/eaut_showcase_status_views.xml',
         'views/eaut_showcase_creator_views.xml',
         'views/eaut_showcase_interest_views.xml',
+        'views/eaut_showcase_comment_views.xml',
         'views/eaut_showcase_home_views.xml',
         'views/eaut_showcase_creator_detail_views.xml',
         'views/eaut_showcase_detail_views.xml',

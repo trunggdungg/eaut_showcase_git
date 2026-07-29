@@ -175,7 +175,7 @@
                                 <a href="#" t-att-data-tab="tab"
                                    t-att-class="'uikick-tab active' if tab_index == 0 else 'uikick-tab'">
                                     <t t-esc="tab_labels.get(tab, tab)"/>
-                                    <t t-if="tab == 'Comments'"><span class="uikick-tab-count">70</span></t>
+                                    <t t-if="tab == 'Comments'"><span class="uikick-tab-count"><t t-esc="len(approved_comments)"/></span></t>
                                 </a>
                             </t>
                         </nav>
@@ -272,6 +272,54 @@
                                                 <p>Chưa có câu hỏi thường gặp nào cho sản phẩm này.</p>
                                             </div>
                                         </t>
+                                    </div>
+                                </t>
+                                <t t-elif="tab == 'Comments'">
+                                    <div class="uikick-tab-content" t-att-data-tab="tab">
+                                        <div t-if="comment_submitted" class="alert alert-success mt-4">
+                                            Cảm ơn bạn đã bình luận! Bình luận sẽ hiển thị sau khi được duyệt.
+                                        </div>
+                                        <div t-if="comment_error" class="alert alert-danger mt-4" t-out="comment_error"/>
+
+                                        <t t-if="approved_comments">
+                                            <div class="uikick-comment-list">
+                                                <t t-foreach="approved_comments" t-as="cmt">
+                                                    <div class="uikick-comment-item">
+                                                        <div class="uikick-comment-avatar"><t t-esc="(cmt['name'] or '')[:1]"/></div>
+                                                        <div class="uikick-comment-body">
+                                                            <div class="uikick-comment-head">
+                                                                <span class="uikick-comment-name"><t t-esc="cmt['name']"/></span>
+                                                                <span class="uikick-comment-time"><t t-esc="cmt['time_ago']"/></span>
+                                                            </div>
+                                                            <p class="uikick-comment-content"><t t-esc="cmt['content']"/></p>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="uikick-tab-placeholder">
+                                                <div class="uikick-tab-placeholder-icon">📋</div>
+                                                <p>Chưa có bình luận nào cho sản phẩm này.</p>
+                                            </div>
+                                        </t>
+
+                                        <form class="uikick-lead-form" id="uikick-comment-form"
+                                              t-att-action="'/uikick/project/' + (project.project_code or '') + '/comment'"
+                                              method="post">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <h3>Viết bình luận</h3>
+                                            <p class="uikick-lead-form-desc">Bình luận của bạn sẽ hiển thị sau khi được quản trị viên duyệt.</p>
+                                            <div class="uikick-lead-field">
+                                                <label>Họ và tên <span class="uikick-required">*</span></label>
+                                                <input type="text" name="comment_name" placeholder="Nguyễn Văn A" required="required"/>
+                                            </div>
+                                            <div class="uikick-lead-field">
+                                                <label>Nội dung bình luận <span class="uikick-required">*</span></label>
+                                                <textarea name="comment_content" placeholder="Chia sẻ suy nghĩ của bạn về sản phẩm này..." required="required"/>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm rounded-pill uikick-btn-block">Gửi bình luận</button>
+                                        </form>
                                     </div>
                                 </t>
                                 <t t-elif="tab == 'Community'">

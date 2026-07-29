@@ -136,13 +136,23 @@ class UikickController(http.Controller):
             )
         ] if project else []
 
+        # Chỉ hiện bình luận đã được admin duyệt — comment_ids đã sắp mới nhất
+        # lên đầu theo _order của model.
+        approved_comments = [
+            {'name': c.name, 'content': c.content, 'time_ago': _relative_time_vi(c.create_date)}
+            for c in project.comment_ids.filtered(lambda c: c.state == 'approved')
+        ] if project else []
+
         values = {
             'project': project,
             'tabs': TABS,
             'tab_labels': TAB_LABELS,
             'community_members': community_members,
+            'approved_comments': approved_comments,
             'submitted': submitted,
             'error': error,
+            'comment_submitted': kw.get('comment_submitted'),
+            'comment_error': kw.get('comment_error'),
         }
         return request.render('eaut_showcase.detail_page', values)
 
@@ -241,3 +251,35 @@ class UikickController(http.Controller):
             return request.redirect(f'/uikick/project/{project_id}?error={error}')
 
         return request.redirect(f'/uikick/project/{project_id}?submitted=1')
+
+ # ============ SUBMIT FORM "BÌNH LUẬN" ============
+    @http.route(['/uikick/project/<string:project_id>/comment'],
+                type='http', auth='public', website=True,
+                methods=['POST'], csrf=True)
+    def submit_comment(self, project_id, **post_data):
+        project = request.env['eaut_showcase.project'].sudo().search(
+            [('project_code', '=', project_id)], limit=1)
+
+        if not project:
+            return request.redirect('/uikick')
+
+        name = (post_data.get('comment_name') or '').strip()
+        content = (post_data.get('comment_content') or '').strip()
+
+        if not name or not content:
+            error = urllib.parse.quote('Vui lòng nhập đầy đủ tên và nội dung bình luận.')
+            return request.redirect(f'/uikick/project/{project_id}?comment_error={error}')
+
+        try:
+            request.env['eaut_showcase.comment'].sudo().create({
+                'project_id': project.id,
+                'name': name,
+                'content': content,
+            })
+            _logger.info('New comment for project %s from %s', project.id, name)
+        except Exception as e:
+            _logger.error('Error creating eaut_showcase.comment: %s', str(e), exc_info=True)
+            error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
+            return request.redirect(f'/uikick/project/{project_id}?comment_error={error}')
+
+        return request.redirect(f'/uikick/project/{project_id}?comment_submitted=1')
