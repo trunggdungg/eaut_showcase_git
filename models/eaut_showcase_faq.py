@@ -1,7 +1,7 @@
 from odoo import fields, models
 
 
-class UikickFaq(models.Model):
+class ShowcaseFaq(models.Model):
     _name = 'eaut_showcase.faq'
     _description = 'Câu hỏi thường gặp (FAQ) của dự án'
     _order = 'sequence, id'

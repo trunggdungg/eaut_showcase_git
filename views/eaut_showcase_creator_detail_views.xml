@@ -11,7 +11,7 @@
                 <!-- Breadcrumb -->
                 <nav class="uikick-breadcrumb">
                     <div class="uikick-container">
-                        <a href="/uikick">Khám phá</a>
+                        <a href="/showcase">Khám phá</a>
                         <span class="uikick-breadcrumb-sep">›</span>
                         <span>Tác giả</span>
                         <span class="uikick-breadcrumb-sep">›</span>
@@ -23,7 +23,7 @@
                 <div class="uikick-creator-page-hero">
                     <div class="uikick-creator-page-avatar">
                         <t t-if="creator.avatar">
-                            <img t-attf-src="/uikick/creator/#{creator.id}/avatar" t-att-alt="creator.name"/>
+                            <img t-attf-src="/showcase/creator/#{creator.id}/avatar" t-att-alt="creator.name"/>
                         </t>
                         <t t-else="">
                             <t t-esc="(creator.name or '')[:1]"/>

@@ -19,6 +19,12 @@ TAB_LABELS = {
 }
 
 SORT_OPTIONS = ["Relevance", "Most viewed", "Newest"]
+
+SORT_LABELS = {
+    "Relevance": "Liên quan",
+    "Most viewed": "Xem nhiều nhất",
+    "Newest": "Mới nhất",
+}
 ORDER_BY_SORT = {
     "Most viewed": "views desc",
     "Newest": "create_date desc",
@@ -48,9 +54,9 @@ def _relative_time_vi(dt):
         return '%d tháng trước' % months
     return '%d năm trước' % int(months // 12)
 
-class UikickController(http.Controller):
+class ShowcaseController(http.Controller):
 
-    @http.route(['/uikick', '/uikick/category/<string:category>'],
+    @http.route(['/showcase', '/showcase/category/<string:category>'],
                 type='http', auth='public', website=True, sitemap=True)
     def home(self, category=None, **kw):
         Project = request.env['eaut_showcase.project'].sudo()
@@ -81,6 +87,8 @@ class UikickController(http.Controller):
         if statuses:
             domain.append(('status_id.name', 'in', statuses))
 
+        all_locations = Project.search([]).mapped('location_id').sorted(key=lambda l: l.name)
+
         location = (kw.get('location') or '').strip()
         if location:
             domain.append(('location_id.name', 'ilike', location))
@@ -90,7 +98,7 @@ class UikickController(http.Controller):
         projects = Project.search(domain, order=order)
 
         if not selected_categories:
-            header_label = 'All Projects'
+            header_label = 'Tất cả dự án'
         elif len(selected_categories) == 1:
             header_label = selected_categories[0]
         else:
@@ -99,9 +107,11 @@ class UikickController(http.Controller):
         values = {
             'categories': all_categories,
             'all_statuses': all_statuses,
+            'all_locations': all_locations,
             'header_label': header_label,
             'projects': projects,
             'sort_options': SORT_OPTIONS,
+            'sort_labels': SORT_LABELS,
             'filters': {
                 'categories': selected_categories,
                 'status': statuses,
@@ -111,7 +121,7 @@ class UikickController(http.Controller):
         }
         return request.render('eaut_showcase.home_page', values)
 
-    @http.route(['/uikick/project/<string:project_id>'],
+    @http.route(['/showcase/project/<string:project_id>'],
                 type='http', auth='public', website=True, sitemap=False)
     def detail(self, project_id, submitted=None, error=None, **kw):
         Project = request.env['eaut_showcase.project'].sudo()
@@ -132,17 +142,29 @@ class UikickController(http.Controller):
             )
         ] if project else []
 
+        anonymous_interest_count = (project.interest_count - len(community_members)) if project else 0
+        # Chỉ hiện bình luận đã được admin duyệt — comment_ids đã sắp mới nhất
+        # lên đầu theo _order của model.
+        approved_comments = [
+            {'name': c.name, 'content': c.content, 'time_ago': _relative_time_vi(c.create_date)}
+            for c in project.comment_ids.filtered(lambda c: c.state == 'approved')
+        ] if project else []
+
         values = {
             'project': project,
             'tabs': TABS,
             'tab_labels': TAB_LABELS,
             'community_members': community_members,
+            'anonymous_interest_count': anonymous_interest_count,
+            'approved_comments': approved_comments,
             'submitted': submitted,
             'error': error,
+            'comment_submitted': kw.get('comment_submitted'),
+            'comment_error': kw.get('comment_error'),
         }
         return request.render('eaut_showcase.detail_page', values)
 
-    @http.route(['/uikick/project/<string:project_id>/thumbnail'],
+    @http.route(['/showcase/project/<string:project_id>/thumbnail'],
                 type='http', auth='public', website=True, sitemap=False)
     def project_thumbnail(self, project_id, **kw):
         project = request.env['eaut_showcase.project'].sudo().search(
@@ -156,7 +178,7 @@ class UikickController(http.Controller):
             project, field_name='image'
         ).get_response()
 
-    @http.route(['/uikick/creator/<int:creator_id>/avatar'],
+    @http.route(['/showcase/creator/<int:creator_id>/avatar'],
                 type='http', auth='public', website=True, sitemap=False)
     def creator_avatar(self, creator_id, **kw):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
@@ -166,7 +188,7 @@ class UikickController(http.Controller):
             creator, field_name='avatar'
         ).get_response()
 
-    @http.route(['/uikick/creator/<int:creator_id>'],
+    @http.route(['/showcase/creator/<int:creator_id>'],
                 type='http', auth='public', website=True, sitemap=True)
     def creator_detail(self, creator_id, **kw):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
@@ -179,7 +201,7 @@ class UikickController(http.Controller):
         return request.render('eaut_showcase.creator_detail_page', values)
 
     # ============ SUBMIT FORM "QUAN TÂM" ============
-    @http.route(['/uikick/project/<string:project_id>/interest'],
+    @http.route(['/showcase/project/<string:project_id>/interest'],
                 type='http', auth='public', website=True,
                 methods=['POST'], csrf=True)
     def submit_interest(self, project_id, **post_data):
@@ -187,7 +209,7 @@ class UikickController(http.Controller):
             [('project_code', '=', project_id)], limit=1)
 
         if not project:
-            return request.redirect('/uikick')
+            return request.redirect('/showcase')
 
         name = (post_data.get('lead_name') or '').strip()
         email = (post_data.get('lead_email') or '').strip()
@@ -197,7 +219,7 @@ class UikickController(http.Controller):
 
         if not name or not email:
             error = urllib.parse.quote('Vui lòng nhập đầy đủ Họ tên và Email.')
-            return request.redirect(f'/uikick/project/{project_id}?error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
         try:
             request.env['eaut_showcase.interest'].sudo().create({
@@ -214,4 +236,36 @@ class UikickController(http.Controller):
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/uikick/project/{project_id}?error={error}')
 
-        return request.redirect(f'/uikick/project/{project_id}?submitted=1')
+        return request.redirect(f'/showcase/project/{project_id}?submitted=1')
+
+# ============ SUBMIT FORM "BÌNH LUẬN" ============
+    @http.route(['/showcase/project/<string:project_id>/comment'],
+                type='http', auth='public', website=True,
+                methods=['POST'], csrf=True)
+    def submit_comment(self, project_id, **post_data):
+        project = request.env['eaut_showcase.project'].sudo().search(
+            [('project_code', '=', project_id)], limit=1)
+
+        if not project:
+            return request.redirect('/showcase')
+
+        name = (post_data.get('comment_name') or '').strip()
+        content = (post_data.get('comment_content') or '').strip()
+
+        if not name or not content:
+            error = urllib.parse.quote('Vui lòng nhập đầy đủ tên và nội dung bình luận.')
+            return request.redirect(f'/showcase/project/{project_id}?comment_error={error}')
+
+        try:
+            request.env['eaut_showcase.comment'].sudo().create({
+                'project_id': project.id,
+                'name': name,
+                'content': content,
+            })
+            _logger.info('New comment for project %s from %s', project.id, name)
+        except Exception as e:
+            _logger.error('Error creating eaut_showcase.comment: %s', str(e), exc_info=True)
+            error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
+            return request.redirect(f'/showcase/project/{project_id}?comment_error={error}')
+
+        return request.redirect(f'/showcase/project/{project_id}?comment_submitted=1')

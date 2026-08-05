@@ -2,7 +2,7 @@
 from odoo import models, fields
 
 
-class UikickStatus(models.Model):
+class ShowcaseStatus(models.Model):
     _name = 'eaut_showcase.status'
     _description = 'Trạng thái bài đăng Showcase'
     _order = 'sequence, id'

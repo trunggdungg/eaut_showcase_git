@@ -10,7 +10,7 @@ COLOR_INDEX_TO_HEX = {
     9: '#D6145F', 10: '#30C381', 11: '#9365B8',
 }
 
-class UikickCategory(models.Model):
+class ShowcaseCategory(models.Model):
     _name = 'eaut_showcase.category'
     _description = 'Danh mục dự án Showcase'
     _order = 'sequence, id'

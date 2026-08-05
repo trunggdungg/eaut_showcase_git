@@ -13,9 +13,9 @@
                 <!-- Breadcrumb -->
                 <nav class="uikick-breadcrumb">
                     <div class="uikick-container">
-                        <a href="/uikick">Khám phá</a>
+                        <a href="/showcase">Khám phá</a>
                         <span class="uikick-breadcrumb-sep">›</span>
-                        <a t-att-href="'/uikick/category/' + (project.category_id.name or '')">
+                        <a t-att-href="'/showcase/category/' + (project.category_id.name or '')">
                             <t t-esc="project.category_id.name"/>
                         </a>
                         <span class="uikick-breadcrumb-sep">›</span>
@@ -51,7 +51,7 @@
                                             allowfullscreen="allowfullscreen" loading="lazy"/>
                                 </t>
                                 <t t-else="">
-                                    <img t-att-src="'/uikick/project/' + (project.project_code or '') + '/thumbnail'"
+                                    <img t-att-src="'/showcase/project/' + (project.project_code or '') + '/thumbnail'"
                                          t-att-alt="project.title" class="uikick-hero-video-img"/>
                                     <video t-att-src="project.video_url" loop="loop" playsinline="playsinline"
                                            controls="controls" preload="auto" class="uikick-hero-video-el"/>
@@ -212,9 +212,7 @@
                                 <a href="#" t-att-data-tab="tab"
                                    t-att-class="'uikick-tab active' if tab_index == 0 else 'uikick-tab'">
                                     <t t-esc="tab_labels.get(tab, tab)"/>
-                                    <t t-if="tab == 'Comments'">
-                                        <span class="uikick-tab-count">70</span>
-                                    </t>
+                                      <t t-if="tab == 'Comments'"><span class="uikick-tab-count"><t t-esc="len(approved_comments)"/></span></t>
                                 </a>
                             </t>
                         </nav>
@@ -250,7 +248,7 @@
                                 <div t-if="error" class="alert alert-danger mt-4" t-out="error"/>
 
                                 <form class="uikick-lead-form"
-                                      t-att-action="'/uikick/project/' + (project.project_code or '') + '/interest'"
+                                      t-att-action="'/showcase/project/' + (project.project_code or '') + '/interest'"
                                       method="post">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <h3>
@@ -331,10 +329,61 @@
                                         </t>
                                     </div>
                                 </t>
+                                    <t t-elif="tab == 'Comments'">
+                                    <div class="uikick-tab-content" t-att-data-tab="tab">
+                                        <div t-if="comment_submitted" class="alert alert-success mt-4">
+                                            Cảm ơn bạn đã bình luận! Bình luận sẽ hiển thị sau khi được duyệt.
+                                        </div>
+                                        <div t-if="comment_error" class="alert alert-danger mt-4" t-out="comment_error"/>
+
+                                        <t t-if="approved_comments">
+                                            <div class="uikick-comment-list">
+                                                <t t-foreach="approved_comments" t-as="cmt">
+                                                    <div class="uikick-comment-item">
+                                                        <div class="uikick-comment-avatar"><t t-esc="(cmt['name'] or '')[:1]"/></div>
+                                                        <div class="uikick-comment-body">
+                                                            <div class="uikick-comment-head">
+                                                                <span class="uikick-comment-name"><t t-esc="cmt['name']"/></span>
+                                                                <span class="uikick-comment-time"><t t-esc="cmt['time_ago']"/></span>
+                                                            </div>
+                                                            <p class="uikick-comment-content"><t t-esc="cmt['content']"/></p>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                            </div>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="uikick-tab-placeholder">
+                                                <div class="uikick-tab-placeholder-icon">📋</div>
+                                                <p>Chưa có bình luận nào cho sản phẩm này.</p>
+                                            </div>
+                                        </t>
+
+                                        <form class="uikick-lead-form" id="uikick-comment-form"
+                                              t-att-action="'/showcase/project/' + (project.project_code or '') + '/comment'"
+                                              method="post">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <h3>Viết bình luận</h3>
+                                            <p class="uikick-lead-form-desc">Bình luận của bạn sẽ hiển thị sau khi được quản trị viên duyệt.</p>
+                                            <div class="uikick-lead-field">
+                                                <label>Họ và tên <span class="uikick-required">*</span></label>
+                                                <input type="text" name="comment_name" placeholder="Nguyễn Văn A" required="required"/>
+                                            </div>
+                                            <div class="uikick-lead-field">
+                                                <label>Nội dung bình luận <span class="uikick-required">*</span></label>
+                                                <textarea name="comment_content" placeholder="Chia sẻ suy nghĩ của bạn về sản phẩm này..." required="required"/>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm rounded-pill uikick-btn-block">Gửi bình luận</button>
+                                        </form>
+                                    </div>
+                                </t>
                                        <t t-elif="tab == 'Community'">
                                     <div class="uikick-tab-content" t-att-data-tab="tab">
                                         <p class="uikick-community-total">
                                             <t t-esc="project.interest_count"/> người đang quan tâm sản phẩm này.
+                                        </p>
+                                         <p t-if="anonymous_interest_count &gt; 0" class="uikick-community-anonymous-note">
+                                            <t t-esc="anonymous_interest_count"/> người ẩn danh đang quan tâm.
                                         </p>
                                         <t t-if="community_members">
                                             <div class="uikick-community-list">
@@ -377,11 +426,11 @@
                                 <div class="uikick-creator-card">
                                     <div class="uikick-creator-head">
 
-                                        <a t-attf-href="/uikick/creator/#{creator.id}"
+                                        <a t-attf-href="/showcase/creator/#{creator.id}"
                                            class="uikick-creator-avatar-link">
 
                                             <t t-if="creator.avatar">
-                                                <img t-attf-src="/uikick/creator/#{creator.id}/avatar"
+                                                <img t-attf-src="/showcase/creator/#{creator.id}/avatar"
                                                      t-att-alt="creator.name"
                                                      class="uikick-creator-avatar"/>
                                             </t>
@@ -394,7 +443,7 @@
                                         </a>
 
                                         <div>
-                                            <a t-attf-href="/uikick/creator/#{creator.id}"
+                                            <a t-attf-href="/showcase/creator/#{creator.id}"
                                                class="uikick-creator-name">
                                                 <t t-esc="creator.name"/>
                                             </a>
@@ -433,7 +482,7 @@
                                     </p>
 
                                     <a
-                                       t-attf-href="/uikick/creator/#{creator.id}"
+                                       t-attf-href="/showcase/creator/#{creator.id}"
                                        class="btn btn-link p-0 uikick-link-btn">
                                        Tìm hiểu thêm
                                     </a>

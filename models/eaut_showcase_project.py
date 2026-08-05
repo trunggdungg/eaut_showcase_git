@@ -6,9 +6,9 @@ YOUTUBE_URL_RE = re.compile(
     r'([A-Za-z0-9_-]{11})'
 )
 
-class UikickProject(models.Model):
+class ShowcaseProject(models.Model):
     _name = 'eaut_showcase.project'
-    _description = 'UIKick Crowdfunding Project'
+    _description = 'Showcase Crowdfunding Project'
     _inherit = ['mail.thread', 'mail.activity.mixin']
     _rec_name = 'title'
     _order = 'sequence, id'
@@ -63,10 +63,29 @@ class UikickProject(models.Model):
     campaign_number = fields.Integer(string='Campaign Number')
     active = fields.Boolean(default=True,tracking=True)
     faq_ids = fields.One2many('eaut_showcase.faq', 'project_id', string='FAQ')
+    comment_ids = fields.One2many('eaut_showcase.comment', 'project_id', string='Bình luận')
     interest_ids = fields.One2many('eaut_showcase.interest', 'project_id', string='Người quan tâm')
     interest_count = fields.Integer(
         string='Số lượt quan tâm', compute='_compute_interest_count', store=True,tracking=True
     )
+
+    comment_count = fields.Integer(
+        string='Số bình luận', compute='_compute_comment_count', store=True,
+    )
+
+    def action_view_comments(self):
+        self.ensure_one()
+        action = self.env['ir.actions.act_window']._for_xml_id(
+            'eaut_showcase.action_eaut_showcase_comment'
+        )
+        action['domain'] = [('project_id', '=', self.id)]
+        action['context'] = {'default_project_id': self.id}
+        return action
+
+    @api.depends('comment_ids')
+    def _compute_comment_count(self):
+        for project in self:
+            project.comment_count = len(project.comment_ids)
 
     @api.depends('interest_ids')
     def _compute_interest_count(self):

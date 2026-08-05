@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 EMAIL_RE = re.compile(r"[^@]+@[^@]+\.[^@]+")
 
 
-class UikickInterest(models.Model):
+class ShowcaseInterest(models.Model):
     _name = 'eaut_showcase.interest'
     _description = 'Người quan tâm đến dự án Showcase'
     _order = 'create_date desc'

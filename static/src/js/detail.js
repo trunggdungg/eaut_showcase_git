@@ -100,6 +100,16 @@
             });
         });
     }
+
+      function initCommentRedirectTab() {
+        // Sau khi gửi bình luận, trang load lại với ?comment_submitted=1 hoặc
+        // ?comment_error=... — tự chuyển sang tab Bình luận để người dùng thấy
+        // ngay thông báo, vì tab này không phải tab mặc định.
+        if (!/[?&](comment_submitted|comment_error)=/.test(window.location.search)) return;
+        var commentsTab = document.querySelector('.uikick-tab[data-tab="Comments"]');
+        if (commentsTab) commentsTab.click();
+    }
+
     function initDescriptionToc() {
         // Tự tách "Mô tả giới thiệu" (project.description) theo từng tiêu đề H2
         // thành các phần riêng, đồng thời sinh mục lục bên trái; click vào mục
@@ -179,5 +189,6 @@
         initDescriptionToc();
         initRemindMe();
         initFaqAccordion();
+        initCommentRedirectTab();
     });
 })();

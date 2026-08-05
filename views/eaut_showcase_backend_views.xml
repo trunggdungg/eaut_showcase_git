@@ -35,6 +35,10 @@
                                    widget="statinfo"
                                    string="Quan tâm"/>
                         </button>
+                           <button name="action_view_comments" type="object"
+                                class="oe_stat_button" icon="fa-comments">
+                            <field name="comment_count" widget="statinfo" string="Bình luận"/>
+                        </button>
                     </div>
 
                     <field name="image"
@@ -97,10 +101,10 @@
                                    style="width: 100%;"/>
                         </page>
 
-                        <page string="Thống kê" name="stats">
-                            <field name="campaign_number"
-                                   string="Số liệu chiến dịch"/>
-                        </page>
+<!--                        <page string="Thống kê" name="stats">-->
+<!--                            <field name="campaign_number"-->
+<!--                                   string="Số liệu chiến dịch"/>-->
+<!--                        </page>-->
 
                          <page string="FAQ" name="faq">
                             <field name="faq_ids">
@@ -129,7 +133,7 @@
     <!-- ============================================================ -->
     <!-- Menu                                                          -->
     <!-- ============================================================ -->
-    <menuitem id="menu_uikick_root" name="Eaut Showcase" sequence="100"/>
+    <menuitem id="menu_uikick_root" name="Eaut Showcase" sequence="100"  web_icon="eaut_showcase,static/description/icon.png"/>
 
     <menuitem id="menu_uikick_projects" name="Dự án" parent="menu_uikick_root"
               action="action_uikick_project" sequence="10"/>
@@ -139,6 +143,9 @@
 
     <menuitem id="menu_uikick_interest" name="Người quan tâm" parent="menu_uikick_root"
               action="action_eaut_showcase_interest" sequence="30"/>
+
+        <menuitem id="menu_uikick_comment" name="Bình luận" parent="menu_uikick_root"
+              action="action_eaut_showcase_comment" sequence="40"/>
 
     <menuitem id="menu_uikick_config" name="Cấu hình" parent="menu_uikick_root" sequence="90"/>
 

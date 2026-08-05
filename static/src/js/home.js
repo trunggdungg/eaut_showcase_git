@@ -55,6 +55,14 @@
         if (sortSelect) {
             sortSelect.addEventListener("change", function () { form.submit(); });
         }
+          var locationSelect = document.getElementById("uikick-location-select");
+        var locationInput = document.getElementById("uikick-location-input");
+        if (locationSelect && locationInput) {
+            locationSelect.addEventListener("change", function () {
+                locationInput.value = locationSelect.value;
+                form.submit();
+            });
+        }
     }
 
     function initMobileFilterToggle() {

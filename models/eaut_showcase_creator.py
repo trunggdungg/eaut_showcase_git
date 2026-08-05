@@ -2,7 +2,7 @@
 from odoo import api, fields, models
 
 
-class UikickCreator(models.Model):
+class ShowcaseCreator(models.Model):
     _name = 'eaut_showcase.creator'
     _description = 'Tác giả / nhóm thực hiện sản phẩm'
     _order = 'name'
