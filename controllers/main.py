@@ -58,9 +58,10 @@ def _relative_time_vi(dt):
 
 class ShowcaseController(http.Controller):
 
-    @http.route(['/showcase', '/showcase/category/<string:category>'],
+    @http.route(['/showcase', '/showcase/page/<int:page>',
+                 '/showcase/category/<string:category>'],
                 type='http', auth='public', website=True, sitemap=True)
-    def home(self, category=None, **kw):
+    def home(self, category=None, page=1, **kw):
         Project = request.env['eaut_showcase.project'].sudo()
 
         all_categories = request.env['eaut_showcase.category'].sudo().search([], order='sequence, id')
@@ -106,7 +107,7 @@ class ShowcaseController(http.Controller):
         if location:
             url_args['location'] = location
 
-        page = int(kw.get('page') or 1)
+        page = page or 1
         total = Project.search_count(domain)
         pager = request.website.pager(
             url='/showcase', total=total, page=page, step=PAGE_SIZE, scope=7, url_args=url_args,
@@ -252,7 +253,7 @@ class ShowcaseController(http.Controller):
         except Exception as e:
             _logger.error('Error creating eaut_showcase.interest: %s', str(e), exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
-            return request.redirect(f'/uikick/project/{project_id}?error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
         return request.redirect(f'/showcase/project/{project_id}?submitted=1')
 
