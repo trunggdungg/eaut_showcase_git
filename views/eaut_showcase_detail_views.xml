@@ -138,9 +138,9 @@
                                     <span class="uikick-category-badge uikick-category-badge-empty">Chưa có danh mục</span>
                                 </t>
                             </div>
-                            <t t-if="project.location_id">
-                                <div class="uikick-hero-meta-group">
-                                    <h4>Địa điểm</h4>
+                            <div class="uikick-hero-meta-group">
+                                <h4>Địa điểm</h4>
+                                <t t-if="project.location_id">
                                     <div class="uikick-hero-location">
                                         <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" clip-rule="evenodd"
@@ -148,8 +148,11 @@
                                         </svg>
                                         <t t-esc="project.location_id.name"/>
                                     </div>
-                                </div>
-                            </t>
+                                </t>
+                                <t t-else="">
+                                    <span class="uikick-category-badge uikick-category-badge-empty">Chưa có địa điểm</span>
+                                </t>
+                            </div>
 
 <!--                            <button class="btn btn-primary btn-sm rounded-pill uikick-btn-block">-->
 <!--                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"-->
