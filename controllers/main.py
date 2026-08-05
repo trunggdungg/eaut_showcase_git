@@ -18,6 +18,8 @@ TAB_LABELS = {
     "Community": "Cộng đồng",
 }
 
+PAGE_SIZE = 12
+
 SORT_OPTIONS = ["Relevance", "Most viewed", "Newest"]
 
 SORT_LABELS = {
@@ -95,7 +97,21 @@ class ShowcaseController(http.Controller):
 
         sort = kw.get('sort') or 'Relevance'
         order = ORDER_BY_SORT.get(sort, 'sequence asc, id asc')
-        projects = Project.search(domain, order=order)
+
+        url_args = {'categories_submitted': 1, 'sort': sort}
+        if selected_categories:
+            url_args['category'] = selected_categories
+        if statuses:
+            url_args['status'] = statuses
+        if location:
+            url_args['location'] = location
+
+        page = int(kw.get('page') or 1)
+        total = Project.search_count(domain)
+        pager = request.website.pager(
+            url='/showcase', total=total, page=page, step=PAGE_SIZE, scope=7, url_args=url_args,
+        )
+        projects = Project.search(domain, order=order, limit=PAGE_SIZE, offset=pager['offset'])
 
         if not selected_categories:
             header_label = 'Tất cả dự án'
@@ -110,6 +126,8 @@ class ShowcaseController(http.Controller):
             'all_locations': all_locations,
             'header_label': header_label,
             'projects': projects,
+            'projects_count': total,
+            'pager': pager,
             'sort_options': SORT_OPTIONS,
             'sort_labels': SORT_LABELS,
             'filters': {

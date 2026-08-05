@@ -136,7 +136,7 @@
                                     <t t-esc="header_label"/>
                                 </h1>
                                 <p>
-                                    <t t-esc="len(projects)"/>
+                                <t t-esc="projects_count"/>
                                     dự án
                                 </p>
                             </div>
@@ -162,6 +162,9 @@
                                 <p class="uikick-empty">Không có dự án nào phù hợp với các bộ lọc này.</p>
                             </t>
                         </div>
+                         <t t-if="pager['page_count'] &gt; 1">
+                            <t t-call="website.pager"/>
+                        </t>
                     </main>
                 </div>
             </div>

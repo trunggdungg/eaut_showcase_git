@@ -39,11 +39,11 @@ class ShowcaseProject(models.Model):
 
     views = fields.Integer(string='View Count', default=0)
     image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920,tracking=True)
-    video_url = fields.Char(string='Video URL',tracking=True)
+    video_url = fields.Char(string='Video URL')
     video_embed_url = fields.Char(
         string='Video Embed URL', compute='_compute_video_embed_url',
         help="URL nhúng iframe khi video_url là link chia sẻ YouTube. Trống nếu "
-             "video_url là file/luồng video phát trực tiếp được (mp4, m3u8...).",tracking=True
+             "video_url là file/luồng video phát trực tiếp được (mp4, m3u8...)."
     )
     video_thumbnail_url = fields.Char(
         string='Video Thumbnail URL', compute='_compute_video_embed_url',
@@ -53,7 +53,7 @@ class ShowcaseProject(models.Model):
     video_preview_embed_url = fields.Char(
         string='Video Preview Embed URL', compute='_compute_video_embed_url',
         help="URL nhúng YouTube tự động phát/tắt tiếng/lặp lại, dùng cho preview "
-             "khi hover vào card ở trang chủ.",tracking=True
+             "khi hover vào card ở trang chủ."
     )
     description = fields.Html(string='Mô tả giới thiệu', sanitize=True)
     status_id = fields.Many2one(
@@ -66,7 +66,7 @@ class ShowcaseProject(models.Model):
     comment_ids = fields.One2many('eaut_showcase.comment', 'project_id', string='Bình luận')
     interest_ids = fields.One2many('eaut_showcase.interest', 'project_id', string='Người quan tâm')
     interest_count = fields.Integer(
-        string='Số lượt quan tâm', compute='_compute_interest_count', store=True,tracking=True
+        string='Số lượt quan tâm', compute='_compute_interest_count', store=True
     )
 
     comment_count = fields.Integer(
