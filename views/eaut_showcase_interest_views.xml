@@ -26,6 +26,13 @@
         <field name="arch" type="xml">
             <form string="Người quan tâm">
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_interests_by_email"
+                                class="oe_stat_button" icon="fa-envelope-o">
+                            <field name="email_interest_count" widget="statinfo"
+                                   string="Lần gửi form"/>
+                        </button>
+                    </div>
                     <widget name="web_ribbon" title="Đã đóng" bg_color="text-bg-secondary"
                             invisible="state != 'closed'"/>
                     <div class="oe_title">

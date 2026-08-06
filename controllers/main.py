@@ -141,7 +141,7 @@ class ShowcaseController(http.Controller):
 
     @http.route(['/showcase/project/<string:project_id>'],
                 type='http', auth='public', website=True, sitemap=False)
-    def detail(self, project_id, submitted=None, error=None, **kw):
+    def detail(self, project_id, submitted=None, error=None, already_interested=None, **kw):
         Project = request.env['eaut_showcase.project'].sudo()
         project = Project.search([('project_code', '=', project_id)], limit=1)
         if not project:
@@ -177,6 +177,7 @@ class ShowcaseController(http.Controller):
             'approved_comments': approved_comments,
             'submitted': submitted,
             'error': error,
+            'already_interested': already_interested,
             'comment_submitted': kw.get('comment_submitted'),
             'comment_error': kw.get('comment_error'),
         }
@@ -240,6 +241,21 @@ class ShowcaseController(http.Controller):
             return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
         try:
+            existing = request.env['eaut_showcase.interest'].sudo().search([
+                ('project_id', '=', project.id),
+                ('email', '=', email),
+            ], limit=1)
+
+            if existing:
+                existing.write({
+                    'name': name,
+                    'phone': phone,
+                    'message': message,
+                    'public_display': public_display,
+                })
+                _logger.info('Updated existing interest for project %s: %s <%s>', project.id, name, email)
+                return request.redirect(f'/showcase/project/{project_id}?submitted=1&already_interested=1')
+
             request.env['eaut_showcase.interest'].sudo().create({
                 'project_id': project.id,
                 'name': name,
@@ -252,7 +268,7 @@ class ShowcaseController(http.Controller):
         except Exception as e:
             _logger.error('Error creating eaut_showcase.interest: %s', str(e), exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
-            return request.redirect(f'/uikick/project/{project_id}?error={error}')
+            return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
         return request.redirect(f'/showcase/project/{project_id}?submitted=1')
 

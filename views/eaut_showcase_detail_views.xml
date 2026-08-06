@@ -242,7 +242,10 @@
                                 <div class="uikick-story-text" id="uikick-description-content"
                                      t-field="project.description"/>
 
-                                <div t-if="submitted" class="alert alert-success mt-4">
+                                <div t-if="submitted and already_interested" class="alert alert-success mt-4">
+                                    Bạn đã quan tâm dự án này trước đó — thông tin của bạn đã được cập nhật.
+                                </div>
+                                <div t-elif="submitted" class="alert alert-success mt-4">
                                     Cảm ơn bạn đã quan tâm! Chúng tôi sẽ liên hệ sớm.
                                 </div>
                                 <div t-if="error" class="alert alert-danger mt-4" t-out="error"/>

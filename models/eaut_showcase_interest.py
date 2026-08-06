@@ -34,8 +34,28 @@ class ShowcaseInterest(models.Model):
              "khai ở tab Cộng đồng trên trang chi tiết dự án.",
     )
 
+    email_interest_count = fields.Integer(
+        string='Số lần gửi form', compute='_compute_email_interest_count',
+    )
+
     @api.constrains('email')
     def _check_email(self):
         for rec in self:
             if rec.email and not EMAIL_RE.match(rec.email):
                 raise ValidationError('Email không hợp lệ: %s' % rec.email)
+
+    def _compute_email_interest_count(self):
+        for rec in self:
+            rec.email_interest_count = (
+                self.search_count([('email', '=', rec.email)]) if rec.email else 0
+            )
+
+    def action_view_interests_by_email(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Các lần quan tâm khác (theo email)',
+            'res_model': 'eaut_showcase.interest',
+            'view_mode': 'list,form',
+            'domain': [('email', '=', self.email)],
+        }
