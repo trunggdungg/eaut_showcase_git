@@ -163,7 +163,9 @@
                             </t>
                         </div>
                          <t t-if="pager['page_count'] &gt; 1">
-                            <t t-call="website.pager"/>
+                            <div class="uikick-pager">
+                                <t t-call="website.pager"/>
+                            </div>
                         </t>
                     </main>
                 </div>

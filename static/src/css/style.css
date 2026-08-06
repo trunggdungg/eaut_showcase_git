@@ -56,6 +56,12 @@
 .uikick-sort select { font-size: 13px; border: 1px solid var(--bs-border-color, #d1d5db); border-radius: 4px; padding: 6px 10px; margin-bottom: 0; }
 .uikick-empty { grid-column: 1 / -1; text-align: center; color: var(--bs-secondary-color, #9ca3af); font-size: 13px; padding: 48px 0; }
 
+/* Pagination — .pagination is a Bootstrap flex container, so it needs
+   justify-content (text-align has no effect on a flex row). */
+.uikick-pager { margin-top: 32px; }
+.uikick-pager .pagination { justify-content: center; margin: 0; }
+
+
 /* Grid + cards */
 .uikick-grid { display: grid; gap: 32px 24px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .uikick-card { display: block; cursor: pointer; }

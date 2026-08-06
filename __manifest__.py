@@ -12,7 +12,7 @@
 """,
     'category': 'Website',
     'author': 'Trugn Dugn',
-    'depends': ['website', 'mail'],
+    'depends': ['website', 'mail','eaut_career_center'],
     'data': [
         'security/ir.model.access.csv',
         'data/eaut_showcase_data.xml',
