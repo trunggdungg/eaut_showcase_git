@@ -83,12 +83,22 @@ class ShowcaseAdvisorRegistration(models.Model):
         if not next_line:
             self.write({'state': 'unassigned'})
             self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+            self.message_post(
+                body='Cả %s nguyện vọng đều không thành công. Nhà trường sẽ liên hệ '
+                     'để phân giảng viên hướng dẫn cho bạn.' % self.term_id.max_preferences,
+                partner_ids=self.student_id.ids,
+            )
             return
         next_line._activate()
         if next_line.state == 'pending':
             self.with_context(advisor_internal_write=True).write({
                 'assigned_creator_id': next_line.creator_id.id,
             })
+            self.message_post(
+                body='Nguyện vọng của bạn đang được chuyển sang giảng viên <b>%s</b>, '
+                     'chờ phản hồi.' % next_line.creator_id.name,
+                partner_ids=self.student_id.ids,
+            )
 
     def action_reset_for_withdrawal(self):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
@@ -194,6 +204,11 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             ('creator_id', '=', self.creator_id.id),
         ], limit=1)
 
+    def _notify(self, partner, body):
+        self.ensure_one()
+        if partner:
+            self.registration_id.message_post(body=body, partner_ids=partner.ids)
+
     def _activate(self):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
         luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu."""
@@ -209,6 +224,11 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             'activated_date': now,
             'deadline': now + timedelta(hours=self.term_id.sla_hours or 48),
         })
+        self._notify(
+            self.creator_id.user_id.partner_id,
+            'Có sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn — '
+            'vào /my/advisor-requests để duyệt.' % self.student_id.name,
+        )
 
     def action_approve(self):
         self.ensure_one()
@@ -238,12 +258,22 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         self.registration_id.with_context(advisor_internal_write=True).write({
             'assigned_creator_id': self.creator_id.id,
         })
+        self._notify(
+            self.student_id,
+            'Chúc mừng! Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn.'
+            % self.creator_id.name,
+        )
 
     def action_reject(self):
         self.ensure_one()
         if self.state != 'pending':
             raise UserError('Nguyện vọng này không ở trạng thái chờ duyệt.')
         self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
+        self._notify(
+            self.student_id,
+            'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn. Hệ thống sẽ tự '
+            'động chuyển sang nguyện vọng kế tiếp (nếu có).' % self.creator_id.name,
+        )
         self.registration_id._activate_next_line()
 
     @api.model
@@ -255,4 +285,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         ])
         for line in expired_lines:
             line.write({'state': 'expired', 'decided_date': now})
+            line._notify(
+                line.student_id,
+                'Giảng viên <b>%s</b> không phản hồi trong thời hạn. Hệ thống sẽ tự '
+                'động chuyển sang nguyện vọng kế tiếp (nếu có).' % line.creator_id.name,
+            )
             line.registration_id._activate_next_line()

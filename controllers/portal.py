@@ -36,10 +36,27 @@ class AdvisorPortalController(http.Controller):
             'registration': registration,
             'capacities': capacities,
             'max_preferences': term.max_preferences if term else 5,
+            'partner': request.env.user.partner_id,
             'submitted': kw.get('submitted'),
             'error': kw.get('error'),
         }
         return request.render('eaut_showcase.portal_my_advisor', values)
+
+    @http.route(['/my/advisor/profile'], type='http', auth='user', website=True,
+                methods=['POST'], csrf=True)
+    def my_advisor_profile(self, **post):
+        student_code = (post.get('student_code') or '').strip()
+        student_class = (post.get('student_class') or '').strip()
+        student_major = (post.get('student_major') or '').strip()
+        if not (student_code and student_class and student_major):
+            error = urllib.parse.quote('Vui lòng điền đầy đủ MSSV, lớp và ngành học.')
+            return request.redirect(f'/my/advisor?error={error}')
+        request.env.user.partner_id.write({
+            'showcase_student_code': student_code,
+            'showcase_student_class': student_class,
+            'showcase_student_major': student_major,
+        })
+        return request.redirect('/my/advisor')
 
     @http.route(['/my/advisor/submit'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
@@ -49,6 +66,9 @@ class AdvisorPortalController(http.Controller):
             return request.redirect('/my/advisor')
 
         partner = request.env.user.partner_id
+        if not partner.showcase_student_code:
+            error = urllib.parse.quote('Vui lòng hoàn thiện hồ sơ (MSSV, lớp, ngành) trước.')
+            return request.redirect(f'/my/advisor?error={error}')
         Registration = request.env['eaut_showcase.advisor.registration'].sudo()
         registration = Registration.search([
             ('term_id', '=', term.id), ('student_id', '=', partner.id),

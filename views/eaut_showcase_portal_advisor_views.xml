@@ -58,6 +58,28 @@
                     </div>
                 </t>
 
+                <t t-elif="not partner.showcase_student_code">
+                    <div class="alert alert-info">
+                        Vui lòng hoàn thiện hồ sơ trước khi chọn giảng viên hướng dẫn.
+                    </div>
+                    <form action="/my/advisor/profile" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="mb-3">
+                            <label for="student_code">Mã số sinh viên (MSSV)</label>
+                            <input type="text" name="student_code" id="student_code" class="form-control" required="required"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="student_class">Lớp</label>
+                            <input type="text" name="student_class" id="student_class" class="form-control" required="required"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="student_major">Ngành học</label>
+                            <input type="text" name="student_major" id="student_major" class="form-control" required="required"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
+                    </form>
+                </t>
+
                 <t t-else="">
                     <p>
                         Chọn tối đa <strong t-esc="max_preferences"/> giảng viên, theo đúng
@@ -110,6 +132,7 @@
                     <thead>
                         <tr>
                             <th>Sinh viên</th>
+                            <th>MSSV / Lớp / Ngành</th>
                             <th>Lời giới thiệu</th>
                             <th>Hạn phản hồi</th>
                             <th>Hành động</th>
@@ -118,6 +141,11 @@
                     <tbody>
                         <tr t-foreach="lines" t-as="line">
                             <td t-esc="line.student_id.name"/>
+                            <td>
+                                <t t-esc="line.student_id.showcase_student_code"/> /
+                                <t t-esc="line.student_id.showcase_student_class"/> /
+                                <t t-esc="line.student_id.showcase_student_major"/>
+                            </td>
                             <td t-esc="line.note"/>
                             <td t-esc="line.deadline"/>
                             <td>
