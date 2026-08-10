@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_eaut_showcase_term_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.list</field>
+        <field name="model">eaut_showcase.term</field>
+        <field name="arch" type="xml">
+            <list string="Kỳ đồ án">
+                <field name="name"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'open'"
+                       decoration-muted="state == 'closed'"/>
+                <field name="unassigned_count" string="Chưa có GVHD"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_eaut_showcase_term_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.form</field>
+        <field name="model">eaut_showcase.term</field>
+        <field name="arch" type="xml">
+            <form string="Kỳ đồ án">
+                <header>
+                    <button name="action_open" type="object" string="Mở đăng ký"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_close" type="object" string="Đóng kỳ"
+                            invisible="state != 'open'"/>
+                    <button name="action_set_draft" type="object" string="Chuyển về nháp"
+                            invisible="state != 'closed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_registrations"
+                                class="oe_stat_button" icon="fa-user-times">
+                            <field name="unassigned_count" widget="statinfo" string="Chưa có GVHD"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="VD: Đồ án tốt nghiệp — HK2 2025-2026"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                        <group>
+                            <field name="sla_hours"/>
+                            <field name="max_preferences"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Giảng viên nhận hướng dẫn" name="capacity">
+                            <field name="capacity_ids">
+                                <list editable="bottom">
+                                    <field name="creator_id"/>
+                                    <field name="max_students"/>
+                                    <field name="approved_count"/>
+                                    <field name="pending_count"/>
+                                    <field name="remaining_slots"/>
+                                    <field name="withdrawn"/>
+                                    <button name="action_withdraw" type="object"
+                                            string="Rút khỏi kỳ" icon="fa-sign-out"
+                                            invisible="withdrawn"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_term" model="ir.actions.act_window">
+        <field name="name">Kỳ đồ án</field>
+        <field name="res_model">eaut_showcase.term</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có kỳ đồ án nào. Tạo 1 kỳ mới để bắt đầu nhận đăng ký chọn giảng viên hướng dẫn.
+            </p>
+        </field>
+    </record>
+
+</odoo>

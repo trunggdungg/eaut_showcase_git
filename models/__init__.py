@@ -7,3 +7,7 @@ from . import eaut_showcase_comment
 from . import eaut_showcase_project
 
 from . import eaut_showcase_interest
+
+from . import eaut_showcase_term
+from . import eaut_showcase_term_capacity
+from . import eaut_showcase_advisor_registration
