@@ -22,6 +22,11 @@ class ShowcaseCreator(models.Model):
         help="Tài khoản Portal giảng viên dùng để đăng nhập và duyệt yêu cầu "
              "hướng dẫn đồ án ở trang /my/advisor-requests.",
     )
+    category_ids = fields.Many2many(
+        'eaut_showcase.category', string='Lĩnh vực',
+        help="Dùng để lọc giảng viên theo lĩnh vực ở trang chọn giảng viên "
+             "hướng dẫn đồ án — dùng chung danh mục với dự án Showcase.",
+    )
     project_ids = fields.Many2many(
         'eaut_showcase.project', 'eaut_showcase_project_creator_rel',
         'creator_id', 'project_id', string='Dự án đã đăng',

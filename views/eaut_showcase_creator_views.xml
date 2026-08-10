@@ -40,6 +40,7 @@
                             <field name="email"/>
                             <field name="website_url"/>
                             <field name="user_id"/>
+                            <field name="category_ids" widget="many2many_tags"/>
                         </group>
                     </group>
                     <notebook>

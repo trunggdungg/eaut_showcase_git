@@ -52,6 +52,43 @@
         </a>
     </template>
 
+    <template id="advisor_card" name="EAUT Showcase - Advisor Card">
+        <div class="uikick-card">
+            <a t-att-href="'/showcase/creator/' + str(capacity.creator_id.id)">
+                <div class="uikick-card-media">
+                    <img t-if="capacity.creator_id.avatar"
+                         t-att-src="'/showcase/creator/' + str(capacity.creator_id.id) + '/avatar'"
+                         t-att-alt="capacity.creator_id.name" class="uikick-card-img"/>
+                    <span t-attf-class="uikick-badge #{'text-bg-success' if capacity.remaining_slots &gt; 0 else 'text-bg-secondary'}">
+                        <t t-if="capacity.remaining_slots &gt; 0">Còn <t t-esc="capacity.remaining_slots"/> chỗ</t>
+                        <t t-else="">Đã đầy</t>
+                    </span>
+                </div>
+                <div class="uikick-card-body">
+                    <p class="uikick-card-category">
+                        <t t-esc="', '.join(capacity.creator_id.category_ids.mapped('name')) or 'Chưa khai lĩnh vực'"/>
+                    </p>
+                    <h3 class="uikick-card-title">
+                        <t t-esc="capacity.creator_id.name"/>
+                    </h3>
+                    <p t-if="capacity.creator_id.role" class="uikick-card-creator">
+                        <span t-esc="capacity.creator_id.role"/>
+                    </p>
+                    <div t-if="capacity.creator_id.location_id" class="uikick-card-location">
+                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
+                        </svg>
+                        <span t-esc="capacity.creator_id.location_id.name"/>
+                    </div>
+                </div>
+            </a>
+            <a href="/my/advisor" class="btn btn-primary btn-sm rounded-pill uikick-btn-block mt-2">
+                Chọn làm nguyện vọng
+            </a>
+        </div>
+    </template>
+
     <!-- ============================================================ -->
     <!-- HOME PAGE (danh sách project + sidebar filter)                -->
     <!-- ============================================================ -->
@@ -78,6 +115,24 @@
                         <input type="hidden" name="categories_submitted" value="1"/>
 
                         <div class="uikick-filter-group">
+                            <h3>Xem theo</h3>
+                            <label class="uikick-check-row uikick-check-row-single">
+                                <input type="radio" name="section" value="projects"
+                                       t-att-checked="'checked' if section == 'projects' else None"
+                                       onchange="this.form.submit()"/>
+                                Dự án
+                            </label>
+                            <label class="uikick-check-row uikick-check-row-single">
+                                <input type="radio" name="section" value="advisors"
+                                       t-att-checked="'checked' if section == 'advisors' else None"
+                                       onchange="this.form.submit()"/>
+                                Giảng viên hướng dẫn đồ án
+                            </label>
+                        </div>
+
+                        <hr/>
+
+                        <div class="uikick-filter-group">
                             <h3>Danh mục</h3>
                             <div class="uikick-category-list">
                                 <t t-foreach="categories" t-as="cat">
@@ -95,12 +150,26 @@
                         <hr/>
 
                         <div class="uikick-filter-group">
-                            <h3>Trạng thái dự án</h3>
-                            <t t-foreach="all_statuses" t-as="st">
+                            <h3><t t-esc="'Trạng thái dự án' if section == 'projects' else 'Trạng thái nhận SV'"/></h3>
+                            <t t-if="section == 'projects'">
+                                <t t-foreach="all_statuses" t-as="st">
+                                    <label class="uikick-check-row uikick-check-row-single">
+                                        <input type="checkbox" name="status" t-att-value="st.name"
+                                               t-att-checked="'checked' if st.name in filters['status'] else None"/>
+                                        <t t-esc="st.name"/>
+                                    </label>
+                                </t>
+                            </t>
+                            <t t-else="">
                                 <label class="uikick-check-row uikick-check-row-single">
-                                    <input type="checkbox" name="status" t-att-value="st.name"
-                                           t-att-checked="'checked' if st.name in filters['status'] else None"/>
-                                    <t t-esc="st.name"/>
+                                    <input type="checkbox" name="status" value="open"
+                                           t-att-checked="'checked' if 'open' in filters['status'] else None"/>
+                                    Còn nhận
+                                </label>
+                                <label class="uikick-check-row uikick-check-row-single">
+                                    <input type="checkbox" name="status" value="full"
+                                           t-att-checked="'checked' if 'full' in filters['status'] else None"/>
+                                    Đã đầy
                                 </label>
                             </t>
                         </div>
@@ -136,8 +205,8 @@
                                     <t t-esc="header_label"/>
                                 </h1>
                                 <p>
-                                <t t-esc="projects_count"/>
-                                    dự án
+                                <t t-esc="items_count"/>
+                                    <t t-esc="' ' + items_label"/>
                                 </p>
                             </div>
                             <div class="uikick-sort">
@@ -155,11 +224,24 @@
                         </div>
 
                         <div class="uikick-grid">
-                            <t t-foreach="projects" t-as="project">
-                                <t t-call="eaut_showcase.project_card"/>
+                            <t t-if="section == 'projects'">
+                                <t t-foreach="projects" t-as="project">
+                                    <t t-call="eaut_showcase.project_card"/>
+                                </t>
+                                <t t-if="not projects">
+                                    <p class="uikick-empty">Không có dự án nào phù hợp với các bộ lọc này.</p>
+                                </t>
                             </t>
-                            <t t-if="not projects">
-                                <p class="uikick-empty">Không có dự án nào phù hợp với các bộ lọc này.</p>
+                            <t t-else="">
+                                <t t-foreach="capacities" t-as="capacity">
+                                    <t t-call="eaut_showcase.advisor_card"/>
+                                </t>
+                                <t t-if="not capacities">
+                                    <p class="uikick-empty">
+                                        <t t-if="not term">Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn.</t>
+                                        <t t-else="">Không có giảng viên nào phù hợp với các bộ lọc này.</t>
+                                    </p>
+                                </t>
                             </t>
                         </div>
                          <t t-if="pager['page_count'] &gt; 1">
