@@ -17,6 +17,11 @@ class ShowcaseCreator(models.Model):
     )
     email = fields.Char(string='Email liên hệ')
     website_url = fields.Char(string='Website / mạng xã hội')
+    user_id = fields.Many2one(
+        'res.users', string='Tài khoản Portal',
+        help="Tài khoản Portal giảng viên dùng để đăng nhập và duyệt yêu cầu "
+             "hướng dẫn đồ án ở trang /my/advisor-requests.",
+    )
     project_ids = fields.Many2many(
         'eaut_showcase.project', 'eaut_showcase_project_creator_rel',
         'creator_id', 'project_id', string='Dự án đã đăng',

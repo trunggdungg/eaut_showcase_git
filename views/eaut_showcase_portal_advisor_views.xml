@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- SINH VIÊN: /my/advisor                                        -->
+    <!-- ============================================================ -->
+    <template id="portal_my_advisor" name="Portal - Chọn giảng viên hướng dẫn">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+            <div class="container my-4">
+                <h2>Chọn giảng viên hướng dẫn đồ án</h2>
+
+                <div t-if="error" class="alert alert-danger" t-esc="error"/>
+                <div t-if="submitted" class="alert alert-success">
+                    Đã nộp nguyện vọng thành công. Bạn sẽ được thông báo khi có kết quả.
+                </div>
+
+                <t t-if="not term">
+                    <div class="alert alert-info">
+                        Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn.
+                    </div>
+                </t>
+
+                <t t-elif="registration and registration.line_ids">
+                    <p>Kỳ:
+                        <strong t-esc="term.name"/>
+                    </p>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nguyện vọng</th>
+                                <th>Giảng viên</th>
+                                <th>Trạng thái</th>
+                                <th>Hạn phản hồi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="registration.line_ids.sorted('sequence')" t-as="line">
+                                <td t-esc="line.sequence"/>
+                                <td t-esc="line.creator_id.name"/>
+                                <td>
+                                    <span t-if="line.state == 'pending'" class="badge text-bg-warning">Đang chờ duyệt
+                                    </span>
+                                    <span t-elif="line.state == 'approved'" class="badge text-bg-success">Đã duyệt
+                                    </span>
+                                    <span t-elif="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ chối
+                                    </span>
+                                    <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn phản
+                                        hồi
+                                    </span>
+                                    <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ
+                                    </span>
+                                    <span t-else="" class="badge text-bg-light">Chờ kích hoạt</span>
+                                </td>
+                                <td t-esc="line.deadline"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div t-if="registration.state == 'approved'" class="alert alert-success">
+                        Bạn đã có giảng viên hướng dẫn:
+                        <strong t-esc="registration.approved_creator_id.name"/>.
+                    </div>
+                    <div t-elif="registration.state == 'unassigned'" class="alert alert-warning">
+                        Cả
+                        <t t-esc="max_preferences"/>
+                        nguyện vọng đều không thành công.
+                        Nhà trường sẽ liên hệ để phân giảng viên hướng dẫn cho bạn.
+                    </div>
+                </t>
+                <t t-elif="not partner.showcase_student_code">
+                    <div class="alert alert-info">
+                        Vui lòng hoàn thiện hồ sơ trước khi chọn giảng viên hướng dẫn.
+                    </div>
+                    <form action="/my/advisor/profile" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="mb-3">
+                            <label for="student_code">Mã số sinh viên (MSSV)</label>
+                            <input type="text" name="student_code" id="student_code" class="form-control"
+                                   required="required"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="student_class">Lớp</label>
+                            <input type="text" name="student_class" id="student_class" class="form-control"
+                                   required="required"/>
+                        </div>
+                        <div class="mb-3">
+                            <label for="student_major">Ngành học</label>
+                            <input type="text" name="student_major" id="student_major" class="form-control"
+                                   required="required"/>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
+                    </form>
+                </t>
+                <t t-else="">
+                    <p>
+                        Chọn tối đa
+                        <strong t-esc="max_preferences"/>
+                        giảng viên, theo đúng
+                        thứ tự ưu tiên bạn mong muốn. Không thể thay đổi sau khi đã nộp.
+                    </p>
+                    <form action="/my/advisor/submit" method="post">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <t t-foreach="range(1, max_preferences + 1)" t-as="idx">
+                            <div class="mb-3">
+                                <label t-attf-for="creator_{{idx}}">Nguyện vọng
+                                    <t t-esc="idx"/>
+                                </label>
+                                <select name="creator_ids" t-attf-id="creator_{{idx}}" class="form-select">
+                                    <option value="">-- Không chọn --</option>
+                                    <option t-foreach="capacities" t-as="cap"
+                                            t-att-value="cap.creator_id.id"
+                                            t-esc="'%s (còn %s chỗ)' % (cap.creator_id.name, cap.remaining_slots)"/>
+                                </select>
+                            </div>
+                        </t>
+                        <button type="submit" class="btn btn-primary">Nộp nguyện vọng</button>
+                    </form>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- GIẢNG VIÊN: /my/advisor-requests                              -->
+    <!-- ============================================================ -->
+    <template id="portal_my_advisor_requests" name="Portal - Yêu cầu hướng dẫn đồ án">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+            <div class="container my-4">
+                <h2>Yêu cầu hướng dẫn đồ án</h2>
+
+                <div t-if="done" class="alert alert-success">Đã cập nhật.</div>
+                <div t-if="error" class="alert alert-danger">
+                    Có lỗi xảy ra hoặc bạn không có quyền thực hiện thao tác này.
+                </div>
+
+                <t t-if="not creator">
+                    <div class="alert alert-warning">
+                        Tài khoản của bạn chưa được liên kết với hồ sơ giảng viên nào —
+                        liên hệ quản trị viên để được cấu hình.
+                    </div>
+                </t>
+                <t t-elif="not lines">
+                    <p>Hiện không có sinh viên nào đang chờ bạn duyệt.</p>
+                </t>
+                <table t-else="" class="table">
+                    <thead>
+                        <tr>
+                            <th>Sinh viên</th>
+                            <th>MSSV / Lớp / Ngành</th>
+                            <th>Lời giới thiệu</th>
+                            <th>Hạn phản hồi</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="lines" t-as="line">
+                            <td t-esc="line.student_id.name"/>
+                            <td>
+                                <t t-esc="line.student_id.showcase_student_code"/>
+                                /
+                                <t t-esc="line.student_id.showcase_student_class"/>
+                                /
+                                <t t-esc="line.student_id.showcase_student_major"/>
+                            </td>
+                            <td t-esc="line.note"/>
+                            <td t-esc="line.deadline"/>
+                            <td>
+                                <form t-attf-action="/my/advisor-requests/#{line.id}/approve"
+                                      method="post" class="d-inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                                </form>
+                                <form t-attf-action="/my/advisor-requests/#{line.id}/reject"
+                                      method="post" class="d-inline">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </t>
+    </template>
+
+</odoo>

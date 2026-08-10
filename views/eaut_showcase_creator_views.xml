@@ -39,6 +39,7 @@
                             <field name="location_id"/>
                             <field name="email"/>
                             <field name="website_url"/>
+                               <field name="user_id"/>
                         </group>
                     </group>
                     <notebook>

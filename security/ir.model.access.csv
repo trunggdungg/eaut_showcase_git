@@ -15,3 +15,12 @@ access_eaut_showcase_faq_user,eaut_showcase.faq.user,model_eaut_showcase_faq,bas
 access_eaut_showcase_faq_manager,eaut_showcase.faq.manager,model_eaut_showcase_faq,base.group_system,1,1,1,1
 access_eaut_showcase_comment_user,eaut_showcase.comment.user,model_eaut_showcase_comment,base.group_user,1,1,1,0
 access_eaut_showcase_comment_manager,eaut_showcase.comment.manager,model_eaut_showcase_comment,base.group_system,1,1,1,1
+
+access_eaut_showcase_term_user,eaut_showcase.term.user,model_eaut_showcase_term,base.group_user,1,0,0,0
+access_eaut_showcase_term_manager,eaut_showcase.term.manager,model_eaut_showcase_term,base.group_system,1,1,1,1
+access_eaut_showcase_term_capacity_user,eaut_showcase.term.capacity.user,model_eaut_showcase_term_capacity,base.group_user,1,1,0,0
+access_eaut_showcase_term_capacity_manager,eaut_showcase.term.capacity.manager,model_eaut_showcase_term_capacity,base.group_system,1,1,1,1
+access_eaut_showcase_advisor_registration_user,eaut_showcase.advisor.registration.user,model_eaut_showcase_advisor_registration,base.group_user,1,1,0,0
+access_eaut_showcase_advisor_registration_manager,eaut_showcase.advisor.registration.manager,model_eaut_showcase_advisor_registration,base.group_system,1,1,1,1
+access_eaut_showcase_advisor_registration_line_user,eaut_showcase.advisor.registration.line.user,model_eaut_showcase_advisor_registration_line,base.group_user,1,1,0,0
+access_eaut_showcase_advisor_registration_line_manager,eaut_showcase.advisor.registration.line.manager,model_eaut_showcase_advisor_registration_line,base.group_system,1,1,1,1
