@@ -306,9 +306,19 @@ class ShowcaseController(http.Controller):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
         if not creator:
             return request.not_found()
+
+        term = request.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc', limit=1)
+        advisor_capacity = request.env['eaut_showcase.term.capacity'].sudo().search([
+            ('term_id', '=', term.id),
+            ('creator_id', '=', creator.id),
+            ('withdrawn', '=', False),
+        ], limit=1) if term else request.env['eaut_showcase.term.capacity']
+
         values = {
             'creator': creator,
             'projects': creator.project_ids,
+            'advisor_capacity': advisor_capacity,
         }
         return request.render('eaut_showcase.creator_detail_page', values)
 
