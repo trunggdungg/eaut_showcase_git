@@ -29,11 +29,28 @@ class ShowcaseAdvisorRegistration(models.Model):
         'eaut_showcase.creator', string='Giảng viên hướng dẫn',
         compute='_compute_approved_creator', store=True,
     )
+    assigned_creator_id = fields.Many2one(
+        'eaut_showcase.creator', string='Đang thuộc giảng viên',
+        help="Đồng bộ tự động theo dòng nguyện vọng đang pending/approved — "
+             "dùng để group-by và kéo-thả trên Kanban xử lý sinh viên chưa gán.",
+    )
 
     _sql_constraints = [
         ('term_student_uniq', 'unique(term_id, student_id)',
          'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.'),
     ]
+
+    def write(self, vals):
+        if 'assigned_creator_id' in vals and not self.env.context.get('advisor_internal_write'):
+            # Admin vừa kéo-thả thẻ trên Kanban sang cột 1 giảng viên khác —
+            # chạy đúng nghiệp vụ gán (kiểm tra sức chứa, huỷ các dòng cũ)
+            # thay vì chỉ ghi thẳng giá trị field như kanban mặc định làm.
+            creator_id = vals.pop('assigned_creator_id')
+            for reg in self:
+                reg._admin_assign(creator_id)
+            if not vals:
+                return True
+        return super().write(vals)
 
     @api.depends('line_ids.state')
     def _compute_approved_creator(self):
@@ -64,9 +81,14 @@ class ShowcaseAdvisorRegistration(models.Model):
         self.ensure_one()
         next_line = self.line_ids.filtered(lambda l: l.state == 'waiting').sorted('sequence')[:1]
         if not next_line:
-            self.state = 'unassigned'
+            self.write({'state': 'unassigned'})
+            self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
             return
         next_line._activate()
+        if next_line.state == 'pending':
+            self.with_context(advisor_internal_write=True).write({
+                'assigned_creator_id': next_line.creator_id.id,
+            })
 
     def action_reset_for_withdrawal(self):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
@@ -74,7 +96,56 @@ class ShowcaseAdvisorRegistration(models.Model):
         được tự đổi nguyện vọng)."""
         for reg in self:
             reg.line_ids.unlink()
-            reg.state = 'draft'
+            reg.write({'state': 'draft'})
+            reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+
+    def _admin_assign(self, creator_id):
+        """Admin kéo-thả 1 SV (thường đang 'unassigned') vào cột giảng viên
+        trên Kanban — gán tay, bỏ qua luồng nguyện vọng nối tiếp bình thường."""
+        self.ensure_one()
+        if not creator_id:
+            # Kéo về cột "Chưa gán" — chỉ huỷ gán hiện tại, không cần logic thêm.
+            self.line_ids.filtered(lambda l: l.state in ('waiting', 'pending', 'approved')).write({
+                'state': 'cancelled', 'decided_date': fields.Datetime.now(),
+            })
+            self.write({'state': 'unassigned'})
+            self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+            return
+
+        capacity = self.env['eaut_showcase.term.capacity'].search([
+            ('term_id', '=', self.term_id.id), ('creator_id', '=', creator_id),
+        ], limit=1)
+        if capacity:
+            self.env.cr.execute(
+                'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
+                (capacity.id,),
+            )
+            approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
+                ('term_id', '=', self.term_id.id),
+                ('creator_id', '=', creator_id),
+                ('state', '=', 'approved'),
+            ])
+            if approved_count >= capacity.max_students:
+                raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
+
+        now = fields.Datetime.now()
+        self.line_ids.filtered(lambda l: l.state in ('waiting', 'pending', 'approved')).write({
+            'state': 'cancelled', 'decided_date': now,
+        })
+        existing_line = self.line_ids.filtered(lambda l: l.creator_id.id == creator_id)
+        if existing_line:
+            existing_line.write({'state': 'approved', 'decided_date': now})
+        else:
+            next_sequence = max(self.line_ids.mapped('sequence') or [0]) + 1
+            self.env['eaut_showcase.advisor.registration.line'].create({
+                'registration_id': self.id,
+                'creator_id': creator_id,
+                'sequence': next_sequence,
+                'state': 'approved',
+                'decided_date': now,
+            })
+        self.write({'state': 'approved'})
+        self.with_context(advisor_internal_write=True).write({'assigned_creator_id': creator_id})
 
 
 class ShowcaseAdvisorRegistrationLine(models.Model):
@@ -163,7 +234,10 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         other_lines = (self.registration_id.line_ids - self).filtered(
             lambda l: l.state in ('waiting', 'pending'))
         other_lines.write({'state': 'cancelled', 'decided_date': fields.Datetime.now()})
-        self.registration_id.state = 'approved'
+        self.registration_id.write({'state': 'approved'})
+        self.registration_id.with_context(advisor_internal_write=True).write({
+            'assigned_creator_id': self.creator_id.id,
+        })
 
     def action_reject(self):
         self.ensure_one()

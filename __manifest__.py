@@ -24,6 +24,7 @@
         'views/eaut_showcase_comment_views.xml',
         'views/eaut_showcase_term_views.xml',
         'views/eaut_showcase_advisor_registration_views.xml',
+        'views/eaut_showcase_advisor_registration_kanban_views.xml',
         'views/eaut_showcase_home_views.xml',
         'views/eaut_showcase_creator_detail_views.xml',
         'views/eaut_showcase_detail_views.xml',
