@@ -272,16 +272,16 @@ class ShowcaseController(http.Controller):
             return request.redirect(f'/showcase/project/{project_id}?error={error}')
 
         # Đẩy dữ liệu sang app custom — lỗi ở đây KHÔNG được làm hỏng luồng chính
-        try:
-            request.env['eaut.career.center.employer'].sudo().create({
-                'name': name,
-                'email': email,
-                'phone': phone,
-                'note': message,
-                # 'source_project_id': project.id,
-            })
-        except Exception as e:
-            _logger.error('Error pushing interest to eaut.career.center.employer: %s', str(e), exc_info=True)
+        # try:
+        #     request.env['eaut.career.center.employer'].sudo().create({
+        #         'name': name,
+        #         'email': email,
+        #         'phone': phone,
+        #         'note': message,
+        #         # 'source_project_id': project.id,
+        #     })
+        # except Exception as e:
+        #     _logger.error('Error pushing interest to eaut.career.center.employer: %s', str(e), exc_info=True)
 
         return request.redirect(f'/showcase/project/{project_id}?submitted=1')
 
