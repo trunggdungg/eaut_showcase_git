@@ -32,6 +32,14 @@ ORDER_BY_SORT = {
     "Newest": "create_date desc",
 }
 
+ADVISOR_SORT_OPTIONS = ["Relevance", "Most slots", "Newest"]
+
+ADVISOR_SORT_LABELS = {
+    "Relevance": "Liên quan",
+    "Most slots": "Còn nhiều chỗ nhất",
+    "Newest": "Mới thêm gần đây",
+}
+
 
 
 
@@ -60,10 +68,13 @@ class ShowcaseController(http.Controller):
 
     @http.route(['/showcase', '/showcase/page/<int:page>', '/showcase/category/<string:category>'],
                 type='http', auth='public', website=True, sitemap=True)
-    def home(self, category=None, page=1,  **kw):
-        Project = request.env['eaut_showcase.project'].sudo()
+    def home(self, category=None,   **kw):
+        section = kw.get('section') if kw.get('section') in ('projects', 'advisors') else 'projects'
+        if section == 'advisors':
+            return self._render_advisors_section(category, kw)
+        return self._render_projects_section(category, kw)
 
-        all_categories = request.env['eaut_showcase.category'].sudo().search([], order='sequence, id')
+    def _get_selected_categories(self, category, all_categories, kw):
         category_names = all_categories.mapped('name')
 
         query_categories = [c for c in request.httprequest.args.getlist('category') if c in category_names]
@@ -72,15 +83,19 @@ class ShowcaseController(http.Controller):
         if categories_submitted:
             # the sidebar's checkbox form was submitted — trust it as-is,
             # including an empty selection meaning "show every category"
-            selected_categories = query_categories
-        elif category and category in category_names:
-            selected_categories = [category]
-        else:
-            selected_categories = []
+            return query_categories
+        if category and category in category_names:
+            return [category]
+        return []
+
+    def _render_projects_section(self, category, kw):
+        Project = request.env['eaut_showcase.project'].sudo()
+
+        all_categories = request.env['eaut_showcase.category'].sudo().search([], order='sequence, id')
+        selected_categories = self._get_selected_categories(category, all_categories, kw)
 
         domain = [('category_id.name', 'in', selected_categories)] if selected_categories else []
         if domain and not Project.search_count(domain):
-            # none of the selected categories have any projects – show everything instead
             domain = []
 
         all_statuses = request.env['eaut_showcase.status'].sudo().search([], order='sequence, id')
@@ -106,7 +121,7 @@ class ShowcaseController(http.Controller):
         if location:
             url_args['location'] = location
 
-        page = page or 1
+        page = int(kw.get('page') or 1)
         total = Project.search_count(domain)
         pager = request.website.pager(
             url='/showcase', total=total, page=page, step=PAGE_SIZE, scope=7, url_args=url_args,
@@ -121,18 +136,97 @@ class ShowcaseController(http.Controller):
             header_label = str(len(selected_categories)) + ' Categories'
 
         values = {
+            'section': 'projects',
             'categories': all_categories,
             'all_statuses': all_statuses,
             'all_locations': all_locations,
             'header_label': header_label,
             'projects': projects,
-            'projects_count': total,
+            'items_count': total,
+            'items_label': 'dự án',
             'pager': pager,
             'sort_options': SORT_OPTIONS,
             'sort_labels': SORT_LABELS,
             'filters': {
                 'categories': selected_categories,
                 'status': statuses,
+                'location': location,
+                'sort': sort,
+            },
+        }
+        return request.render('eaut_showcase.home_page', values)
+
+    def _render_advisors_section(self, category, kw):
+        all_categories = request.env['eaut_showcase.category'].sudo().search([], order='sequence, id')
+        selected_categories = self._get_selected_categories(category, all_categories, kw)
+
+        slot_filters = [s for s in request.httprequest.args.getlist('status') if s in ('open', 'full')]
+        location = (kw.get('location') or '').strip()
+        sort = kw.get('sort') if kw.get('sort') in ADVISOR_SORT_OPTIONS else 'Relevance'
+
+        term = request.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc', limit=1)
+        capacities = term.capacity_ids.filtered(lambda c: not c.withdrawn) if term else \
+            request.env['eaut_showcase.term.capacity']
+
+        if selected_categories:
+            wanted = set(selected_categories)
+            capacities = capacities.filtered(
+                lambda c: set(c.creator_id.category_ids.mapped('name')) & wanted)
+        if location:
+            capacities = capacities.filtered(
+                lambda c: location.lower() in (c.creator_id.location_id.name or '').lower())
+        if slot_filters:
+            want_open = 'open' in slot_filters
+            want_full = 'full' in slot_filters
+            capacities = capacities.filtered(
+                lambda c: (want_open and c.remaining_slots > 0) or (want_full and c.remaining_slots <= 0))
+
+        if sort == 'Most slots':
+            capacities = capacities.sorted(key=lambda c: c.remaining_slots, reverse=True)
+        elif sort == 'Newest':
+            capacities = capacities.sorted(key=lambda c: c.creator_id.id, reverse=True)
+
+        all_locations = term.capacity_ids.mapped('creator_id.location_id').sorted(
+            key=lambda l: l.name) if term else request.env['res.country.state']
+
+        url_args = {'categories_submitted': 1, 'sort': sort, 'section': 'advisors'}
+        if selected_categories:
+            url_args['category'] = selected_categories
+        if slot_filters:
+            url_args['status'] = slot_filters
+        if location:
+            url_args['location'] = location
+
+        page = int(kw.get('page') or 1)
+        total = len(capacities)
+        pager = request.website.pager(
+            url='/showcase', total=total, page=page, step=PAGE_SIZE, scope=7, url_args=url_args,
+        )
+        capacities_page = capacities[pager['offset']:pager['offset'] + PAGE_SIZE]
+
+        if not selected_categories:
+            header_label = 'Tất cả giảng viên'
+        elif len(selected_categories) == 1:
+            header_label = selected_categories[0]
+        else:
+            header_label = str(len(selected_categories)) + ' lĩnh vực'
+
+        values = {
+            'section': 'advisors',
+            'term': term,
+            'categories': all_categories,
+            'all_locations': all_locations,
+            'header_label': header_label,
+            'capacities': capacities_page,
+            'items_count': total,
+            'items_label': 'giảng viên',
+            'pager': pager,
+            'sort_options': ADVISOR_SORT_OPTIONS,
+            'sort_labels': ADVISOR_SORT_LABELS,
+            'filters': {
+                'categories': selected_categories,
+                'status': slot_filters,
                 'location': location,
                 'sort': sort,
             },
@@ -213,9 +307,18 @@ class ShowcaseController(http.Controller):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
         if not creator:
             return request.not_found()
+        term = request.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc', limit=1)
+        advisor_capacity = request.env['eaut_showcase.term.capacity'].sudo().search([
+            ('term_id', '=', term.id),
+            ('creator_id', '=', creator.id),
+            ('withdrawn', '=', False),
+        ], limit=1) if term else request.env['eaut_showcase.term.capacity']
+
         values = {
             'creator': creator,
             'projects': creator.project_ids,
+            'advisor_capacity': advisor_capacity,
         }
         return request.render('eaut_showcase.creator_detail_page', values)
 

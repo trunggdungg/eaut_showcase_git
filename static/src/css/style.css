@@ -337,6 +337,10 @@ img.uikick-creator-avatar { object-fit: cover; }
 .uikick-creator-page-meta { font-size: 14px; color: var(--bs-secondary-color, #6b7280); }
 .uikick-creator-page-meta span { margin: 0 2px; }
 
+.uikick-creator-page-advisor-cta {
+    display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px;
+}
+
 .uikick-creator-page-tabs-row { border-bottom: 1px solid var(--bs-border-color, #e5e7eb); }
 .uikick-creator-page-tabs-row .uikick-tabs { justify-content: center; }
 

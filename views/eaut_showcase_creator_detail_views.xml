@@ -47,6 +47,20 @@
                             </span>
                         </t>
                     </p>
+
+                     <div t-if="advisor_capacity" class="uikick-creator-page-advisor-cta">
+                        <span t-attf-class="uikick-badge #{'text-bg-success' if advisor_capacity.remaining_slots &gt; 0 else 'text-bg-secondary'}">
+                            <t t-if="advisor_capacity.remaining_slots &gt; 0">
+                                Còn <t t-esc="advisor_capacity.remaining_slots"/> chỗ nhận hướng dẫn đồ án
+                            </t>
+                            <t t-else="">Đã đủ số lượng nhận hướng dẫn đồ án</t>
+                        </span>
+                        <a t-if="advisor_capacity.remaining_slots &gt; 0" href="/my/advisor"
+                           class="btn btn-primary btn-sm rounded-pill">
+                            Chọn làm giảng viên hướng dẫn
+                        </a>
+                    </div>
+
                 </div>
 
                 <div class="uikick-creator-page-tabs-row">

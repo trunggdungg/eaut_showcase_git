@@ -70,14 +70,10 @@ class AdvisorPortalController(http.Controller):
             error = urllib.parse.quote('Vui lòng hoàn thiện hồ sơ (MSSV, lớp, ngành) trước.')
             return request.redirect(f'/my/advisor?error={error}')
         Registration = request.env['eaut_showcase.advisor.registration'].sudo()
-        registration = Registration.search([
+        existing = Registration.search([
             ('term_id', '=', term.id), ('student_id', '=', partner.id),
         ], limit=1)
-        if not registration:
-            registration = Registration.create({
-                'term_id': term.id, 'student_id': partner.id,
-            })
-        if registration.line_ids:
+        if existing and existing.line_ids:
             error = urllib.parse.quote('Bạn đã nộp nguyện vọng cho kỳ này rồi.')
             return request.redirect(f'/my/advisor?error={error}')
 
@@ -88,6 +84,10 @@ class AdvisorPortalController(http.Controller):
         if len(creator_ids) != len(set(creator_ids)):
             error = urllib.parse.quote('Không được chọn trùng 1 giảng viên ở nhiều nguyện vọng.')
             return request.redirect(f'/my/advisor?error={error}')
+
+        registration = existing or Registration.create({
+            'term_id': term.id, 'student_id': partner.id,
+        })
 
         try:
             registration.action_submit(creator_ids)

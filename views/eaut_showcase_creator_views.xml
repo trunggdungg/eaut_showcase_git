@@ -19,6 +19,11 @@
         <field name="model">eaut_showcase.creator</field>
         <field name="arch" type="xml">
             <form string="Tác giả">
+                 <header>
+                    <button name="action_create_portal_user" type="object" string="Tạo tài khoản người dùng"
+                            class="btn-primary" invisible="user_id"/>
+                </header>
+
                 <sheet>
                     <div class="oe_button_box" name="button_box">
                         <button name="action_view_projects" type="object"
@@ -40,6 +45,8 @@
                             <field name="email"/>
                             <field name="website_url"/>
                                <field name="user_id"/>
+
+                              <field name="category_ids" widget="many2many_tags"/>
                         </group>
                     </group>
                     <notebook>
