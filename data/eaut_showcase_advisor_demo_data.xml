@@ -78,6 +78,7 @@
         <field name="term_id" ref="demo_term_hk1_2026_2027"/>
         <field name="student_id" ref="demo_partner_student_1"/>
         <field name="state">approved</field>
+        <field name="assigned_creator_id" ref="demo_creator_dang_thi_hoa"/>
     </record>
     <record id="demo_registration_1_line_1" model="eaut_showcase.advisor.registration.line">
         <field name="registration_id" ref="demo_registration_1"/>
@@ -92,6 +93,7 @@
         <field name="term_id" ref="demo_term_hk1_2026_2027"/>
         <field name="student_id" ref="demo_partner_student_2"/>
         <field name="state">in_progress</field>
+        <field name="assigned_creator_id" ref="demo_creator_bui_van_nam"/>
     </record>
     <record id="demo_registration_2_line_1" model="eaut_showcase.advisor.registration.line">
         <field name="registration_id" ref="demo_registration_2"/>

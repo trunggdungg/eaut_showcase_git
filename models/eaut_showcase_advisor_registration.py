@@ -31,6 +31,7 @@ class ShowcaseAdvisorRegistration(models.Model):
     )
     assigned_creator_id = fields.Many2one(
         'eaut_showcase.creator', string='Đang thuộc giảng viên',
+        group_expand='_group_expand_assigned_creators',
         help="Đồng bộ tự động theo dòng nguyện vọng đang pending/approved — "
              "dùng để group-by và kéo-thả trên Kanban xử lý sinh viên chưa gán.",
     )
@@ -39,6 +40,15 @@ class ShowcaseAdvisorRegistration(models.Model):
         ('term_student_uniq', 'unique(term_id, student_id)',
          'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.'),
     ]
+
+    @api.model
+    def _group_expand_assigned_creators(self, creators, domain):
+        # Luôn hiện cột cho mọi giảng viên đang có sức chứa ở 1 kỳ draft/open,
+        # kể cả khi chưa có SV nào — nếu không, Kanban chỉ hiện cột cho giảng
+        # viên đã có ít nhất 1 SV rơi đúng field assigned_creator_id.
+        return self.env['eaut_showcase.term.capacity'].search([
+            ('term_id.state', 'in', ('draft', 'open')),
+        ]).creator_id
 
     def write(self, vals):
         if 'assigned_creator_id' in vals and not self.env.context.get('advisor_internal_write'):
