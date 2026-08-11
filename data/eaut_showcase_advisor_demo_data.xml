@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- DEMO: Chọn giảng viên hướng dẫn đồ án                          -->
+    <!-- ============================================================ -->
+
+    <!-- Giảng viên demo -->
+    <record id="demo_creator_dang_thi_hoa" model="eaut_showcase.creator">
+        <field name="name">TS. Đặng Thị Hoa</field>
+        <field name="role">Giảng viên Khoa CNTT</field>
+        <field name="bio">Nghiên cứu Trí tuệ nhân tạo và Thị giác máy tính, hướng dẫn nhiều đồ án ứng dụng Computer Vision.</field>
+        <field name="email">hoadt.demo@eaut.edu.vn</field>
+        <field name="category_ids" eval="[(6, 0, [ref('cat_technology')])]"/>
+    </record>
+
+    <record id="demo_creator_bui_van_nam" model="eaut_showcase.creator">
+        <field name="name">ThS. Bùi Văn Nam</field>
+        <field name="role">Giảng viên Khoa CNTT</field>
+        <field name="bio">Hướng dẫn các đề tài phát triển ứng dụng web và di động cho doanh nghiệp.</field>
+        <field name="email">nambv.demo@eaut.edu.vn</field>
+        <field name="category_ids" eval="[(6, 0, [ref('cat_apps')])]"/>
+    </record>
+
+    <record id="demo_creator_vu_minh_khang" model="eaut_showcase.creator">
+        <field name="name">TS. Vũ Minh Khang</field>
+        <field name="role">Giảng viên Khoa Điện - Điện tử</field>
+        <field name="bio">Hướng dẫn đồ án về IoT, hệ thống nhúng và tự động hoá.</field>
+        <field name="email">khangvm.demo@eaut.edu.vn</field>
+        <field name="category_ids" eval="[(6, 0, [ref('cat_technology')])]"/>
+    </record>
+
+    <!-- Kỳ đồ án demo -->
+    <record id="demo_term_hk1_2026_2027" model="eaut_showcase.term">
+        <field name="name">Đồ án tốt nghiệp — Demo HK1 2026-2027</field>
+        <field name="date_start">2026-09-01</field>
+        <field name="date_end">2026-09-30</field>
+        <field name="state">open</field>
+        <field name="sla_hours">48</field>
+        <field name="max_preferences">5</field>
+    </record>
+
+    <!-- Sức chứa giảng viên trong kỳ demo -->
+    <record id="demo_capacity_hoa" model="eaut_showcase.term.capacity">
+        <field name="term_id" ref="demo_term_hk1_2026_2027"/>
+        <field name="creator_id" ref="demo_creator_dang_thi_hoa"/>
+        <field name="max_students">3</field>
+    </record>
+    <record id="demo_capacity_nam" model="eaut_showcase.term.capacity">
+        <field name="term_id" ref="demo_term_hk1_2026_2027"/>
+        <field name="creator_id" ref="demo_creator_bui_van_nam"/>
+        <field name="max_students">2</field>
+    </record>
+    <record id="demo_capacity_khang" model="eaut_showcase.term.capacity">
+        <field name="term_id" ref="demo_term_hk1_2026_2027"/>
+        <field name="creator_id" ref="demo_creator_vu_minh_khang"/>
+        <field name="max_students">4</field>
+    </record>
+
+    <!-- Sinh viên demo -->
+    <record id="demo_partner_student_1" model="res.partner">
+        <field name="name">Nguyễn Thị Mai</field>
+        <field name="email">maint.demo@eaut.edu.vn</field>
+        <field name="showcase_student_code">2151061234</field>
+        <field name="showcase_student_class">CNTT15-01</field>
+        <field name="showcase_student_major">Công nghệ thông tin</field>
+    </record>
+    <record id="demo_partner_student_2" model="res.partner">
+        <field name="name">Trần Văn Bình</field>
+        <field name="email">binhtv.demo@eaut.edu.vn</field>
+        <field name="showcase_student_code">2151065678</field>
+        <field name="showcase_student_class">CNTT15-02</field>
+        <field name="showcase_student_major">Công nghệ thông tin</field>
+    </record>
+
+    <!-- Hồ sơ đăng ký demo #1: đã được duyệt ngay ở nguyện vọng 1 -->
+    <record id="demo_registration_1" model="eaut_showcase.advisor.registration">
+        <field name="term_id" ref="demo_term_hk1_2026_2027"/>
+        <field name="student_id" ref="demo_partner_student_1"/>
+        <field name="state">approved</field>
+         <field name="assigned_creator_id" ref="demo_creator_dang_thi_hoa"/>
+
+    </record>
+    <record id="demo_registration_1_line_1" model="eaut_showcase.advisor.registration.line">
+        <field name="registration_id" ref="demo_registration_1"/>
+        <field name="creator_id" ref="demo_creator_dang_thi_hoa"/>
+        <field name="sequence">1</field>
+        <field name="state">approved</field>
+        <field name="note">Em rất thích hướng nghiên cứu Computer Vision của cô, mong được cô hướng dẫn.</field>
+    </record>
+
+    <!-- Hồ sơ đăng ký demo #2: NV1 đang chờ duyệt, NV2 chờ kích hoạt -->
+    <record id="demo_registration_2" model="eaut_showcase.advisor.registration">
+        <field name="term_id" ref="demo_term_hk1_2026_2027"/>
+        <field name="student_id" ref="demo_partner_student_2"/>
+        <field name="state">in_progress</field>
+           <field name="assigned_creator_id" ref="demo_creator_bui_van_nam"/>
+
+    </record>
+    <record id="demo_registration_2_line_1" model="eaut_showcase.advisor.registration.line">
+        <field name="registration_id" ref="demo_registration_2"/>
+        <field name="creator_id" ref="demo_creator_bui_van_nam"/>
+        <field name="sequence">1</field>
+        <field name="state">pending</field>
+        <field name="note">Em muốn làm đề tài web bán hàng, mong thầy nhận hướng dẫn.</field>
+    </record>
+    <record id="demo_registration_2_line_2" model="eaut_showcase.advisor.registration.line">
+        <field name="registration_id" ref="demo_registration_2"/>
+        <field name="creator_id" ref="demo_creator_vu_minh_khang"/>
+        <field name="sequence">2</field>
+        <field name="state">waiting</field>
+    </record>
+
+</odoo>

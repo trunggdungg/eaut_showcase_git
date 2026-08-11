@@ -12,8 +12,17 @@ _logger = logging.getLogger(__name__)
 class AdvisorPortalController(http.Controller):
 
     def _get_open_term(self):
-        return request.env['eaut_showcase.term'].sudo().search(
-            [('state', '=', 'open')], order='date_start desc', limit=1)
+        """Chọn đúng kỳ đang mở cho sinh viên hiện tại — nếu 1 kỳ có khai
+                danh sách 'Sinh viên đủ điều kiện' thì chỉ những SV trong danh sách
+                đó mới thấy kỳ này (dùng khi nhiều khoa mở kỳ song song); kỳ không
+                khai danh sách thì mở cho mọi sinh viên."""
+        partner = request.env.user.partner_id
+        terms = request.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc')
+        for term in terms:
+            if not term.eligible_student_ids or partner in term.eligible_student_ids:
+                return term
+        return request.env['eaut_showcase.term']
 
     def _get_registration(self, term):
         partner = request.env.user.partner_id
@@ -24,6 +33,13 @@ class AdvisorPortalController(http.Controller):
     # ============ SINH VIÊN: CHỌN GIẢNG VIÊN HƯỚNG DẪN ============
     @http.route(['/my/advisor'], type='http', auth='user', website=True, sitemap=False)
     def my_advisor(self, **kw):
+        lecturer_profile = self._get_creator_for_current_user()
+        if lecturer_profile:
+            return request.render('eaut_showcase.portal_my_advisor', {
+                'lecturer_profile': lecturer_profile,
+            })
+
+
         term = self._get_open_term()
         registration = self._get_registration(term) if term else None
         capacities = request.env['eaut_showcase.term.capacity']
@@ -32,6 +48,7 @@ class AdvisorPortalController(http.Controller):
                 ('term_id', '=', term.id), ('withdrawn', '=', False),
             ])
         values = {
+            'lecturer_profile': False,
             'term': term,
             'registration': registration,
             'capacities': capacities,
@@ -45,6 +62,12 @@ class AdvisorPortalController(http.Controller):
     @http.route(['/my/advisor/profile'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
     def my_advisor_profile(self, **post):
+        if self._get_creator_for_current_user():
+            error = urllib.parse.quote(
+                'Tài khoản này đã đăng ký làm giảng viên hướng dẫn, không thể dùng để '
+                'đăng ký chọn giảng viên hướng dẫn.')
+            return request.redirect(f'/my/advisor?error={error}')
+
         student_code = (post.get('student_code') or '').strip()
         student_class = (post.get('student_class') or '').strip()
         student_major = (post.get('student_major') or '').strip()
@@ -61,6 +84,11 @@ class AdvisorPortalController(http.Controller):
     @http.route(['/my/advisor/submit'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
     def my_advisor_submit(self, **post):
+        if self._get_creator_for_current_user():
+            error = urllib.parse.quote(
+                'Tài khoản này đã đăng ký làm giảng viên hướng dẫn, không thể dùng để '
+                'đăng ký chọn giảng viên hướng dẫn.')
+            return request.redirect(f'/my/advisor?error={error}')
         term = self._get_open_term()
         if not term:
             return request.redirect('/my/advisor')

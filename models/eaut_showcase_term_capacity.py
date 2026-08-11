@@ -49,6 +49,24 @@ class ShowcaseTermCapacity(models.Model):
             capacity.pending_count = pending
             capacity.remaining_slots = capacity.max_students - approved - pending
 
+    def unlink(self):
+        Line = self.env['eaut_showcase.advisor.registration.line']
+        for capacity in self:
+            count = Line.search_count([
+                ('term_id', '=', capacity.term_id.id),
+                ('creator_id', '=', capacity.creator_id.id),
+                ('state', 'in', ('approved', 'pending')),
+            ])
+            if count:
+                raise UserError(
+                    'Không thể xoá — giảng viên "%s" đang có %s sinh viên đã duyệt/đang '
+                    'chờ trong kỳ "%s". Dùng nút "Rút khỏi kỳ" để xử lý đúng quy trình '
+                    '(sinh viên sẽ được reset để chọn lại) thay vì xoá trực tiếp, tránh '
+                    'mất dấu vết dữ liệu.' % (capacity.creator_id.name, count, capacity.term_id.name)
+                )
+        return super().unlink()
+
+
     def action_withdraw(self):
         self.ensure_one()
         if self.term_id.state != 'open':

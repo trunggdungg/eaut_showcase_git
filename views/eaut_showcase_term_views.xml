@@ -38,6 +38,10 @@
                                 class="oe_stat_button" icon="fa-user-times">
                             <field name="unassigned_count" widget="statinfo" string="Chưa có GVHD"/>
                         </button>
+                          <button type="object" name="action_view_eligible_students"
+                                class="oe_stat_button" icon="fa-user-plus">
+                            <field name="eligible_student_count" widget="statinfo" string="SV đủ điều kiện"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <h1>
@@ -56,6 +60,10 @@
                     </group>
                     <notebook>
                         <page string="Giảng viên nhận hướng dẫn" name="capacity">
+                             <div class="mb-2">
+                                <button name="action_assign_creators_kanban" type="object"
+                                        string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>
+                            </div>
                             <field name="capacity_ids">
                                 <list editable="bottom">
                                     <field name="creator_id"/>
@@ -67,6 +75,22 @@
                                     <button name="action_withdraw" type="object"
                                             string="Rút khỏi kỳ" icon="fa-sign-out"
                                             invisible="withdrawn"/>
+                                </list>
+                            </field>
+                        </page>
+                         <page string="Sinh viên đủ điều kiện" name="eligible_students">
+                            <p class="text-muted">
+                                Để trống = không giới hạn, mọi sinh viên Portal đều thấy và
+                                đăng ký được ở kỳ này. Nếu có nhiều kỳ mở song song (nhiều
+                                khoa), khai danh sách ở đây để sinh viên chỉ thấy đúng kỳ
+                                của khoa mình.
+                            </p>
+                            <field name="eligible_student_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="showcase_student_code" string="MSSV"/>
+                                    <field name="showcase_student_class" string="Lớp"/>
                                 </list>
                             </field>
                         </page>

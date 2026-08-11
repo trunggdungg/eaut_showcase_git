@@ -41,6 +41,7 @@ class ShowcaseCreator(models.Model):
 
     kanban_term_id = fields.Many2one(
         'eaut_showcase.term', string='Kỳ đồ án',
+        compute='_compute_kanban_term_id', inverse='_inverse_kanban_term_id', store=True,
         group_expand='_group_expand_kanban_terms',
         help="Suy ra từ sức chứa (term.capacity) thật của giảng viên — kỳ còn "
              "hiệu lực (chưa rút) có ngày mở gần nhất. Kéo-thả trên Kanban "
@@ -89,7 +90,7 @@ class ShowcaseCreator(models.Model):
         # self.with_context(creator_internal_write=True).write({'kanban_term_id': term_id})
         elif existing.withdrawn:
             existing.withdrawn = False
-            
+
     def action_view_projects(self):
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id(

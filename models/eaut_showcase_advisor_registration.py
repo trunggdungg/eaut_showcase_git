@@ -32,6 +32,7 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     assigned_creator_id = fields.Many2one(
         'eaut_showcase.creator', string='Đang thuộc giảng viên',
+        group_expand='_group_expand_assigned_creators',
         help="Đồng bộ tự động theo dòng nguyện vọng đang pending/approved — "
              "dùng để group-by và kéo-thả trên Kanban xử lý sinh viên chưa gán.",
     )
@@ -40,6 +41,32 @@ class ShowcaseAdvisorRegistration(models.Model):
         ('term_student_uniq', 'unique(term_id, student_id)',
          'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.'),
     ]
+
+    @api.model
+    def _group_expand_assigned_creators(self, creators, domain):
+        # Luôn hiện cột cho mọi giảng viên đang có sức chứa, kể cả khi chưa có
+        # SV nào — nếu không, Kanban chỉ hiện cột cho giảng viên đã có ít
+        # nhất 1 SV rơi đúng field assigned_creator_id. Nếu người dùng đã lọc
+        # theo 1 kỳ cụ thể (tìm kiếm "Kỳ đồ án"), chỉ hiện giảng viên của
+        # đúng kỳ đó — tránh trộn giảng viên nhiều kỳ/khoa khác nhau vào
+        # chung 1 board khi trường có nhiều kỳ mở song song.
+        term_ids = self._term_ids_from_domain(domain)
+        capacity_domain = [('term_id', 'in', term_ids)] if term_ids is not None \
+            else [('term_id.state', 'in', ('draft', 'open'))]
+        return self.env['eaut_showcase.term.capacity'].search(capacity_domain).creator_id
+
+    @api.model
+    def _term_ids_from_domain(self, domain):
+        """Rút ra danh sách term_id đang bị lọc trong domain hiện tại của
+        search view (nếu có) — chỉ xử lý dạng đơn giản ('term_id', '='/'in', ...),
+        đủ dùng cho ô tìm kiếm 'Kỳ đồ án' trên Kanban này."""
+        for condition in domain or []:
+            if isinstance(condition, (list, tuple)) and len(condition) == 3 \
+                    and condition[0] == 'term_id':
+                value = condition[2]
+                return list(value) if isinstance(value, (list, tuple)) else [value]
+        return None
+
 
     def write(self, vals):
         if 'assigned_creator_id' in vals and not self.env.context.get('advisor_internal_write'):
