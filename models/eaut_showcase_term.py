@@ -87,7 +87,7 @@ class ShowcaseTerm(models.Model):
                     'student_id': partner.id,
                     'state': 'unassigned',
                 })
-                
+
 
     def action_open(self):
         self.write({'state': 'open'})

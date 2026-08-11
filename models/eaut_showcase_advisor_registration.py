@@ -137,6 +137,12 @@ class ShowcaseAdvisorRegistration(models.Model):
             reg.write({'state': 'draft'})
             reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
 
+    def action_unassign(self):
+        """Nút "Bỏ gán" trên thẻ Kanban — đưa SV về "Chưa có GVHD" ngay lập
+        tức, không phụ thuộc việc cột "Không" có đang hiện trên board hay
+        không (cột đó tự ẩn khi không còn ai ở trạng thái đó)."""
+        for reg in self:
+            reg._admin_assign(False)
     def _admin_assign(self, creator_id):
         """Admin kéo-thả 1 SV (thường đang 'unassigned') vào cột giảng viên
         trên Kanban — gán tay, bỏ qua luồng nguyện vọng nối tiếp bình thường."""
