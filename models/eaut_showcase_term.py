@@ -88,6 +88,29 @@ class ShowcaseTerm(models.Model):
                     'state': 'unassigned',
                 })
 
+    def action_sync_eligible_students(self):
+        self.ensure_one()
+        Registration = self.env['eaut_showcase.advisor.registration']
+        existing_student_ids = set(
+            Registration.search([('term_id', '=', self.id)]).student_id.ids
+        )
+        missing_count = len(self.eligible_student_ids.filtered(
+            lambda p: p.id not in existing_student_ids))
+        self._sync_eligible_student_registrations()
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Đã đồng bộ danh sách sinh viên đủ điều kiện',
+                'message': (
+                    'Đã tạo thêm %s hồ sơ "Chưa có GVHD".' % missing_count
+                    if missing_count else
+                    'Không có sinh viên nào cần tạo thêm — đã đồng bộ đầy đủ từ trước.'
+                ),
+                'type': 'success',
+            },
+        }
+
     def action_open(self):
         self.write({'state': 'open'})
 

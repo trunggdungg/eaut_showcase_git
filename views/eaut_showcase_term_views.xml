@@ -117,6 +117,10 @@
                                 khoa), khai danh sách ở đây để sinh viên chỉ thấy đúng kỳ
                                 của khoa mình.
                             </p>
+                            <div class="mb-2">
+                                <button name="action_sync_eligible_students" type="object"
+                                        string="Đồng bộ danh sách SV" class="btn-secondary"/>
+                            </div>
                             <field name="eligible_student_ids">
                                 <list>
                                     <field name="name"/>
