@@ -14,6 +14,7 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     term_id = fields.Many2one(
         'eaut_showcase.term', string='Kỳ đồ án', required=True, ondelete='cascade',
+        group_expand='_group_expand_terms',
     )
     student_id = fields.Many2one('res.partner', string='Sinh viên', required=True)
     line_ids = fields.One2many(
@@ -40,6 +41,14 @@ class ShowcaseAdvisorRegistration(models.Model):
         ('term_student_uniq', 'unique(term_id, student_id)',
          'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.'),
     ]
+
+    @api.model
+    def _group_expand_terms(self, terms, domain):
+        # Cùng lý do với _group_expand_assigned_creators — khi Group By "Kỳ
+        # đồ án", hiện đủ mọi kỳ draft/open làm cột kể cả kỳ chưa có hồ sơ
+        # đăng ký nào.
+        return self.env['eaut_showcase.term'].search(
+            [('state', 'in', ('draft', 'open'))], order='date_start desc')
 
     @api.model
     def _group_expand_assigned_creators(self, creators, domain):
