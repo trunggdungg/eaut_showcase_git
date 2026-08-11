@@ -32,12 +32,28 @@ class ShowcaseTerm(models.Model):
     unassigned_count = fields.Integer(
         string='Sinh viên chưa có GVHD', compute='_compute_unassigned_count',
     )
+    eligible_student_ids = fields.Many2many(
+        'res.partner', 'eaut_showcase_term_eligible_student_rel',
+        'term_id', 'partner_id', string='Sinh viên đủ điều kiện',
+        help="Chỉ sinh viên trong danh sách này mới thấy và đăng ký được ở "
+             "kỳ này — dùng khi nhiều khoa mở kỳ song song, tránh sinh viên "
+             "khoa khác lỡ đăng ký nhầm kỳ. Để trống = không giới hạn, mọi "
+             "sinh viên Portal đều thấy được kỳ này.",
+    )
+    eligible_student_count = fields.Integer(
+        string='Số sinh viên đủ điều kiện', compute='_compute_eligible_student_count',
+    )
 
     @api.depends('registration_ids.state')
     def _compute_unassigned_count(self):
         for term in self:
             term.unassigned_count = len(term.registration_ids.filtered(
                 lambda r: r.state == 'unassigned'))
+
+    @api.depends('eligible_student_ids')
+    def _compute_eligible_student_count(self):
+        for term in self:
+            term.eligible_student_count = len(term.eligible_student_ids)
 
     def action_open(self):
         self.write({'state': 'open'})
@@ -73,6 +89,16 @@ class ShowcaseTerm(models.Model):
             'res_model': 'eaut_showcase.advisor.registration',
             'view_mode': 'list,form',
             'domain': [('term_id', '=', self.id), ('state', '=', 'unassigned')],
+        }
+
+    def action_view_eligible_students(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Sinh viên đủ điều kiện',
+            'res_model': 'res.partner',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.eligible_student_ids.ids)],
         }
 
     def action_assign_creators_kanban(self):

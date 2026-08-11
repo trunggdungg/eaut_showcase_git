@@ -12,8 +12,17 @@ _logger = logging.getLogger(__name__)
 class AdvisorPortalController(http.Controller):
 
     def _get_open_term(self):
-        return request.env['eaut_showcase.term'].sudo().search(
-            [('state', '=', 'open')], order='date_start desc', limit=1)
+        """Chọn đúng kỳ đang mở cho sinh viên hiện tại — nếu 1 kỳ có khai
+        danh sách 'Sinh viên đủ điều kiện' thì chỉ những SV trong danh sách
+        đó mới thấy kỳ này (dùng khi nhiều khoa mở kỳ song song); kỳ không
+        khai danh sách thì mở cho mọi sinh viên."""
+        partner = request.env.user.partner_id
+        terms = request.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc')
+        for term in terms:
+            if not term.eligible_student_ids or partner in term.eligible_student_ids:
+                return term
+        return request.env['eaut_showcase.term']
 
     def _get_registration(self, term):
         partner = request.env.user.partner_id
