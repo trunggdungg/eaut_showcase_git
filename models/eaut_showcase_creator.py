@@ -35,11 +35,48 @@ class ShowcaseCreator(models.Model):
     project_count = fields.Integer(
         string='Số dự án đã đăng', compute='_compute_project_count', store=True,
     )
+    kanban_term_id = fields.Many2one(
+        'eaut_showcase.term', string='Kỳ đồ án',
+        group_expand='_group_expand_kanban_terms',
+        help="Kéo-thả trên Kanban 'Phân bổ giảng viên theo kỳ' để gán giảng "
+             "viên vào kỳ — tự tạo sức chứa (term.capacity, mặc định 1 chỗ) "
+             "nếu chưa có, chỉnh số lượng chi tiết ở form Kỳ đồ án.",
+    )
 
     @api.depends('project_ids')
     def _compute_project_count(self):
         for creator in self:
             creator.project_count = len(creator.project_ids)
+
+    @api.model
+    def _group_expand_kanban_terms(self, terms, domain):
+        # Luôn hiện đủ các kỳ draft/open làm cột, kể cả kỳ chưa có giảng
+        # viên nào — nếu không, Kanban mặc định chỉ hiện cột cho giá trị đã
+        # tồn tại, không có chỗ để kéo giảng viên vào 1 kỳ mới toanh.
+        return self.env['eaut_showcase.term'].search(
+            [('state', 'in', ('draft', 'open'))], order='date_start desc')
+
+    def write(self, vals):
+        if 'kanban_term_id' in vals and not self.env.context.get('creator_internal_write'):
+            term_id = vals.pop('kanban_term_id')
+            for creator in self:
+                creator._assign_to_term(term_id)
+            if not vals:
+                return True
+        return super().write(vals)
+
+    def _assign_to_term(self, term_id):
+        self.ensure_one()
+        if not term_id:
+            self.with_context(creator_internal_write=True).write({'kanban_term_id': False})
+            return
+        Capacity = self.env['eaut_showcase.term.capacity']
+        existing = Capacity.search([
+            ('term_id', '=', term_id), ('creator_id', '=', self.id),
+        ], limit=1)
+        if not existing:
+            Capacity.create({'term_id': term_id, 'creator_id': self.id, 'max_students': 1})
+        self.with_context(creator_internal_write=True).write({'kanban_term_id': term_id})
 
     def action_view_projects(self):
         self.ensure_one()

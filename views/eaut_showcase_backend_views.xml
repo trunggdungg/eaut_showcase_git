@@ -156,6 +156,9 @@
     <menuitem id="menu_uikick_advisor_registration_kanban" name="Phân bổ giảng viên" parent="menu_uikick_root"
               action="action_eaut_showcase_advisor_registration_kanban" sequence="70"/>
 
+    <menuitem id="menu_uikick_creator_kanban" name="Phân bổ giảng viên theo kỳ" parent="menu_uikick_root"
+              action="action_eaut_showcase_creator_kanban" sequence="80"/>
+
     <menuitem id="menu_uikick_config" name="Cấu hình" parent="menu_uikick_root" sequence="90"/>
 
     <menuitem id="menu_uikick_category" name="Danh mục" parent="menu_uikick_config"
