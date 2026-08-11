@@ -56,6 +56,10 @@
                     </group>
                     <notebook>
                         <page string="Giảng viên nhận hướng dẫn" name="capacity">
+                            <div class="mb-2">
+                                <button name="action_assign_creators_kanban" type="object"
+                                        string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>
+                            </div>
                             <field name="capacity_ids">
                                 <list editable="bottom">
                                     <field name="creator_id"/>
