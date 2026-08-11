@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ShowcaseCreator(models.Model):
@@ -47,3 +48,41 @@ class ShowcaseCreator(models.Model):
         )
         action['domain'] = [('creator_ids', 'in', self.id)]
         return action
+
+    def action_create_portal_user(self):
+        """Tạo tài khoản Portal thẳng từ hồ sơ Tác giả — tránh phải tự tay
+        tạo Contact/User riêng rồi nối lại field user_id (dễ tạo nhầm loại
+        Người/Công ty, tạo dư contact, hoặc nối sai người)."""
+        self.ensure_one()
+        if self.user_id:
+            raise UserError('Tác giả này đã có tài khoản Portal (%s) rồi.' % self.user_id.login)
+        if not self.email:
+            raise UserError('Vui lòng nhập Email liên hệ trước khi tạo tài khoản Portal.')
+
+        existing_user = self.env['res.users'].sudo().search([('login', '=', self.email)], limit=1)
+        if existing_user:
+            raise UserError(
+                'Đã có tài khoản đăng nhập dùng email này (%s). Vào field "Tài khoản '
+                'Portal" để chọn thủ công tài khoản đó thay vì tạo mới.' % self.email
+            )
+
+        portal_group = self.env.ref('base.group_portal')
+        user = self.env['res.users'].sudo().with_context(no_reset_password=True).create({
+            'name': self.name,
+            'login': self.email,
+            'email': self.email,
+            'groups_id': [(6, 0, [portal_group.id])],
+        })
+        user.sudo().action_reset_password()
+        self.user_id = user.id
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Đã tạo tài khoản Portal',
+                'message': 'Email mời đặt mật khẩu đã được gửi tới %s.' % self.email,
+                'type': 'success',
+                'sticky': False,
+            },
+        }
