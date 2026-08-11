@@ -44,6 +44,14 @@
                                 <span t-elif="record.state.raw_value === 'unassigned'"
                                       class="badge text-bg-danger">Chưa gán</span>
                             </div>
+                            <div class="o_kanban_record_bottom" t-if="record.state.raw_value !== 'unassigned'">
+                                <div class="oe_kanban_bottom_right">
+                                    <button type="object" name="action_unassign"
+                                            class="btn btn-sm btn-link text-danger p-0">
+                                        Bỏ gán
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </t>
                 </templates>
