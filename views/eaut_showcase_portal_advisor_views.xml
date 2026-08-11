@@ -10,6 +10,16 @@
             <div class="container my-4">
                 <h2>Chọn giảng viên hướng dẫn đồ án</h2>
 
+                <t t-if="lecturer_profile">
+                    <div class="alert alert-warning">
+                        Tài khoản này đã đăng ký làm giảng viên hướng dẫn
+                        (<strong t-esc="lecturer_profile.name"/>) — không thể dùng để đăng ký
+                        chọn giảng viên hướng dẫn. Nếu bạn cũng là sinh viên, vui lòng dùng
+                        1 tài khoản Portal khác.
+                    </div>
+                </t>
+
+                <t t-else="">
                 <div t-if="error" class="alert alert-danger" t-esc="error"/>
                 <div t-if="submitted" class="alert alert-success">
                     Đã nộp nguyện vọng thành công. Bạn sẽ được thông báo khi có kết quả.
@@ -100,6 +110,7 @@
                         </t>
                         <button type="submit" class="btn btn-primary">Nộp nguyện vọng</button>
                     </form>
+                </t>
                 </t>
             </div>
         </t>
