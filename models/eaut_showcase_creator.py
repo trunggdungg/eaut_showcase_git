@@ -35,18 +35,35 @@ class ShowcaseCreator(models.Model):
     project_count = fields.Integer(
         string='Số dự án đã đăng', compute='_compute_project_count', store=True,
     )
+    capacity_ids = fields.One2many(
+        'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
+    )
     kanban_term_id = fields.Many2one(
         'eaut_showcase.term', string='Kỳ đồ án',
+        compute='_compute_kanban_term_id', inverse='_inverse_kanban_term_id', store=True,
         group_expand='_group_expand_kanban_terms',
-        help="Kéo-thả trên Kanban 'Phân bổ giảng viên theo kỳ' để gán giảng "
-             "viên vào kỳ — tự tạo sức chứa (term.capacity, mặc định 1 chỗ) "
-             "nếu chưa có, chỉnh số lượng chi tiết ở form Kỳ đồ án.",
+        help="Suy ra từ sức chứa (term.capacity) thật của giảng viên — kỳ còn "
+             "hiệu lực (chưa rút) có ngày mở gần nhất. Kéo-thả trên Kanban "
+             "'Phân bổ giảng viên theo kỳ' sẽ tự tạo sức chứa nếu chưa có; "
+             "field này luôn phản ánh đúng dữ liệu dù thêm/sửa từ đâu (Kanban "
+             "hay tab 'Giảng viên nhận hướng dẫn' trong form Kỳ).",
     )
 
     @api.depends('project_ids')
     def _compute_project_count(self):
         for creator in self:
             creator.project_count = len(creator.project_ids)
+
+    @api.depends('capacity_ids.term_id', 'capacity_ids.withdrawn')
+    def _compute_kanban_term_id(self):
+        for creator in self:
+            active = creator.capacity_ids.filtered(lambda c: not c.withdrawn)
+            active = active.sorted(key=lambda c: c.term_id.date_start, reverse=True)
+            creator.kanban_term_id = active[:1].term_id if active else False
+
+    def _inverse_kanban_term_id(self):
+        for creator in self:
+            creator._assign_to_term(creator.kanban_term_id.id)
 
     @api.model
     def _group_expand_kanban_terms(self, terms, domain):
@@ -56,19 +73,12 @@ class ShowcaseCreator(models.Model):
         return self.env['eaut_showcase.term'].search(
             [('state', 'in', ('draft', 'open'))], order='date_start desc')
 
-    def write(self, vals):
-        if 'kanban_term_id' in vals and not self.env.context.get('creator_internal_write'):
-            term_id = vals.pop('kanban_term_id')
-            for creator in self:
-                creator._assign_to_term(term_id)
-            if not vals:
-                return True
-        return super().write(vals)
-
     def _assign_to_term(self, term_id):
         self.ensure_one()
         if not term_id:
-            self.with_context(creator_internal_write=True).write({'kanban_term_id': False})
+            # Kéo về cột "Không" trên Kanban — sức chứa hiện có không tự
+            # xoá/rút, nên giá trị tính toán sẽ tự quay lại kỳ cũ ở lần tính
+            # kế tiếp; không cần xử lý thêm ở đây.
             return
         Capacity = self.env['eaut_showcase.term.capacity']
         existing = Capacity.search([
@@ -76,7 +86,8 @@ class ShowcaseCreator(models.Model):
         ], limit=1)
         if not existing:
             Capacity.create({'term_id': term_id, 'creator_id': self.id, 'max_students': 1})
-        self.with_context(creator_internal_write=True).write({'kanban_term_id': term_id})
+        elif existing.withdrawn:
+            existing.withdrawn = False
 
     def action_view_projects(self):
         self.ensure_one()
