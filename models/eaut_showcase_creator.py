@@ -50,38 +50,58 @@ class ShowcaseCreator(models.Model):
         return action
 
     def action_create_portal_user(self):
-        """Tạo tài khoản Portal thẳng từ hồ sơ Tác giả — tránh phải tự tay
-        tạo Contact/User riêng rồi nối lại field user_id (dễ tạo nhầm loại
-        Người/Công ty, tạo dư contact, hoặc nối sai người)."""
+        """Tạo Liên hệ (nếu chưa có) và cấp quyền truy cập Portal cho đúng
+        Liên hệ đó — đi qua đúng cơ chế "Grant Portal Access" chuẩn của Odoo
+        (portal.wizard) thay vì tự tạo res.users tay, để dùng đúng mẫu email
+        mời + luồng bảo mật (signup token) mà Odoo tự quản lý."""
         self.ensure_one()
         if self.user_id:
             raise UserError('Tác giả này đã có tài khoản Portal (%s) rồi.' % self.user_id.login)
         if not self.email:
             raise UserError('Vui lòng nhập Email liên hệ trước khi tạo tài khoản Portal.')
 
-        existing_user = self.env['res.users'].sudo().search([('login', '=', self.email)], limit=1)
+        email = self.email.strip()
+
+        # Email đã là login của 1 tài khoản khác (Portal hay Internal) chưa?
+        existing_user = self.env['res.users'].sudo().search([('login', '=', email)], limit=1)
         if existing_user:
             raise UserError(
-                'Đã có tài khoản đăng nhập dùng email này (%s). Vào field "Tài khoản '
-                'Portal" để chọn thủ công tài khoản đó thay vì tạo mới.' % self.email
+                'Email này đã được dùng làm tài khoản đăng nhập (%s) — vào field "Tài '
+                'khoản Portal" để chọn thủ công tài khoản đó thay vì tạo mới.' % existing_user.login
             )
 
-        portal_group = self.env.ref('base.group_portal')
-        user = self.env['res.users'].sudo().with_context(no_reset_password=True).create({
-            'name': self.name,
-            'login': self.email,
-            'email': self.email,
-            'groups_id': [(6, 0, [portal_group.id])],
-        })
-        user.sudo().action_reset_password()
-        self.user_id = user.id
+        Partner = self.env['res.partner'].sudo()
+        partner = Partner.search([('email', '=', email)], limit=1)
+        # Email đã được cấp quyền Portal cho 1 liên hệ khác chưa?
+        if partner and partner.user_ids:
+            raise UserError(
+                'Email này đã được cấp quyền Portal cho liên hệ "%s" (đăng nhập: %s) rồi — '
+                'không thể cấp trùng.' % (partner.name, partner.user_ids[0].login)
+            )
+        if not partner:
+            partner = Partner.create({
+                'name': self.name,
+                'email': email,
+                'company_type': 'person',
+            })
+
+        wizard = self.env['portal.wizard'].sudo().with_context(
+            active_model='res.partner', active_ids=partner.ids,
+        ).create({})
+        wizard_user = wizard.user_ids.filtered(lambda u: u.partner_id == partner)
+        if not wizard_user:
+            raise UserError('Không thể khởi tạo yêu cầu cấp quyền Portal cho liên hệ này.')
+        wizard_user.email = email
+        wizard_user.action_grant_access()
+
+        self.user_id = partner.user_ids[:1].id
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': 'Đã tạo tài khoản Portal',
-                'message': 'Email mời đặt mật khẩu đã được gửi tới %s.' % self.email,
+                'title': 'Đã cấp quyền Portal',
+                'message': 'Email mời đăng nhập Portal đã được gửi tới %s.' % email,
                 'type': 'success',
                 'sticky': False,
             },
