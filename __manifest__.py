@@ -28,6 +28,7 @@
         'views/eaut_showcase_advisor_registration_kanban_views.xml',
         'views/eaut_showcase_creator_kanban_views.xml',
         'views/eaut_showcase_portal_advisor_views.xml',
+        'views/eaut_showcase_portal_home_views.xml',
         'views/eaut_showcase_home_views.xml',
         'views/eaut_showcase_creator_detail_views.xml',
         'views/eaut_showcase_detail_views.xml',
