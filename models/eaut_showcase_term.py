@@ -55,6 +55,39 @@ class ShowcaseTerm(models.Model):
         for term in self:
             term.eligible_student_count = len(term.eligible_student_ids)
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        terms = super().create(vals_list)
+        terms._sync_eligible_student_registrations()
+        return terms
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'eligible_student_ids' in vals:
+            self._sync_eligible_student_registrations()
+        return result
+
+    def _sync_eligible_student_registrations(self):
+        """Thêm 1 SV vào 'Sinh viên đủ điều kiện' → tạo ngay 1 hồ sơ đăng ký
+        ở trạng thái "Chưa có GVHD" cho họ (nếu chưa có) — để họ được tính
+        vào số đếm và xuất hiện sẵn trên Kanban phân bổ, kể cả khi họ chưa
+        từng tự đăng nhập nộp nguyện vọng. Nếu sau đó SV tự nộp thật, hệ
+        thống dùng lại đúng bản ghi này (action_submit chỉ yêu cầu line_ids
+        rỗng, không quan tâm state ban đầu)."""
+        Registration = self.env['eaut_showcase.advisor.registration']
+        for term in self:
+            existing_student_ids = set(
+                Registration.search([('term_id', '=', term.id)]).student_id.ids
+            )
+            missing = term.eligible_student_ids.filtered(
+                lambda p: p.id not in existing_student_ids)
+            for partner in missing:
+                Registration.create({
+                    'term_id': term.id,
+                    'student_id': partner.id,
+                    'state': 'unassigned',
+                })
+
     def action_open(self):
         self.write({'state': 'open'})
 
