@@ -178,10 +178,11 @@ class ShowcaseAdvisorRegistration(models.Model):
         capacity = self.env['eaut_showcase.term.capacity'].search([
             ('term_id', '=', self.term_id.id), ('creator_id', '=', creator_id),
         ], limit=1)
-        if not capacity:
+        if not capacity or capacity.max_students <= 0:
             # Giảng viên chưa được khai sức chứa ở ĐÚNG kỳ của sinh viên này
-            # (có thể do họ chỉ có sức chứa ở 1 kỳ khác) — chặn hẳn, không
-            # cho gán vô điều kiện, tránh vượt sức chứa mà không ai biết.
+            # (có thể do họ chỉ có sức chứa ở 1 kỳ khác), hoặc đã khai nhưng
+            # để 0 — cả 2 trường hợp đều coi như "chưa sẵn sàng nhận SV kỳ
+            # này", chặn hẳn, không cho gán vô điều kiện.
             raise ValidationError(
                 'Giảng viên này chưa được khai sức chứa ở kỳ "%s" — vào "Kỳ đồ án" > '
                 '"Giảng viên nhận hướng dẫn" để thêm giảng viên vào đúng kỳ trước khi gán.'
