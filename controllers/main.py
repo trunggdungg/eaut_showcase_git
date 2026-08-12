@@ -163,10 +163,15 @@ class ShowcaseController(http.Controller):
         location = (kw.get('location') or '').strip()
         sort = kw.get('sort') if kw.get('sort') in ADVISOR_SORT_OPTIONS else 'Relevance'
 
-        term = request.env['eaut_showcase.term'].sudo().search(
-            [('state', '=', 'open')], order='date_start desc', limit=1)
-        capacities = term.capacity_ids.filtered(lambda c: not c.withdrawn) if term else \
-            request.env['eaut_showcase.term.capacity']
+        open_terms = request.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc')
+        selected_term_ids = [int(t) for t in request.httprequest.args.getlist('term') if t.isdigit()]
+        selected_term_ids = [t for t in selected_term_ids if t in open_terms.ids]
+        wanted_term_ids = selected_term_ids or open_terms.ids
+
+        capacities = request.env['eaut_showcase.term.capacity'].sudo().search([
+            ('term_id', 'in', wanted_term_ids), ('withdrawn', '=', False),
+        ])
 
         if selected_categories:
             wanted = set(selected_categories)
@@ -186,8 +191,8 @@ class ShowcaseController(http.Controller):
         elif sort == 'Newest':
             capacities = capacities.sorted(key=lambda c: c.creator_id.id, reverse=True)
 
-        all_locations = term.capacity_ids.mapped('creator_id.location_id').sorted(
-            key=lambda l: l.name) if term else request.env['res.country.state']
+        all_locations = open_terms.capacity_ids.mapped('creator_id.location_id').sorted(
+            key=lambda l: l.name)
 
         url_args = {'categories_submitted': 1, 'sort': sort, 'section': 'advisors'}
         if selected_categories:
@@ -196,6 +201,8 @@ class ShowcaseController(http.Controller):
             url_args['status'] = slot_filters
         if location:
             url_args['location'] = location
+        if selected_term_ids:
+            url_args['term'] = selected_term_ids
 
         page = int(kw.get('page') or 1)
         total = len(capacities)
@@ -213,7 +220,7 @@ class ShowcaseController(http.Controller):
 
         values = {
             'section': 'advisors',
-            'term': term,
+            'open_terms': open_terms,
             'categories': all_categories,
             'all_locations': all_locations,
             'header_label': header_label,
@@ -228,6 +235,7 @@ class ShowcaseController(http.Controller):
                 'status': slot_filters,
                 'location': location,
                 'sort': sort,
+                'term': selected_term_ids,
             },
         }
         return request.render('eaut_showcase.home_page', values)
