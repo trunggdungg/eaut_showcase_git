@@ -75,6 +75,17 @@ class ShowcaseAdvisorRegistration(models.Model):
                 return list(value) if isinstance(value, (list, tuple)) else [value]
         return None
 
+    def unlink(self):
+        for reg in self:
+            if reg.state not in ('draft', 'unassigned'):
+                raise UserError(
+                    'Không thể xoá — sinh viên "%s" đang ở trạng thái "%s" (đã có kết quả '
+                    'với giảng viên). Dùng nút "Bỏ gán" trên Kanban để đưa về "Chưa có GVHD" '
+                    'trước, tránh mất dấu vết lịch sử đăng ký/duyệt.'
+                    % (reg.student_id.name, dict(reg._fields['state'].selection).get(reg.state))
+                )
+        return super().unlink()
+
     def write(self, vals):
         if 'assigned_creator_id' in vals and not self.env.context.get('advisor_internal_write'):
             # Admin vừa kéo-thả thẻ trên Kanban sang cột 1 giảng viên khác —
@@ -167,18 +178,26 @@ class ShowcaseAdvisorRegistration(models.Model):
         capacity = self.env['eaut_showcase.term.capacity'].search([
             ('term_id', '=', self.term_id.id), ('creator_id', '=', creator_id),
         ], limit=1)
-        if capacity:
-            self.env.cr.execute(
-                'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
-                (capacity.id,),
+        if not capacity:
+            # Giảng viên chưa được khai sức chứa ở ĐÚNG kỳ của sinh viên này
+            # (có thể do họ chỉ có sức chứa ở 1 kỳ khác) — chặn hẳn, không
+            # cho gán vô điều kiện, tránh vượt sức chứa mà không ai biết.
+            raise ValidationError(
+                'Giảng viên này chưa được khai sức chứa ở kỳ "%s" — vào "Kỳ đồ án" > '
+                '"Giảng viên nhận hướng dẫn" để thêm giảng viên vào đúng kỳ trước khi gán.'
+                % self.term_id.name
             )
-            approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
-                ('term_id', '=', self.term_id.id),
-                ('creator_id', '=', creator_id),
-                ('state', '=', 'approved'),
-            ])
-            if approved_count >= capacity.max_students:
-                raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
+        self.env.cr.execute(
+            'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
+            (capacity.id,),
+        )
+        approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
+            ('term_id', '=', self.term_id.id),
+            ('creator_id', '=', creator_id),
+            ('state', '=', 'approved'),
+        ])
+        if approved_count >= capacity.max_students:
+            raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
 
         now = fields.Datetime.now()
         self.line_ids.filtered(lambda l: l.state in ('waiting', 'pending', 'approved')).write({
