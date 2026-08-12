@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 import logging
 import urllib.parse
 
@@ -239,6 +240,56 @@ class AdvisorPortalController(http.Controller):
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
         return request.redirect('/my/advisor-requests?done=1')
+
+    # ============ GIẢNG VIÊN: QUẢN LÝ HỒ SƠ ============
+    @http.route(['/my/advisor-requests/profile'], type='http', auth='user', website=True,
+                methods=['GET'], sitemap=False)
+    def my_advisor_lecturer_profile(self, **kw):
+        creator = self._get_creator_for_current_user()
+        if not creator:
+            return request.redirect('/my/advisor-requests?error=1')
+        values = {
+            'creator': creator,
+            'all_categories': request.env['eaut_showcase.category'].sudo().search(
+                [], order='sequence, id'),
+            'all_locations': request.env['res.country.state'].sudo().search(
+                [('country_id.code', '=', 'VN')], order='name'),
+            'done': kw.get('done'),
+            'error': kw.get('error'),
+        }
+        return request.render('eaut_showcase.portal_my_advisor_lecturer_profile', values)
+
+    @http.route(['/my/advisor-requests/profile'], type='http', auth='user', website=True,
+                methods=['POST'], csrf=True)
+    def my_advisor_lecturer_profile_save(self, **post):
+        creator = self._get_creator_for_current_user()
+        if not creator:
+            return request.redirect('/my/advisor-requests?error=1')
+
+        name = (post.get('name') or '').strip()
+        if not name:
+            error = urllib.parse.quote('Vui lòng nhập tên hiển thị.')
+            return request.redirect(f'/my/advisor-requests/profile?error={error}')
+
+        category_ids = [int(v) for v in request.httprequest.form.getlist('category_ids') if v]
+        vals = {
+            'name': name,
+            'role': (post.get('role') or '').strip(),
+            'bio': (post.get('bio') or '').strip(),
+            'email': (post.get('email') or '').strip(),
+            'website_url': (post.get('website_url') or '').strip(),
+            'location_id': int(post.get('location_id')) if post.get('location_id') else False,
+            'category_ids': [(6, 0, category_ids)],
+        }
+        avatar_file = request.httprequest.files.get('avatar')
+        if avatar_file and avatar_file.filename:
+            vals['avatar'] = base64.b64encode(avatar_file.read())
+
+        try:
+            creator.write(vals)
+        except (UserError, ValidationError) as e:
+            return request.redirect(f'/my/advisor-requests/profile?error={urllib.parse.quote(str(e))}')
+        return request.redirect('/my/advisor-requests/profile?done=1')
 
     def _decide_request(self, line_id, approve):
         creator = self._get_creator_for_current_user()

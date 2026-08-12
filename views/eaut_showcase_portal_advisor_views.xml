@@ -123,7 +123,12 @@
         <t t-call="portal.portal_layout">
             <t t-set="breadcrumbs_searchbar" t-value="False"/>
             <div class="container my-4">
-                <h2>Yêu cầu hướng dẫn đồ án</h2>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Yêu cầu hướng dẫn đồ án</h2>
+                    <a t-if="creator" href="/my/advisor-requests/profile" class="btn btn-outline-secondary btn-sm">
+                        Hồ sơ của tôi
+                    </a>
+                </div>
 
                 <div t-if="done" class="alert alert-success">Đã cập nhật.</div>
                 <div t-if="error" class="alert alert-danger">
@@ -304,6 +309,89 @@
                         </div>
                     </div>
                 </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- GIẢNG VIÊN: /my/advisor-requests/profile                      -->
+    <!-- ============================================================ -->
+    <template id="portal_my_advisor_lecturer_profile" name="Portal - Hồ sơ giảng viên">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+            <div class="container my-4">
+                <h2>Hồ sơ giảng viên</h2>
+
+                <div t-if="done" class="alert alert-success">Đã lưu hồ sơ.</div>
+                <div t-if="error" class="alert alert-danger">
+                    <t t-if="error != '1'" t-esc="error"/>
+                    <t t-else="">Có lỗi xảy ra hoặc bạn không có quyền thực hiện thao tác này.</t>
+                </div>
+
+                <form action="/my/advisor-requests/profile" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                    <div class="mb-3" t-if="creator.avatar">
+                        <img t-att-src="'/showcase/creator/' + str(creator.id) + '/avatar'"
+                             style="max-width:120px; max-height:120px; border-radius:8px; object-fit:cover;"
+                             alt="Ảnh đại diện"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="avatar">Ảnh đại diện</label>
+                        <input type="file" name="avatar" id="avatar" class="form-control" accept="image/*"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name">Tên hiển thị</label>
+                        <input type="text" name="name" id="name" class="form-control" required="required"
+                               t-att-value="creator.name"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="role">Vai trò</label>
+                        <input type="text" name="role" id="role" class="form-control"
+                               t-att-value="creator.role"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email">Email liên hệ</label>
+                        <input type="email" name="email" id="email" class="form-control"
+                               t-att-value="creator.email"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="website_url">Website / mạng xã hội</label>
+                        <input type="text" name="website_url" id="website_url" class="form-control"
+                               t-att-value="creator.website_url"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="location_id">Địa điểm</label>
+                        <select name="location_id" id="location_id" class="form-select">
+                            <option value="">-- Không chọn --</option>
+                            <t t-foreach="all_locations" t-as="loc">
+                                <option t-att-value="loc.id"
+                                        t-att-selected="'selected' if creator.location_id.id == loc.id else None"
+                                        t-esc="loc.name"/>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label>Lĩnh vực</label>
+                        <div>
+                            <t t-foreach="all_categories" t-as="cat">
+                                <label class="d-block">
+                                    <input type="checkbox" name="category_ids" t-att-value="cat.id"
+                                           t-att-checked="'checked' if cat.id in creator.category_ids.ids else None"/>
+                                    <t t-esc="cat.name"/>
+                                </label>
+                            </t>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bio">Giới thiệu</label>
+                        <textarea name="bio" id="bio" class="form-control" rows="4" t-esc="creator.bio"/>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
+                    <a href="/my/advisor-requests" class="btn btn-outline-secondary">Quay lại</a>
+                </form>
             </div>
         </t>
     </template>
