@@ -194,23 +194,24 @@
                             </t>
                         </div>
 
-                        <hr/>
-
-                        <div class="uikick-filter-group">
-                            <h3>Địa điểm</h3>
-                             <input type="text" name="location" placeholder="Tìm kiếm theo thành phố, tỉnh..."
-                                   class="uikick-input" id="uikick-location-input"
-                                   t-att-value="filters['location']"/>
-                            <select class="uikick-select" id="uikick-location-select">
-                                <option value="">Tất cả địa điểm</option>
-                                <t t-foreach="all_locations" t-as="loc">
-                                    <option t-att-value="loc.name"
-                                            t-att-selected="'selected' if filters['location'] == loc.name else None">
-                                        <t t-esc="loc.name"/>
-                                    </option>
-                                </t>
-                            </select>
-                        </div>
+                        <t t-if="section == 'projects'">
+                            <hr/>
+                            <div class="uikick-filter-group">
+                                <h3>Địa điểm</h3>
+                                 <input type="text" name="location" placeholder="Tìm kiếm theo thành phố, tỉnh..."
+                                       class="uikick-input" id="uikick-location-input"
+                                       t-att-value="filters['location']"/>
+                                <select class="uikick-select" id="uikick-location-select">
+                                    <option value="">Tất cả địa điểm</option>
+                                    <t t-foreach="all_locations" t-as="loc">
+                                        <option t-att-value="loc.name"
+                                                t-att-selected="'selected' if filters['location'] == loc.name else None">
+                                            <t t-esc="loc.name"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                        </t>
 
                         <button type="submit"
                                 class="btn btn-primary btn-sm rounded-pill uikick-btn-block uikick-filter-apply">Áp dụng

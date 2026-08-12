@@ -160,7 +160,6 @@ class ShowcaseController(http.Controller):
         selected_categories = self._get_selected_categories(category, all_categories, kw)
 
         slot_filters = [s for s in request.httprequest.args.getlist('status') if s in ('open', 'full')]
-        location = (kw.get('location') or '').strip()
         sort = kw.get('sort') if kw.get('sort') in ADVISOR_SORT_OPTIONS else 'Relevance'
 
         open_terms = request.env['eaut_showcase.term'].sudo().search(
@@ -177,9 +176,6 @@ class ShowcaseController(http.Controller):
             wanted = set(selected_categories)
             capacities = capacities.filtered(
                 lambda c: set(c.creator_id.category_ids.mapped('name')) & wanted)
-        if location:
-            capacities = capacities.filtered(
-                lambda c: location.lower() in (c.creator_id.location_id.name or '').lower())
         if slot_filters:
             want_open = 'open' in slot_filters
             want_full = 'full' in slot_filters
@@ -191,16 +187,11 @@ class ShowcaseController(http.Controller):
         elif sort == 'Newest':
             capacities = capacities.sorted(key=lambda c: c.creator_id.id, reverse=True)
 
-        all_locations = open_terms.capacity_ids.mapped('creator_id.location_id').sorted(
-            key=lambda l: l.name)
-
         url_args = {'categories_submitted': 1, 'sort': sort, 'section': 'advisors'}
         if selected_categories:
             url_args['category'] = selected_categories
         if slot_filters:
             url_args['status'] = slot_filters
-        if location:
-            url_args['location'] = location
         if selected_term_ids:
             url_args['term'] = selected_term_ids
 
@@ -222,7 +213,6 @@ class ShowcaseController(http.Controller):
             'section': 'advisors',
             'open_terms': open_terms,
             'categories': all_categories,
-            'all_locations': all_locations,
             'header_label': header_label,
             'capacities': capacities_page,
             'items_count': total,
@@ -233,7 +223,6 @@ class ShowcaseController(http.Controller):
             'filters': {
                 'categories': selected_categories,
                 'status': slot_filters,
-                'location': location,
                 'sort': sort,
                 'term': selected_term_ids,
             },
