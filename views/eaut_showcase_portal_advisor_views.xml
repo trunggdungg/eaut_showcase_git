@@ -136,44 +136,122 @@
                         liên hệ quản trị viên để được cấu hình.
                     </div>
                 </t>
-                <t t-elif="not lines">
-                    <p>Hiện không có sinh viên nào đang chờ bạn duyệt.</p>
+                <t t-else="">
+                    <ul class="nav nav-tabs mb-3" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab"
+                                    data-bs-target="#tab-pending" type="button" role="tab">
+                                Đang chờ (<t t-esc="len(pending_lines)"/>)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#tab-approved" type="button" role="tab">
+                                Đang hướng dẫn (<t t-esc="len(approved_lines)"/>)
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#tab-history" type="button" role="tab">
+                                Lịch sử (<t t-esc="len(history_lines)"/>)
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tab-pending" role="tabpanel">
+                            <p t-if="not pending_lines">Hiện không có sinh viên nào đang chờ bạn duyệt.</p>
+                            <table t-else="" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Sinh viên</th>
+                                        <th>MSSV / Lớp / Ngành</th>
+                                        <th>Lời giới thiệu</th>
+                                        <th>Hạn phản hồi</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="pending_lines" t-as="line">
+                                        <td t-esc="line.student_id.name"/>
+                                        <td>
+                                            <t t-esc="line.student_id.showcase_student_code"/> /
+                                            <t t-esc="line.student_id.showcase_student_class"/> /
+                                            <t t-esc="line.student_id.showcase_student_major"/>
+                                        </td>
+                                        <td t-esc="line.note"/>
+                                        <td t-esc="line.deadline"/>
+                                        <td>
+                                            <form t-attf-action="/my/advisor-requests/#{line.id}/approve"
+                                                  method="post" class="d-inline">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                                            </form>
+                                            <form t-attf-action="/my/advisor-requests/#{line.id}/reject"
+                                                  method="post" class="d-inline">
+                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="tab-approved" role="tabpanel">
+                            <p t-if="not approved_lines">Hiện chưa có sinh viên nào bạn đang hướng dẫn.</p>
+                            <table t-else="" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Sinh viên</th>
+                                        <th>MSSV / Lớp / Ngành</th>
+                                        <th>Lời giới thiệu</th>
+                                        <th>Ngày duyệt</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="approved_lines" t-as="line">
+                                        <td t-esc="line.student_id.name"/>
+                                        <td>
+                                            <t t-esc="line.student_id.showcase_student_code"/> /
+                                            <t t-esc="line.student_id.showcase_student_class"/> /
+                                            <t t-esc="line.student_id.showcase_student_major"/>
+                                        </td>
+                                        <td t-esc="line.note"/>
+                                        <td t-esc="line.decided_date"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="tab-history" role="tabpanel">
+                            <p t-if="not history_lines">Chưa có lịch sử xử lý nào.</p>
+                            <table t-else="" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Sinh viên</th>
+                                        <th>MSSV / Lớp / Ngành</th>
+                                        <th>Trạng thái</th>
+                                        <th>Ngày quyết định</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="history_lines" t-as="line">
+                                        <td t-esc="line.student_id.name"/>
+                                        <td>
+                                            <t t-esc="line.student_id.showcase_student_code"/> /
+                                            <t t-esc="line.student_id.showcase_student_class"/> /
+                                            <t t-esc="line.student_id.showcase_student_major"/>
+                                        </td>
+                                        <td>
+                                            <span t-if="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ chối</span>
+                                            <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn phản hồi</span>
+                                            <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ</span>
+                                        </td>
+                                        <td t-esc="line.decided_date"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </t>
-                <table t-else="" class="table">
-                    <thead>
-                        <tr>
-                            <th>Sinh viên</th>
-                            <th>MSSV / Lớp / Ngành</th>
-                            <th>Lời giới thiệu</th>
-                            <th>Hạn phản hồi</th>
-                            <th>Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr t-foreach="lines" t-as="line">
-                            <td t-esc="line.student_id.name"/>
-                            <td>
-                                <t t-esc="line.student_id.showcase_student_code"/> /
-                                <t t-esc="line.student_id.showcase_student_class"/> /
-                                <t t-esc="line.student_id.showcase_student_major"/>
-                            </td>
-                            <td t-esc="line.note"/>
-                            <td t-esc="line.deadline"/>
-                            <td>
-                                <form t-attf-action="/my/advisor-requests/#{line.id}/approve"
-                                      method="post" class="d-inline">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
-                                </form>
-                                <form t-attf-action="/my/advisor-requests/#{line.id}/reject"
-                                      method="post" class="d-inline">
-                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
             </div>
         </t>
     </template>

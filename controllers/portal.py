@@ -139,15 +139,24 @@ class AdvisorPortalController(http.Controller):
     @http.route(['/my/advisor-requests'], type='http', auth='user', website=True, sitemap=False)
     def my_advisor_requests(self, **kw):
         creator = self._get_creator_for_current_user()
-        lines = request.env['eaut_showcase.advisor.registration.line']
+        Line = request.env['eaut_showcase.advisor.registration.line']
+        pending_lines = approved_lines = history_lines = Line
         if creator:
-            lines = lines.sudo().search([
-                ('creator_id', '=', creator.id),
-                ('state', '=', 'pending'),
+            pending_lines = Line.sudo().search([
+                ('creator_id', '=', creator.id), ('state', '=', 'pending'),
             ], order='activated_date asc')
+            approved_lines = Line.sudo().search([
+                ('creator_id', '=', creator.id), ('state', '=', 'approved'),
+            ], order='decided_date desc')
+            history_lines = Line.sudo().search([
+                ('creator_id', '=', creator.id),
+                ('state', 'in', ('rejected', 'expired', 'cancelled')),
+            ], order='decided_date desc')
         values = {
             'creator': creator,
-            'lines': lines,
+            'pending_lines': pending_lines,
+            'approved_lines': approved_lines,
+            'history_lines': history_lines,
             'done': kw.get('done'),
             'error': kw.get('error'),
         }
