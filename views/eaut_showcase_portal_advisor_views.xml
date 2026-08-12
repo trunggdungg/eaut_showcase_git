@@ -127,7 +127,8 @@
 
                 <div t-if="done" class="alert alert-success">Đã cập nhật.</div>
                 <div t-if="error" class="alert alert-danger">
-                    Có lỗi xảy ra hoặc bạn không có quyền thực hiện thao tác này.
+                    <t t-if="error != '1'" t-esc="error"/>
+                    <t t-else="">Có lỗi xảy ra hoặc bạn không có quyền thực hiện thao tác này.</t>
                 </div>
 
                 <t t-if="not creator">
@@ -137,6 +138,57 @@
                     </div>
                 </t>
                 <t t-else="">
+                    <div class="mb-4">
+                        <h4>Sức chứa nhận hướng dẫn của bạn</h4>
+                        <p t-if="not open_terms" class="text-muted">
+                            Hiện không có kỳ đồ án nào đang mở.
+                        </p>
+                        <t t-foreach="open_terms" t-as="oterm">
+                            <t t-set="cap" t-value="capacities_by_term.get(oterm.id)"/>
+                            <div class="border rounded p-3 mb-2">
+                                <strong t-esc="oterm.name"/>
+                                <t t-if="cap and not cap.withdrawn">
+                                    <div class="small text-muted my-2">
+                                        Tối đa <t t-esc="cap.max_students"/> SV — Đã duyệt
+                                        <t t-esc="cap.approved_count"/>, đang chờ
+                                        <t t-esc="cap.pending_count"/>, còn trống
+                                        <t t-esc="cap.remaining_slots"/>.
+                                    </div>
+                                    <form t-attf-action="/my/advisor-requests/capacity/#{cap.id}/update"
+                                          method="post" class="d-inline-flex align-items-center gap-2">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="number" min="1" name="max_students" t-att-value="cap.max_students"
+                                               class="form-control form-control-sm" style="width: 80px;"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">Cập nhật</button>
+                                    </form>
+                                    <form t-attf-action="/my/advisor-requests/capacity/#{cap.id}/withdraw"
+                                          method="post" class="d-inline"
+                                          onsubmit="return confirm('Rút khỏi kỳ này? Các SV đang chờ/đã duyệt bởi bạn sẽ được reset để chọn lại giảng viên khác.');">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Rút khỏi kỳ</button>
+                                    </form>
+                                </t>
+                                <t t-else="">
+                                    <div class="small text-muted my-2">
+                                        <t t-if="cap and cap.withdrawn">Bạn đã rút khỏi kỳ này.</t>
+                                        <t t-else="">Bạn chưa đăng ký nhận hướng dẫn kỳ này.</t>
+                                    </div>
+                                    <form action="/my/advisor-requests/capacity/register" method="post"
+                                          class="d-inline-flex align-items-center gap-2">
+                                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                        <input type="hidden" name="term_id" t-att-value="oterm.id"/>
+                                        <input type="number" min="1" name="max_students" value="1"
+                                               class="form-control form-control-sm" style="width: 80px;"/>
+                                        <button type="submit" class="btn btn-sm btn-primary">
+                                            <t t-if="cap and cap.withdrawn">Đăng ký lại</t>
+                                            <t t-else="">Đăng ký nhận hướng dẫn</t>
+                                        </button>
+                                    </form>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
+
                     <ul class="nav nav-tabs mb-3" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" data-bs-toggle="tab"
