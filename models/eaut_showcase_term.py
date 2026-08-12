@@ -62,10 +62,33 @@ class ShowcaseTerm(models.Model):
         return terms
 
     def write(self, vals):
+        old_eligible_by_term = {}
+        if 'eligible_student_ids' in vals:
+            old_eligible_by_term = {term.id: term.eligible_student_ids for term in self}
         result = super().write(vals)
         if 'eligible_student_ids' in vals:
             self._sync_eligible_student_registrations()
+            self._cleanup_removed_eligible_students(old_eligible_by_term)
         return result
+
+    def _cleanup_removed_eligible_students(self, old_eligible_by_term):
+        """Bớt 1 SV khỏi 'Sinh viên đủ điều kiện' (VD: lỡ thêm nhầm) — hồ sơ
+        đăng ký 'Chưa có GVHD' đã tự tạo cho họ trước đó (bởi
+        _sync_eligible_student_registrations) sẽ thành mồ côi nếu không dọn,
+        vẫn đếm vào 'Chưa có GVHD' dù không còn trong danh sách. Chỉ tự xoá
+        khi hồ sơ chưa có gì thật sự (draft/unassigned) — SV lỡ đã nộp
+        nguyện vọng hoặc đã được duyệt thì giữ nguyên, không tự mất dữ liệu."""
+        Registration = self.env['eaut_showcase.advisor.registration']
+        for term in self:
+            removed = old_eligible_by_term.get(term.id, self.env['res.partner']) - term.eligible_student_ids
+            if not removed:
+                continue
+            orphaned = Registration.search([
+                ('term_id', '=', term.id),
+                ('student_id', 'in', removed.ids),
+                ('state', 'in', ('draft', 'unassigned')),
+            ])
+            orphaned.unlink()
 
     def _sync_eligible_student_registrations(self):
         """Thêm 1 SV vào 'Sinh viên đủ điều kiện' → tạo ngay 1 hồ sơ đăng ký
