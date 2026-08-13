@@ -259,6 +259,30 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
          'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.'),
     ]
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        lines._backfill_pending_deadline()
+        return lines
+
+    def write(self, vals):
+        result = super().write(vals)
+        if vals.get('state') == 'pending':
+            self._backfill_pending_deadline()
+        return result
+
+    def _backfill_pending_deadline(self):
+        """Đảm bảo mọi dòng ở trạng thái 'pending' luôn có deadline — tránh
+        trường hợp tạo/sửa tay (demo data, sửa trực tiếp qua popup dòng
+        nguyện vọng...) đưa 1 dòng vào 'pending' mà bỏ qua _activate(), làm
+        cột 'Hạn phản hồi' trống trên portal giảng viên."""
+        for line in self:
+            if line.state == 'pending' and not line.deadline:
+                line.write({
+                    'activated_date': line.activated_date or fields.Datetime.now(),
+                    'deadline': fields.Datetime.now() + timedelta(hours=line.term_id.sla_hours or 48),
+                })
+
     def _get_capacity(self):
         self.ensure_one()
         return self.env['eaut_showcase.term.capacity'].search([
