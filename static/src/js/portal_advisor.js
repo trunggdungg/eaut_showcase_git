@@ -6,17 +6,12 @@
         if (ms <= 0) {
             return "Đã hết hạn";
         }
-        var totalSeconds = Math.floor(ms / 1000);
-        var days = Math.floor(totalSeconds / 86400);
-        var hours = Math.floor((totalSeconds % 86400) / 3600);
-        var minutes = Math.floor((totalSeconds % 3600) / 60);
-        var seconds = totalSeconds % 60;
-        var parts = [];
-        if (days > 0) {
-            parts.push(days + " ngày");
-        }
-        parts.push(hours + " giờ", minutes + " phút", seconds + " giây");
-        return "Còn " + parts.join(" ");
+        // Gộp hết vào giờ (kể cả khi hơn 1 ngày) + phút, không hiện giây —
+        // đỡ rối mắt hơn so với đếm ngược đủ ngày/giờ/phút/giây.
+        var totalMinutes = Math.floor(ms / 60000);
+        var hours = Math.floor(totalMinutes / 60);
+        var minutes = totalMinutes % 60;
+        return "Còn " + hours + " giờ " + minutes + " phút";
     }
 
     function tick() {
@@ -33,6 +28,6 @@
             return;
         }
         tick();
-        setInterval(tick, 1000);
+        setInterval(tick, 30000);
     });
 })();
