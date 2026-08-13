@@ -238,8 +238,8 @@ class AdvisorPortalController(http.Controller):
         try:
             capacity.action_withdraw()
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            return request.redirect(f'/my/advisor-requests/capacity?error={urllib.parse.quote(str(e))}')
+        return request.redirect('/my/advisor-requests/capacity?done=1')
 
     # ============ GIẢNG VIÊN: QUẢN LÝ HỒ SƠ ============
     @http.route(['/my/advisor-requests/profile'], type='http', auth='user', website=True,
