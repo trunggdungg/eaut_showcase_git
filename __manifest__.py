@@ -39,6 +39,7 @@
             'eaut_showcase/static/src/css/style.css',
             'eaut_showcase/static/src/js/home.js',
             'eaut_showcase/static/src/js/detail.js',
+            'eaut_showcase/static/src/js/portal_advisor.js',
         ],
     },
     'icon': 'static/description/icon.png',

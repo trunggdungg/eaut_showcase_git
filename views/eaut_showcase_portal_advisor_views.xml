@@ -54,7 +54,12 @@
                                     <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ</span>
                                     <span t-else="" class="badge text-bg-light">Chờ kích hoạt</span>
                                 </td>
-                                <td t-esc="line.deadline"/>
+                                <td>
+                                    <span t-if="line.state == 'pending' and line.deadline" class="uikick-countdown"
+                                          t-att-data-deadline="line.deadline.strftime('%Y-%m-%dT%H:%M:%SZ')">
+                                        <t t-esc="line.deadline"/>
+                                    </span>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -236,7 +241,12 @@
                                             <t t-esc="line.student_id.showcase_student_major"/>
                                         </td>
                                         <td t-esc="line.note"/>
-                                        <td t-esc="line.deadline"/>
+                                        <td>
+                                            <span t-if="line.deadline" class="uikick-countdown"
+                                                  t-att-data-deadline="line.deadline.strftime('%Y-%m-%dT%H:%M:%SZ')">
+                                                <t t-esc="line.deadline"/>
+                                            </span>
+                                        </td>
                                         <td>
                                             <form t-attf-action="/my/advisor-requests/#{line.id}/approve"
                                                   method="post" class="d-inline">
