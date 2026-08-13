@@ -12,6 +12,7 @@
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
                        decoration-success="state == 'open'"
+                       decoration-warning="state == 'locked'"
                        decoration-muted="state == 'closed'"/>
                 <field name="unassigned_count" string="Chưa có GVHD"/>
             </list>
@@ -58,11 +59,13 @@
                 <header>
                     <button name="action_open" type="object" string="Mở đăng ký"
                             class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_lock" type="object" string="Chốt danh sách"
+                            class="btn-primary" invisible="state != 'open'"/>
                     <button name="action_close" type="object" string="Đóng kỳ"
-                            invisible="state != 'open'"/>
+                            invisible="state != 'locked'"/>
                     <button name="action_set_draft" type="object" string="Chuyển về nháp"
                             invisible="state != 'closed'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,locked,closed"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">

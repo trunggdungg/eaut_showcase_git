@@ -162,8 +162,10 @@ class ShowcaseController(http.Controller):
         slot_filters = [s for s in request.httprequest.args.getlist('status') if s in ('open', 'full')]
         sort = kw.get('sort') if kw.get('sort') in ADVISOR_SORT_OPTIONS else 'Relevance'
 
+        # 'locked' (chốt danh sách) vẫn hiện công khai — chỉ 'closed' mới ẩn
+        # giảng viên của kỳ đó khỏi trang này (đóng kỳ = công tắc hiện/ẩn).
         open_terms = request.env['eaut_showcase.term'].sudo().search(
-            [('state', '=', 'open')], order='date_start desc')
+            [('state', 'in', ('open', 'locked'))], order='date_start desc')
         selected_term_ids = [int(t) for t in request.httprequest.args.getlist('term') if t.isdigit()]
         selected_term_ids = [t for t in selected_term_ids if t in open_terms.ids]
         wanted_term_ids = selected_term_ids or open_terms.ids

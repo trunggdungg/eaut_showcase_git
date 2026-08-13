@@ -19,8 +19,13 @@ class ShowcaseTerm(models.Model):
     state = fields.Selection([
         ('draft', 'Nháp'),
         ('open', 'Đang mở'),
+        ('locked', 'Chốt danh sách'),
         ('closed', 'Đã đóng'),
-    ], string='Trạng thái', default='draft', required=True)
+    ], string='Trạng thái', default='draft', required=True,
+        help="Đang mở: SV nộp nguyện vọng, GV tự đăng ký/rút sức chứa. Chốt "
+             "danh sách: khoá GV rút khỏi kỳ và SV nộp mới, nhưng vẫn hiện "
+             "công khai trên website. Đã đóng: công tắc ẩn GV của kỳ này "
+             "khỏi website.")
 
     sla_hours = fields.Integer(
         string='Hạn phản hồi của giảng viên (giờ)', default=DEFAULT_SLA_HOURS,
@@ -142,6 +147,13 @@ class ShowcaseTerm(models.Model):
 
     def action_open(self):
         self.write({'state': 'open'})
+
+    def action_lock(self):
+        """Chốt danh sách giảng viên — từ đây action_withdraw() tự chặn (nó
+        chỉ cho rút khi term.state == 'open'), không cần thêm điều kiện gì
+        ở đó. SV cũng không nộp mới được vì _get_open_term() chỉ tìm state
+        == 'open'. Web công khai vẫn hiện GV — chỉ 'closed' mới ẩn."""
+        self.write({'state': 'locked'})
 
     def action_set_draft(self):
         self.write({'state': 'draft'})
