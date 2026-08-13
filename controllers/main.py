@@ -165,7 +165,7 @@ class ShowcaseController(http.Controller):
         sort = kw.get('sort') if kw.get('sort') in ADVISOR_SORT_OPTIONS else 'Relevance'
 
         open_terms = request.env['eaut_showcase.term'].sudo().search(
-            [('state', '=', 'open')], order='date_start desc')
+            [('state', 'in', ('open', 'locked'))], order='date_start desc')
         selected_term_ids = [int(t) for t in request.httprequest.args.getlist('term') if t.isdigit()]
         selected_term_ids = [t for t in selected_term_ids if t in open_terms.ids]
         wanted_term_ids = selected_term_ids or open_terms.ids

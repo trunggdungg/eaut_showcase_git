@@ -12,6 +12,7 @@
                 <field name="state" widget="badge"
                        decoration-info="state == 'draft'"
                        decoration-success="state == 'open'"
+                       decoration-warning="state == 'locked'"
                        decoration-muted="state == 'closed'"/>
                 <field name="unassigned_count" string="Chưa có GVHD"/>
             </list>
@@ -26,11 +27,13 @@
                 <header>
                     <button name="action_open" type="object" string="Mở đăng ký"
                             class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_lock" type="object" string="Chốt danh sách"
+                            class="btn-primary" invisible="state != 'open'"/>
                     <button name="action_close" type="object" string="Đóng kỳ"
-                            invisible="state != 'open'"/>
+                            invisible="state != 'locked'"/>
                     <button name="action_set_draft" type="object" string="Chuyển về nháp"
                             invisible="state != 'closed'"/>
-                    <field name="state" widget="statusbar" statusbar_visible="draft,open,closed"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,locked,closed"/>
                 </header>
                 <sheet>
                     <div class="oe_button_box" name="button_box">
@@ -38,7 +41,7 @@
                                 class="oe_stat_button" icon="fa-user-times">
                             <field name="unassigned_count" widget="statinfo" string="Chưa có GVHD"/>
                         </button>
-                          <button type="object" name="action_view_eligible_students"
+                        <button type="object" name="action_view_eligible_students"
                                 class="oe_stat_button" icon="fa-user-plus">
                             <field name="eligible_student_count" widget="statinfo" string="SV đủ điều kiện"/>
                         </button>
@@ -60,7 +63,7 @@
                     </group>
                     <notebook>
                         <page string="Giảng viên nhận hướng dẫn" name="capacity">
-                             <div class="mb-2">
+                            <div class="mb-2">
                                 <button name="action_assign_creators_kanban" type="object"
                                         string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>
                             </div>
@@ -78,7 +81,7 @@
                                 </list>
                             </field>
                         </page>
-                         <page string="Sinh viên đủ điều kiện" name="eligible_students">
+                        <page string="Sinh viên đủ điều kiện" name="eligible_students">
                             <p class="text-muted">
                                 Để trống = không giới hạn, mọi sinh viên Portal đều thấy và
                                 đăng ký được ở kỳ này. Nếu có nhiều kỳ mở song song (nhiều

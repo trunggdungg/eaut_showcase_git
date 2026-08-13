@@ -14,8 +14,13 @@ class ShowcaseTerm(models.Model):
     state = fields.Selection([
         ('draft', 'Nháp'),
         ('open', 'Đang mở'),
+        ('locked', 'Chốt danh sách'),
         ('closed', 'Đã đóng'),
-    ], string='Trạng thái', default='draft', required=True)
+    ], string='Trạng thái', default='draft', required=True,
+        help="Đang mở: SV nộp nguyện vọng, GV tự đăng ký/rút sức chứa. Chốt "
+             "danh sách: khoá GV rút khỏi kỳ và SV nộp mới, nhưng vẫn hiện "
+             "công khai trên website. Đã đóng: công tắc ẩn GV của kỳ này "
+             "khỏi website.")
 
     sla_hours = fields.Integer(
         string='Hạn phản hồi của giảng viên (giờ)', default=DEFAULT_SLA_HOURS,
@@ -116,6 +121,13 @@ class ShowcaseTerm(models.Model):
     def action_open(self):
         self.write({'state': 'open'})
 
+    def action_lock(self):
+        """Chốt danh sách giảng viên — từ đây action_withdraw() tự chặn (nó
+        chỉ cho rút khi term.state == 'open'), không cần thêm điều kiện gì
+        ở đó. SV cũng không nộp mới được vì _get_open_term() chỉ tìm state
+        == 'open'. Web công khai vẫn hiện GV — chỉ 'closed' mới ẩn."""
+        self.write({'state': 'locked'})
+
     def action_set_draft(self):
         self.write({'state': 'draft'})
 
@@ -124,19 +136,19 @@ class ShowcaseTerm(models.Model):
         unassigned = self.unassigned_count
         self.write({'state': 'closed'})
         if unassigned:
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Đã đóng kỳ — vẫn còn sinh viên chưa có GVHD',
-                    'message': (
-                        '%s sinh viên chưa được gán giảng viên hướng dẫn. '
-                        'Vào "Sinh viên chưa có GVHD" để gán tay.'
-                    ) % unassigned,
-                    'type': 'warning',
-                    'sticky': True,
-                },
-            }
+            # Dùng kênh bus riêng (notify_warning) thay vì return thẳng
+            # ir.actions.client — trả action từ nút sẽ THAY THẾ hành vi
+            # refresh mặc định của form, khiến statusbar hiện vẫn còn "Đang
+            # mở" tới khi F5 lại. notify_warning không đụng tới giá trị trả
+            # về của nút nên form vẫn tự reload đúng như bình thường.
+            self.env.user.notify_warning(
+                title='Đã đóng kỳ — vẫn còn sinh viên chưa có GVHD',
+                message=(
+                            '%s sinh viên chưa được gán giảng viên hướng dẫn. '
+                            'Vào "Sinh viên chưa có GVHD" để gán tay.'
+                        ) % unassigned,
+                sticky=True,
+            )
         return True
 
     def action_view_registrations(self):
