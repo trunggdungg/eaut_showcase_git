@@ -100,6 +100,8 @@
         <field name="creator_id" ref="demo_creator_bui_van_nam"/>
         <field name="sequence">1</field>
         <field name="state">pending</field>
+        <field name="activated_date" eval="(datetime.now() - timedelta(hours=1)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        <field name="deadline" eval="(datetime.now() + timedelta(hours=47)).strftime('%Y-%m-%d %H:%M:%S')"/>
         <field name="note">Em muốn làm đề tài web bán hàng, mong thầy nhận hướng dẫn.</field>
     </record>
     <record id="demo_registration_2_line_2" model="eaut_showcase.advisor.registration.line">
