@@ -4,6 +4,8 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from .eaut_showcase_term import DEFAULT_SLA_HOURS
+
 
 class ShowcaseAdvisorRegistration(models.Model):
     _name = 'eaut_showcase.advisor.registration'
@@ -282,7 +284,8 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             if line.state == 'pending' and not line.deadline:
                 line.write({
                     'activated_date': line.activated_date or fields.Datetime.now(),
-                    'deadline': fields.Datetime.now() + timedelta(hours=line.term_id.sla_hours or 48),
+                    'deadline': fields.Datetime.now() + timedelta(
+                        hours=line.term_id.sla_hours or DEFAULT_SLA_HOURS),
                     'reminder_sent': False,
                 })
 
@@ -311,7 +314,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         self.write({
             'state': 'pending',
             'activated_date': now,
-            'deadline': now + timedelta(hours=self.term_id.sla_hours or 48),
+            'deadline': now + timedelta(hours=self.term_id.sla_hours or DEFAULT_SLA_HOURS),
             'reminder_sent': False,
         })
         self._notify(

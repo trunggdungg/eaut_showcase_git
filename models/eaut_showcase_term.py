@@ -1,6 +1,12 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
+# Mặc định số giờ SLA của 1 kỳ — dùng làm default cho field sla_hours dưới
+# đây, và cũng là fallback trong eaut_showcase_advisor_registration.py khi
+# 1 kỳ nào đó có sla_hours rỗng/0 (tránh deadline = ngay bây giờ). Gộp về 1
+# hằng số duy nhất để đổi mặc định không bị sót chỗ nào.
+DEFAULT_SLA_HOURS = 48
+
 
 class ShowcaseTerm(models.Model):
     _name = 'eaut_showcase.term'
@@ -17,7 +23,7 @@ class ShowcaseTerm(models.Model):
     ], string='Trạng thái', default='draft', required=True)
 
     sla_hours = fields.Integer(
-        string='Hạn phản hồi của giảng viên (giờ)', default=48,
+        string='Hạn phản hồi của giảng viên (giờ)', default=DEFAULT_SLA_HOURS,
         help="Số giờ tối đa giảng viên có để duyệt/từ chối 1 nguyện vọng trước "
              "khi hệ thống tự động chuyển sang nguyện vọng kế tiếp của sinh viên.",
     )
