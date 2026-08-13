@@ -173,10 +173,11 @@ class ShowcaseTerm(models.Model):
                         'Vào "Sinh viên chưa có GVHD" để gán tay.'
                     ) % unassigned,
                     'type': 'warning',
-                    'sticky': True,
-                    # Đóng thông báo xong thì tự reload lại trang — không
-                    # cần F5 tay, statusbar sẽ hiện đúng "Đã đóng" ngay khi
-                    # người dùng đọc xong và bấm tắt thông báo.
+                    # Không sticky — thông báo tự tắt sau vài giây, kéo theo
+                    # 'next' (reload) tự chạy luôn, không cần bấm tắt tay hay
+                    # F5 — mượt như 3 nút chuyển stage khác (chúng chỉ
+                    # return None nên Odoo tự load lại record ngay).
+                    'sticky': False,
                     'next': {'type': 'ir.actions.client', 'tag': 'reload'},
                 },
             }
