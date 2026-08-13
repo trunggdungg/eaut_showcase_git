@@ -53,6 +53,9 @@
                                     <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn phản hồi</span>
                                     <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ</span>
                                     <span t-else="" class="badge text-bg-light">Chờ kích hoạt</span>
+                                    <div t-if="line.state == 'rejected' and line.reject_reason" class="small text-muted mt-1">
+                                        Lý do: <t t-esc="line.reject_reason"/>
+                                    </div>
                                 </td>
                                 <td>
                                     <span t-if="line.state == 'pending' and line.deadline" class="uikick-countdown"
@@ -255,8 +258,10 @@
                                                 <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
                                             </form>
                                             <form t-attf-action="/my/advisor-requests/#{line.id}/reject"
-                                                  method="post" class="d-inline">
+                                                  method="post" class="d-inline-flex gap-1 mt-1">
                                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                <input type="text" name="reason" placeholder="Lý do (không bắt buộc)"
+                                                       class="form-control form-control-sm" style="width: 150px;"/>
                                                 <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
                                             </form>
                                         </td>
@@ -312,6 +317,9 @@
                                             <span t-if="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ chối</span>
                                             <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn phản hồi</span>
                                             <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ</span>
+                                            <div t-if="line.reject_reason" class="small text-muted mt-1">
+                                                Lý do: <t t-esc="line.reject_reason"/>
+                                            </div>
                                         </td>
                                         <td t-esc="line.decided_date"/>
                                     </tr>

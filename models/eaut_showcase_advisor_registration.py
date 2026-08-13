@@ -251,6 +251,8 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     activated_date = fields.Datetime(string='Ngày kích hoạt')
     deadline = fields.Datetime(string='Hạn phản hồi')
     decided_date = fields.Datetime(string='Ngày quyết định')
+    reject_reason = fields.Text(string='Lý do từ chối')
+    reminder_sent = fields.Boolean(string='Đã nhắc trước hạn', default=False)
 
     _sql_constraints = [
         ('registration_creator_uniq', 'unique(registration_id, creator_id)',
@@ -281,6 +283,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
                 line.write({
                     'activated_date': line.activated_date or fields.Datetime.now(),
                     'deadline': fields.Datetime.now() + timedelta(hours=line.term_id.sla_hours or 48),
+                    'reminder_sent': False,
                 })
 
     def _get_capacity(self):
@@ -309,6 +312,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             'state': 'pending',
             'activated_date': now,
             'deadline': now + timedelta(hours=self.term_id.sla_hours or 48),
+            'reminder_sent': False,
         })
         self._notify(
             self.creator_id.user_id.partner_id,
@@ -350,15 +354,20 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             % self.creator_id.name,
         )
 
-    def action_reject(self):
+    def action_reject(self, reason=None):
         self.ensure_one()
         if self.state != 'pending':
             raise UserError('Nguyện vọng này không ở trạng thái chờ duyệt.')
-        self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
+        reason = (reason or '').strip()
+        self.write({
+            'state': 'rejected', 'decided_date': fields.Datetime.now(),
+            'reject_reason': reason or False,
+        })
+        reason_txt = (' Lý do: %s' % reason) if reason else ''
         self._notify(
             self.student_id,
-            'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn. Hệ thống sẽ tự '
-            'động chuyển sang nguyện vọng kế tiếp (nếu có).' % self.creator_id.name,
+            'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s Hệ thống sẽ tự '
+            'động chuyển sang nguyện vọng kế tiếp (nếu có).' % (self.creator_id.name, reason_txt),
         )
         self.registration_id._activate_next_line()
 
@@ -377,3 +386,24 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
                 'động chuyển sang nguyện vọng kế tiếp (nếu có).' % line.creator_id.name,
             )
             line.registration_id._activate_next_line()
+
+    @api.model
+    def _cron_remind_pending_lines(self):
+        """Nhắc giảng viên khi 1 yêu cầu đang chờ sắp hết hạn (<= 6 giờ) mà
+        chưa nhắc lần nào — tránh spam email mỗi giờ chạy cron cho tới lúc
+        hết hạn thật."""
+        now = fields.Datetime.now()
+        threshold = now + timedelta(hours=6)
+        soon_due = self.search([
+            ('state', '=', 'pending'),
+            ('reminder_sent', '=', False),
+            ('deadline', '<=', threshold),
+            ('deadline', '>', now),
+        ])
+        for line in soon_due:
+            line._notify(
+                line.creator_id.user_id.partner_id,
+                'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
+                '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.' % line.student_id.name,
+            )
+            line.reminder_sent = True

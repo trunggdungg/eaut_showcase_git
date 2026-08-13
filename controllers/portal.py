@@ -291,13 +291,13 @@ class AdvisorPortalController(http.Controller):
             return request.redirect(f'/my/advisor-requests/profile?error={urllib.parse.quote(str(e))}')
         return request.redirect('/my/advisor-requests/profile?done=1')
 
-    def _decide_request(self, line_id, approve):
+    def _decide_request(self, line_id, approve, reason=None):
         creator = self._get_creator_for_current_user()
         line = request.env['eaut_showcase.advisor.registration.line'].sudo().browse(line_id)
         if not creator or not line.exists() or line.creator_id.id != creator.id:
             return request.redirect('/my/advisor-requests?error=1')
         try:
-            line.action_approve() if approve else line.action_reject()
+            line.action_approve() if approve else line.action_reject(reason)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
         except Exception as e:
@@ -313,4 +313,4 @@ class AdvisorPortalController(http.Controller):
     @http.route(['/my/advisor-requests/<int:line_id>/reject'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
     def my_advisor_request_reject(self, line_id, **post):
-        return self._decide_request(line_id, approve=False)
+        return self._decide_request(line_id, approve=False, reason=post.get('reason'))
