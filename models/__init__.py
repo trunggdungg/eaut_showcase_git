@@ -9,6 +9,7 @@ from . import eaut_showcase_project
 from . import eaut_showcase_interest
 
 from . import eaut_showcase_term
+from . import eaut_showcase_term_close_warning
 from . import eaut_showcase_term_capacity
 from . import eaut_showcase_advisor_registration
 from . import eaut_showcase_res_partner

@@ -163,23 +163,25 @@ class ShowcaseTerm(models.Model):
         unassigned = self.unassigned_count
         self.write({'state': 'closed'})
         if unassigned:
+            # Popup có nút OK (thay vì toast) — dùng wizard TransientModel
+            # theo đúng pattern chuẩn của Odoo (target=new). Đóng popup xong
+            # (nút OK = special="cancel") Odoo tự reload lại form Kỳ đồ án
+            # phía sau, không cần F5.
+            warning = self.env['eaut_showcase.term.close.warning'].create({
+                'message': (
+                    'Đã đóng kỳ — vẫn còn %s sinh viên chưa được gán giảng '
+                    'viên hướng dẫn. Vào "Phân bổ GVHD" để gán tay.'
+                ) % unassigned,
+            })
             return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': 'Đã đóng kỳ — vẫn còn sinh viên chưa có GVHD',
-                    'message': (
-                        '%s sinh viên chưa được gán giảng viên hướng dẫn. '
-                        'Vào "Sinh viên chưa có GVHD" để gán tay.'
-                    ) % unassigned,
-                    'type': 'warning',
-                    # Không sticky — thông báo tự tắt sau vài giây, kéo theo
-                    # 'next' (reload) tự chạy luôn, không cần bấm tắt tay hay
-                    # F5 — mượt như 3 nút chuyển stage khác (chúng chỉ
-                    # return None nên Odoo tự load lại record ngay).
-                    'sticky': False,
-                    'next': {'type': 'ir.actions.client', 'tag': 'reload'},
-                },
+                'type': 'ir.actions.act_window',
+                'name': 'Đóng kỳ',
+                'res_model': 'eaut_showcase.term.close.warning',
+                'view_mode': 'form',
+                'res_id': warning.id,
+                'view_id': self.env.ref(
+                    'eaut_showcase.view_eaut_showcase_term_close_warning_form').id,
+                'target': 'new',
             }
         return True
 
