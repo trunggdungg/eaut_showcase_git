@@ -174,6 +174,10 @@ class ShowcaseTerm(models.Model):
                     ) % unassigned,
                     'type': 'warning',
                     'sticky': True,
+                    # Đóng thông báo xong thì tự reload lại trang — không
+                    # cần F5 tay, statusbar sẽ hiện đúng "Đã đóng" ngay khi
+                    # người dùng đọc xong và bấm tắt thông báo.
+                    'next': {'type': 'ir.actions.client', 'tag': 'reload'},
                 },
             }
         return True
