@@ -75,6 +75,9 @@
                     <p t-if="capacity.creator_id.role" class="uikick-card-creator">
                         <span t-esc="capacity.creator_id.role"/>
                     </p>
+<!--                    <p class="uikick-card-creator text-muted">-->
+<!--                        <t t-esc="capacity.term_id.name"/>-->
+<!--                    </p>-->
                     <div t-if="capacity.creator_id.location_id" class="uikick-card-location">
                         <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" clip-rule="evenodd"
@@ -131,6 +134,23 @@
                             </label>
                         </div>
 
+                             <t t-if="section == 'advisors'">
+                            <hr/>
+                            <div class="uikick-filter-group">
+                                <h3>Kỳ đồ án</h3>
+                                <t t-foreach="open_terms" t-as="term_opt">
+                                    <label class="uikick-check-row uikick-check-row-single">
+                                        <input type="checkbox" name="term" t-att-value="term_opt.id"
+                                               t-att-checked="'checked' if term_opt.id in filters['term'] else None"/>
+                                        <t t-esc="term_opt.name"/>
+                                    </label>
+                                </t>
+                                <p t-if="not open_terms" class="text-muted small mb-0">
+                                    Hiện không có kỳ nào đang mở.
+                                </p>
+                            </div>
+                        </t>
+
                         <hr/>
 
                         <div class="uikick-filter-group">
@@ -176,23 +196,24 @@
                             </t>
                         </div>
 
-                        <hr/>
-
-                        <div class="uikick-filter-group">
-                            <h3>Địa điểm</h3>
-                             <input type="text" name="location" placeholder="Tìm kiếm theo thành phố, tỉnh..."
-                                   class="uikick-input" id="uikick-location-input"
-                                   t-att-value="filters['location']"/>
-                            <select class="uikick-select" id="uikick-location-select">
-                                <option value="">Tất cả địa điểm</option>
-                                <t t-foreach="all_locations" t-as="loc">
-                                    <option t-att-value="loc.name"
-                                            t-att-selected="'selected' if filters['location'] == loc.name else None">
-                                        <t t-esc="loc.name"/>
-                                    </option>
-                                </t>
-                            </select>
-                        </div>
+                           <t t-if="section == 'projects'">
+                            <hr/>
+                            <div class="uikick-filter-group">
+                                <h3>Địa điểm</h3>
+                                 <input type="text" name="location" placeholder="Tìm kiếm theo thành phố, tỉnh..."
+                                       class="uikick-input" id="uikick-location-input"
+                                       t-att-value="filters['location']"/>
+                                <select class="uikick-select" id="uikick-location-select">
+                                    <option value="">Tất cả địa điểm</option>
+                                    <t t-foreach="all_locations" t-as="loc">
+                                        <option t-att-value="loc.name"
+                                                t-att-selected="'selected' if filters['location'] == loc.name else None">
+                                            <t t-esc="loc.name"/>
+                                        </option>
+                                    </t>
+                                </select>
+                            </div>
+                        </t>
 
                         <button type="submit"
                                 class="btn btn-primary btn-sm rounded-pill uikick-btn-block uikick-filter-apply">Áp dụng
@@ -240,7 +261,7 @@
                                 </t>
                                 <t t-if="not capacities">
                                     <p class="uikick-empty">
-                                        <t t-if="not term">Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn.</t>
+                                           <t t-if="not open_terms">Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn.</t>
                                         <t t-else="">Không có giảng viên nào phù hợp với các bộ lọc này.</t>
                                     </p>
                                 </t>

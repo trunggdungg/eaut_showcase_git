@@ -4,6 +4,7 @@ from datetime import timedelta
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+from .eaut_showcase_term import DEFAULT_SLA_HOURS
 
 class ShowcaseAdvisorRegistration(models.Model):
     _name = 'eaut_showcase.advisor.registration'
@@ -67,6 +68,16 @@ class ShowcaseAdvisorRegistration(models.Model):
                 return list(value) if isinstance(value, (list, tuple)) else [value]
         return None
 
+    def unlink(self):
+        for reg in self:
+            if reg.state not in ('draft', 'unassigned'):
+                raise UserError(
+                    'Không thể xoá — sinh viên "%s" đang ở trạng thái "%s". '
+                    'Dùng nút "Bỏ gán" trên Kanban để đưa về "Chưa có GVHD" '
+                    'trước, tránh mất dấu vết lịch sử đăng ký/duyệt.'
+                    % (reg.student_id.name, dict(reg._fields['state'].selection).get(reg.state))
+                )
+        return super().unlink()
 
     def write(self, vals):
         if 'assigned_creator_id' in vals and not self.env.context.get('advisor_internal_write'):
@@ -159,18 +170,27 @@ class ShowcaseAdvisorRegistration(models.Model):
         capacity = self.env['eaut_showcase.term.capacity'].search([
             ('term_id', '=', self.term_id.id), ('creator_id', '=', creator_id),
         ], limit=1)
-        if capacity:
-            self.env.cr.execute(
-                'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
-                (capacity.id,),
+        if not capacity or capacity.max_students <= 0:
+            # (có thể do họ chỉ có sức chứa ở 1 kỳ khác), hoặc đã khai nhưng
+            # để 0 — cả 2 trường hợp đều coi như "chưa sẵn sàng nhận SV kỳ
+            # này", chặn hẳn, không cho gán vô điều kiện.
+            raise ValidationError(
+                'Giảng viên này chưa được khai sức chứa ở kỳ "%s" — vào "Kỳ đồ án" > '
+                '"Giảng viên nhận hướng dẫn" để thêm giảng viên vào đúng kỳ trước khi gán.'
+                % self.term_id.name
             )
-            approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
-                ('term_id', '=', self.term_id.id),
-                ('creator_id', '=', creator_id),
-                ('state', '=', 'approved'),
-            ])
-            if approved_count >= capacity.max_students:
-                raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
+
+        self.env.cr.execute(
+            'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
+            (capacity.id,),
+        )
+        approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
+            ('term_id', '=', self.term_id.id),
+            ('creator_id', '=', creator_id),
+            ('state', '=', 'approved'),
+        ])
+        if approved_count >= capacity.max_students:
+            raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
 
         now = fields.Datetime.now()
         self.line_ids.filtered(lambda l: l.state in ('waiting', 'pending', 'approved')).write({
@@ -223,13 +243,41 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     activated_date = fields.Datetime(string='Ngày kích hoạt')
     deadline = fields.Datetime(string='Hạn phản hồi')
     decided_date = fields.Datetime(string='Ngày quyết định')
-
+    reject_reason = fields.Text(string='Lý do từ chối')
+    reminder_sent = fields.Boolean(string='Đã nhắc trước hạn', default=False)
     _sql_constraints = [
         ('registration_creator_uniq', 'unique(registration_id, creator_id)',
          'Không thể chọn trùng 1 giảng viên trong cùng hồ sơ đăng ký.'),
         ('registration_sequence_uniq', 'unique(registration_id, sequence)',
          'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.'),
     ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        lines = super().create(vals_list)
+        lines._backfill_pending_deadline()
+        return lines
+
+    def write(self, vals):
+        result = super().write(vals)
+        if vals.get('state') == 'pending':
+            self._backfill_pending_deadline()
+        return result
+
+    def _backfill_pending_deadline(self):
+        """Đảm bảo mọi dòng ở trạng thái 'pending' luôn có deadline — tránh
+        trường hợp tạo/sửa tay (demo data, sửa trực tiếp qua popup dòng
+        nguyện vọng...) đưa 1 dòng vào 'pending' mà bỏ qua _activate(), làm
+        cột 'Hạn phản hồi' trống trên portal giảng viên."""
+        for line in self:
+            if line.state == 'pending' and not line.deadline:
+                line.write({
+                    'activated_date': line.activated_date or fields.Datetime.now(),
+                    'deadline': fields.Datetime.now() + timedelta(
+                        hours=line.term_id.sla_hours or DEFAULT_SLA_HOURS),
+                    'reminder_sent': False,
+                })
+
 
     def _get_capacity(self):
         self.ensure_one()
@@ -256,7 +304,8 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         self.write({
             'state': 'pending',
             'activated_date': now,
-            'deadline': now + timedelta(hours=self.term_id.sla_hours or 48),
+            'deadline': now + timedelta(hours=self.term_id.sla_hours or DEFAULT_SLA_HOURS),
+            'reminder_sent': False,
         })
         self._notify(
             self.creator_id.user_id.partner_id,
@@ -298,15 +347,20 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             % self.creator_id.name,
         )
 
-    def action_reject(self):
+    def action_reject(self, reason=None):
         self.ensure_one()
         if self.state != 'pending':
             raise UserError('Nguyện vọng này không ở trạng thái chờ duyệt.')
-        self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
+        reason = (reason or '').strip()
+        self.write({
+            'state': 'rejected', 'decided_date': fields.Datetime.now(),
+            'reject_reason': reason or False,
+        })
+        reason_txt = (' Lý do: %s' % reason) if reason else ''
         self._notify(
             self.student_id,
-            'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn. Hệ thống sẽ tự '
-            'động chuyển sang nguyện vọng kế tiếp (nếu có).' % self.creator_id.name,
+            'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s Hệ thống sẽ tự '
+            'động chuyển sang nguyện vọng kế tiếp (nếu có).' % (self.creator_id.name, reason_txt),
         )
         self.registration_id._activate_next_line()
 
@@ -325,3 +379,24 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
                 'động chuyển sang nguyện vọng kế tiếp (nếu có).' % line.creator_id.name,
             )
             line.registration_id._activate_next_line()
+
+    @api.model
+    def _cron_remind_pending_lines(self):
+        """Nhắc giảng viên khi 1 yêu cầu đang chờ sắp hết hạn (<= 6 giờ) mà
+        chưa nhắc lần nào — tránh spam email mỗi giờ chạy cron cho tới lúc
+        hết hạn thật."""
+        now = fields.Datetime.now()
+        threshold = now + timedelta(hours=6)
+        soon_due = self.search([
+            ('state', '=', 'pending'),
+            ('reminder_sent', '=', False),
+            ('deadline', '<=', threshold),
+            ('deadline', '>', now),
+        ])
+        for line in soon_due:
+            line._notify(
+                line.creator_id.user_id.partner_id,
+                'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
+                '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.' % line.student_id.name,
+            )
+            line.reminder_sent = True

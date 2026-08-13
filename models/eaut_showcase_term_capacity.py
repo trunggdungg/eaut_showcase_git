@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ShowcaseTermCapacity(models.Model):
@@ -48,6 +48,24 @@ class ShowcaseTermCapacity(models.Model):
             capacity.approved_count = approved
             capacity.pending_count = pending
             capacity.remaining_slots = capacity.max_students - approved - pending
+
+    @api.constrains('max_students')
+    def _check_max_students(self):
+        Line = self.env['eaut_showcase.advisor.registration.line']
+        for capacity in self:
+            approved = Line.search_count([
+                ('term_id', '=', capacity.term_id.id),
+                ('creator_id', '=', capacity.creator_id.id),
+                ('state', '=', 'approved'),
+            ])
+            if capacity.max_students < approved:
+                raise ValidationError(
+                    'Không thể đặt "Số sinh viên tối đa" (%s) thấp hơn số sinh viên đã '
+                    'duyệt hiện có (%s) của giảng viên "%s" trong kỳ "%s". Dùng nút "Bỏ '
+                    'gán" cho SV thừa trước, hoặc giữ nguyên số lớn hơn/bằng %s.'
+                    % (capacity.max_students, approved, capacity.creator_id.name,
+                       capacity.term_id.name, approved)
+                )
 
     def unlink(self):
         Line = self.env['eaut_showcase.advisor.registration.line']

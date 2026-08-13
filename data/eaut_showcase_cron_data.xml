@@ -2,10 +2,20 @@
 <odoo>
 
     <record id="ir_cron_expire_advisor_registration_lines" model="ir.cron">
-        <field name="name">EAUT Showcase: Hết hạn nguyện vọng chọn giảng viên hướng dẫn</field>
+        <field name="name">EAUT : Hết hạn nguyện vọng chọn giảng viên hướng dẫn</field>
         <field name="model_id" ref="model_eaut_showcase_advisor_registration_line"/>
         <field name="state">code</field>
         <field name="code">model._cron_expire_pending_lines()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">hours</field>
+        <field name="active">True</field>
+    </record>
+
+        <record id="ir_cron_remind_advisor_registration_lines" model="ir.cron">
+        <field name="name">EAUT : Nhắc giảng viên sắp hết hạn phản hồi</field>
+        <field name="model_id" ref="model_eaut_showcase_advisor_registration_line"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_remind_pending_lines()</field>
         <field name="interval_number">1</field>
         <field name="interval_type">hours</field>
         <field name="active">True</field>
