@@ -118,6 +118,7 @@
                 </t>
                 </t>
             </div>
+            <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
         </t>
     </template>
 
@@ -320,6 +321,7 @@
                     </div>
                 </t>
             </div>
+            <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
         </t>
     </template>
 
