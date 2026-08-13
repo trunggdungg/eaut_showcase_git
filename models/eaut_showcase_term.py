@@ -159,18 +159,19 @@ class ShowcaseTerm(models.Model):
         self.write({'state': 'draft'})
 
     def action_close(self):
+        """Nếu còn SV chưa gán, hỏi xác nhận TRƯỚC khi đóng (popup có 2 nút
+        Đóng kỳ/Huỷ) — chưa write() gì cả, để bấm Huỷ thì kỳ vẫn giữ đúng
+        stage hiện tại, chưa đóng gì. Chỉ đóng thật khi bấm 'Đóng kỳ' trên
+        popup (xem action_confirm() ở eaut_showcase.term.close.warning)."""
         self.ensure_one()
         unassigned = self.unassigned_count
-        self.write({'state': 'closed'})
         if unassigned:
-            # Popup có nút OK (thay vì toast) — dùng wizard TransientModel
-            # theo đúng pattern chuẩn của Odoo (target=new). Đóng popup xong
-            # (nút OK = special="cancel") Odoo tự reload lại form Kỳ đồ án
-            # phía sau, không cần F5.
             warning = self.env['eaut_showcase.term.close.warning'].create({
+                'term_id': self.id,
                 'message': (
-                    'Đã đóng kỳ — vẫn còn %s sinh viên chưa được gán giảng '
-                    'viên hướng dẫn. Vào "Phân bổ GVHD" để gán tay.'
+                    'Kỳ này vẫn còn %s sinh viên chưa được gán giảng viên '
+                    'hướng dẫn. Bạn có chắc muốn đóng kỳ không? Vào "Phân '
+                    'bổ GVHD" để gán tay trước nếu cần.'
                 ) % unassigned,
             })
             return {
@@ -183,6 +184,7 @@ class ShowcaseTerm(models.Model):
                     'eaut_showcase.view_eaut_showcase_term_close_warning_form').id,
                 'target': 'new',
             }
+        self.write({'state': 'closed'})
         return True
 
     def action_view_registrations(self):

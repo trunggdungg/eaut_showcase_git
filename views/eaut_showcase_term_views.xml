@@ -155,9 +155,11 @@
         <field name="model">eaut_showcase.term.close.warning</field>
         <field name="arch" type="xml">
             <form string="Đóng kỳ">
+                <field name="term_id" invisible="1"/>
                 <field name="message" readonly="1" nolabel="1"/>
                 <footer>
-                    <button string="OK" class="btn-primary" special="cancel"/>
+                    <button string="Đóng kỳ" name="action_confirm" type="object" class="btn-primary"/>
+                    <button string="Huỷ" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>
         </field>
