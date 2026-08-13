@@ -163,19 +163,19 @@ class ShowcaseTerm(models.Model):
         unassigned = self.unassigned_count
         self.write({'state': 'closed'})
         if unassigned:
-            # Dùng kênh bus riêng (notify_warning) thay vì return thẳng
-            # ir.actions.client — trả action từ nút sẽ THAY THẾ hành vi
-            # refresh mặc định của form, khiến statusbar hiện vẫn còn "Đang
-            # mở" tới khi F5 lại. notify_warning không đụng tới giá trị trả
-            # về của nút nên form vẫn tự reload đúng như bình thường.
-            self.env.user.notify_warning(
-                title='Đã đóng kỳ — vẫn còn sinh viên chưa có GVHD',
-                message=(
-                    '%s sinh viên chưa được gán giảng viên hướng dẫn. '
-                    'Vào "Sinh viên chưa có GVHD" để gán tay.'
-                ) % unassigned,
-                sticky=True,
-            )
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': 'Đã đóng kỳ — vẫn còn sinh viên chưa có GVHD',
+                    'message': (
+                        '%s sinh viên chưa được gán giảng viên hướng dẫn. '
+                        'Vào "Sinh viên chưa có GVHD" để gán tay.'
+                    ) % unassigned,
+                    'type': 'warning',
+                    'sticky': True,
+                },
+            }
         return True
 
     def action_view_registrations(self):
