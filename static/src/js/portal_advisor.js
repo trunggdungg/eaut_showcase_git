@@ -69,8 +69,27 @@
         });
     }
 
+    /** Bootstrap tab tự reset về tab "active" hardcode trong HTML mỗi khi
+     * trang load lại (F5/redirect sau khi submit form) — không nhớ tab
+     * người dùng đang đứng. Đọc query string ?tab=<id> (id không có tiền tố
+     * "tab-") rồi giả lập click đúng nút đó, tận dụng luôn event listener
+     * Bootstrap đã gắn sẵn (không cần đụng tới API bootstrap.Tab trực
+     * tiếp — không chắc chắn nó có lộ ra window hay không). */
+    function restoreActiveTab() {
+        var params = new URLSearchParams(window.location.search);
+        var tab = params.get("tab");
+        if (!tab) {
+            return;
+        }
+        var btn = document.querySelector('[data-bs-toggle="tab"][data-bs-target="#tab-' + tab + '"]');
+        if (btn) {
+            btn.click();
+        }
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmForms();
+        restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
             return;
         }

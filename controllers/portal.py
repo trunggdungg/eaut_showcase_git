@@ -195,24 +195,24 @@ class AdvisorPortalController(http.Controller):
     def my_advisor_capacity_register(self, **post):
         creator = self._get_creator_for_current_user()
         if not creator:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         term = request.env['eaut_showcase.term'].sudo().browse(
             int(post.get('term_id') or 0)).exists()
         if not term or term.state != 'open':
             error = urllib.parse.quote('Kỳ này hiện không mở đăng ký.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
             max_students = int(post.get('max_students') or 0)
         except ValueError:
             max_students = 0
         if max_students < 1:
             error = urllib.parse.quote('Số sinh viên tối đa phải lớn hơn 0.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
 
         capacity = self._get_capacity_for_term(creator, term)
         if capacity and capacity.pending_action != 'none':
             error = urllib.parse.quote('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
             if capacity:
                 # Đang 'đã rút' (withdrawn=True) — chỉ tạo yêu cầu tham gia
@@ -224,8 +224,9 @@ class AdvisorPortalController(http.Controller):
                     'withdrawn': True, 'pending_action': 'join',
                 })
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
     @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/update'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
@@ -233,19 +234,20 @@ class AdvisorPortalController(http.Controller):
         creator = self._get_creator_for_current_user()
         capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
         if not creator or not capacity or capacity.creator_id.id != creator.id:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         try:
             max_students = int(post.get('max_students') or 0)
         except ValueError:
             max_students = 0
         if max_students < 1:
             error = urllib.parse.quote('Số sinh viên tối đa phải lớn hơn 0.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
             capacity.write({'max_students': max_students})
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
     @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/withdraw'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
@@ -253,12 +255,13 @@ class AdvisorPortalController(http.Controller):
         creator = self._get_creator_for_current_user()
         capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
         if not creator or not capacity or capacity.creator_id.id != creator.id:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         try:
             capacity.action_gv_request_withdraw()
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
     @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/cancel-request'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
@@ -266,12 +269,13 @@ class AdvisorPortalController(http.Controller):
         creator = self._get_creator_for_current_user()
         capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
         if not creator or not capacity or capacity.creator_id.id != creator.id:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         try:
             capacity.action_gv_cancel_request()
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
     # ============ GIẢNG VIÊN: QUẢN LÝ HỒ SƠ ============
     @http.route(['/my/advisor-requests/profile'], type='http', auth='user', website=True,
