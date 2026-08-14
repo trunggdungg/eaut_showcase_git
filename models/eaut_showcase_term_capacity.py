@@ -106,7 +106,7 @@ class ShowcaseTermCapacity(models.Model):
             ('creator_id', '=', self.creator_id.id),
             ('state', 'in', ['pending', 'approved']),
         ])
-        affected_lines.registration_id.action_reset_for_withdrawal()
+        affected_lines.registration_id.action_reset_for_withdrawal(creator=self.creator_id)
 
     def action_gv_request_withdraw(self):
         """GV tự bấm 'Rút khỏi kỳ' trên Portal — chỉ tạo yêu cầu chờ Admin

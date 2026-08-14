@@ -155,14 +155,22 @@ class ShowcaseAdvisorRegistration(models.Model):
                 partner_ids=self.student_id.ids,
             )
 
-    def action_reset_for_withdrawal(self):
+    def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
         để sinh viên vote lại từ đầu (ngoại lệ duy nhất cho quy tắc SV không
-        được tự đổi nguyện vọng)."""
+        được tự đổi nguyện vọng). creator (nếu có): GV vừa rút, để báo rõ
+        cho SV biết vì sao hồ sơ của họ bị reset."""
         for reg in self:
             reg.line_ids.unlink()
             reg.write({'state': 'draft'})
             reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+            if creator:
+                reg.message_post(
+                    body='Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
+                         'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
+                         'viên hướng dẫn.' % creator.name,
+                    partner_ids=reg.student_id.ids,
+                )
 
     def action_unassign(self):
         """Nút "Bỏ gán" trên thẻ Kanban — đưa SV về "Chưa có GVHD" ngay lập
