@@ -107,6 +107,15 @@
                                     <field name="pending_count"/>
                                     <field name="remaining_slots"/>
                                     <field name="withdrawn"/>
+                                    <field name="pending_action" widget="badge"
+                                           decoration-info="pending_action == 'join'"
+                                           decoration-warning="pending_action == 'withdraw'"/>
+                                    <button name="action_admin_approve_request" type="object"
+                                            string="Duyệt yêu cầu" icon="fa-check"
+                                            invisible="pending_action == 'none'"/>
+                                    <button name="action_admin_reject_request" type="object"
+                                            string="Từ chối yêu cầu" icon="fa-times"
+                                            invisible="pending_action == 'none'"/>
                                     <button name="action_withdraw" type="object"
                                             string="Rút khỏi kỳ" icon="fa-sign-out"
                                             invisible="withdrawn"/>

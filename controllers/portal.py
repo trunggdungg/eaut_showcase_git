@@ -188,7 +188,8 @@ class AdvisorPortalController(http.Controller):
             ('term_id', '=', term.id), ('creator_id', '=', creator.id),
         ], limit=1)
 
-    # ============ GIẢNG VIÊN: TỰ QUẢN LÝ SỨC CHỨA ============
+    # ============ GIẢNG VIÊN: TỰ QUẢN LÝ SỨC CHỨA (cần Admin duyệt Tham
+    # gia/Rút — chỉ riêng "Cập nhật số lượng" là tự do, không cần duyệt) ====
     @http.route(['/my/advisor-requests/capacity/register'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
     def my_advisor_capacity_register(self, **post):
@@ -209,12 +210,18 @@ class AdvisorPortalController(http.Controller):
             return request.redirect(f'/my/advisor-requests?error={error}')
 
         capacity = self._get_capacity_for_term(creator, term)
+        if capacity and capacity.pending_action != 'none':
+            error = urllib.parse.quote('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
+            return request.redirect(f'/my/advisor-requests?error={error}')
         try:
             if capacity:
-                capacity.write({'max_students': max_students, 'withdrawn': False})
+                # Đang 'đã rút' (withdrawn=True) — chỉ tạo yêu cầu tham gia
+                # lại, chưa active ngay, chờ Admin duyệt.
+                capacity.write({'max_students': max_students, 'pending_action': 'join'})
             else:
                 request.env['eaut_showcase.term.capacity'].sudo().create({
                     'term_id': term.id, 'creator_id': creator.id, 'max_students': max_students,
+                    'withdrawn': True, 'pending_action': 'join',
                 })
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
@@ -248,10 +255,23 @@ class AdvisorPortalController(http.Controller):
         if not creator or not capacity or capacity.creator_id.id != creator.id:
             return request.redirect('/my/advisor-requests?error=1')
         try:
-            capacity.action_withdraw()
+            capacity.action_gv_request_withdraw()
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests/capacity?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests/capacity?done=1')
+            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
+        return request.redirect('/my/advisor-requests?done=1')
+
+    @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/cancel-request'], type='http', auth='user',
+                website=True, methods=['POST'], csrf=True)
+    def my_advisor_capacity_cancel_request(self, capacity_id, **post):
+        creator = self._get_creator_for_current_user()
+        capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
+        if not creator or not capacity or capacity.creator_id.id != creator.id:
+            return request.redirect('/my/advisor-requests?error=1')
+        try:
+            capacity.action_gv_cancel_request()
+        except (UserError, ValidationError) as e:
+            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
+        return request.redirect('/my/advisor-requests?done=1')
 
     # ============ GIẢNG VIÊN: QUẢN LÝ HỒ SƠ ============
     @http.route(['/my/advisor-requests/profile'], type='http', auth='user', website=True,

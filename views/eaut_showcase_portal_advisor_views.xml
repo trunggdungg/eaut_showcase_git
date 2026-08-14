@@ -295,6 +295,10 @@
                                             <t t-esc="cap.pending_count"/>, còn trống
                                             <t t-esc="cap.remaining_slots"/>.
                                         </div>
+                                        <div t-if="cap.pending_action == 'withdraw'" class="alert alert-warning py-2">
+                                            Đã gửi yêu cầu rút khỏi kỳ này — đang chờ Admin duyệt.
+                                            Trong lúc chờ, bạn vẫn nhận SV bình thường.
+                                        </div>
                                         <form t-attf-action="/my/advisor-requests/capacity/#{cap.id}/update"
                                               method="post" class="d-inline-flex align-items-center gap-2">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -302,11 +306,29 @@
                                                    class="form-control form-control-sm" style="width: 80px;"/>
                                             <button type="submit" class="btn btn-sm btn-outline-primary">Cập nhật</button>
                                         </form>
-                                        <form t-attf-action="/my/advisor-requests/capacity/#{cap.id}/withdraw"
+                                        <form t-if="cap.pending_action != 'withdraw'"
+                                              t-attf-action="/my/advisor-requests/capacity/#{cap.id}/withdraw"
                                               method="post" class="d-inline"
-                                              onsubmit="return confirm('Rút khỏi kỳ này? Các SV đang chờ/đã duyệt bởi bạn sẽ được reset để chọn lại giảng viên khác.');">
+                                              onsubmit="return confirm('Gửi yêu cầu rút khỏi kỳ này? Cần Admin duyệt mới thật sự có hiệu lực.');">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Rút khỏi kỳ</button>
+                                        </form>
+                                        <form t-if="cap.pending_action == 'withdraw'"
+                                              t-attf-action="/my/advisor-requests/capacity/#{cap.id}/cancel-request"
+                                              method="post" class="d-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Huỷ yêu cầu rút</button>
+                                        </form>
+                                    </t>
+                                    <t t-elif="cap and cap.pending_action == 'join'">
+                                        <div class="alert alert-info py-2">
+                                            Đã gửi yêu cầu tham gia (tối đa <t t-esc="cap.max_students"/> SV) —
+                                            đang chờ Admin duyệt.
+                                        </div>
+                                        <form t-attf-action="/my/advisor-requests/capacity/#{cap.id}/cancel-request"
+                                              method="post" class="d-inline">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <button type="submit" class="btn btn-sm btn-outline-secondary">Huỷ yêu cầu</button>
                                         </form>
                                     </t>
                                     <t t-else="">
@@ -325,6 +347,9 @@
                                                 <t t-else="">Đăng ký nhận hướng dẫn</t>
                                             </button>
                                         </form>
+                                        <p class="small text-muted mt-1 mb-0">
+                                            Yêu cầu cần Admin duyệt mới có hiệu lực.
+                                        </p>
                                     </t>
                                 </div>
                             </t>

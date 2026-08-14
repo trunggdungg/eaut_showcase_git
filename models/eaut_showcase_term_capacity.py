@@ -17,6 +17,15 @@ class ShowcaseTermCapacity(models.Model):
     )
     max_students = fields.Integer(string='Số sinh viên tối đa', default=1, required=True)
     withdrawn = fields.Boolean(string='Đã rút khỏi kỳ')
+    pending_action = fields.Selection([
+        ('none', 'Không có'),
+        ('join', 'Chờ duyệt tham gia'),
+        ('withdraw', 'Chờ duyệt rút'),
+    ], string='Yêu cầu đang chờ', default='none', required=True,
+        help="GV tự đăng ký tham gia/rút khỏi kỳ qua Portal chỉ tạo ra yêu "
+             "cầu ở đây — phải Admin duyệt (action_admin_approve_request) "
+             "mới thật sự có hiệu lực, tránh GV tự do tham gia/rút tuỳ ý. "
+             "Sửa 'Số sinh viên tối đa' vẫn không cần duyệt.")
 
     approved_count = fields.Integer(string='Đã duyệt', compute='_compute_counts')
     pending_count = fields.Integer(string='Đang chờ duyệt', compute='_compute_counts')
@@ -85,6 +94,9 @@ class ShowcaseTermCapacity(models.Model):
         return super().unlink()
 
     def action_withdraw(self):
+        """Rút thật — chỉ nên gọi bởi Admin (form/list backend) hoặc bởi
+        action_admin_approve_request() khi duyệt yêu cầu của GV, không phải
+        chỗ GV tự bấm trực tiếp (xem action_gv_request_withdraw)."""
         self.ensure_one()
         if self.term_id.state != 'open':
             raise UserError('Chỉ có thể rút khỏi kỳ trong lúc kỳ còn đang mở đăng ký.')
@@ -95,3 +107,40 @@ class ShowcaseTermCapacity(models.Model):
             ('state', 'in', ['pending', 'approved']),
         ])
         affected_lines.registration_id.action_reset_for_withdrawal()
+
+    def action_gv_request_withdraw(self):
+        """GV tự bấm 'Rút khỏi kỳ' trên Portal — chỉ tạo yêu cầu chờ Admin
+        duyệt, KHÔNG rút ngay. Trong lúc chờ, GV vẫn hoạt động bình thường
+        (vẫn hiện công khai, SV vẫn chọn được) — chỉ khi Admin duyệt mới
+        thật sự rút (action_withdraw)."""
+        self.ensure_one()
+        if self.term_id.state != 'open':
+            raise UserError('Chỉ có thể gửi yêu cầu rút trong lúc kỳ còn đang mở đăng ký.')
+        if self.pending_action != 'none':
+            raise UserError('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
+        self.pending_action = 'withdraw'
+
+    def action_gv_cancel_request(self):
+        """GV tự huỷ yêu cầu tham gia/rút do chính mình gửi, trước khi Admin
+        kịp xử lý — không cần Admin can thiệp cho việc rút lại ý định của
+        chính GV."""
+        self.ensure_one()
+        if self.pending_action == 'none':
+            raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
+        self.pending_action = 'none'
+
+    def action_admin_approve_request(self):
+        self.ensure_one()
+        if self.pending_action == 'join':
+            self.write({'withdrawn': False, 'pending_action': 'none'})
+        elif self.pending_action == 'withdraw':
+            self.action_withdraw()
+            self.pending_action = 'none'
+        else:
+            raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
+
+    def action_admin_reject_request(self):
+        self.ensure_one()
+        if self.pending_action == 'none':
+            raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
+        self.pending_action = 'none'

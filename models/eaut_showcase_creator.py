@@ -87,7 +87,10 @@ class ShowcaseCreator(models.Model):
         if not existing:
             Capacity.create({'term_id': term_id, 'creator_id': self.id, 'max_students': 1})
         elif existing.withdrawn:
-            existing.withdrawn = False
+            # Admin tự kéo-thả (khác GV tự bấm ở Portal) — có hiệu lực ngay,
+            # không qua bước chờ duyệt; dọn luôn pending_action nếu GV lỡ có
+            # 1 yêu cầu treo từ trước, tránh còn sót badge "chờ duyệt" ảo.
+            existing.write({'withdrawn': False, 'pending_action': 'none'})
 
     def action_view_projects(self):
         self.ensure_one()
