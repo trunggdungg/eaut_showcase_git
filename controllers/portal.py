@@ -167,15 +167,28 @@ class AdvisorPortalController(http.Controller):
                 ('creator_id', '=', creator.id),
                 ('state', 'in', ('rejected', 'expired', 'cancelled')),
             ], order='decided_date desc')
+            history_terms = history_lines.mapped('term_id').sorted(
+                key=lambda t: t.date_start, reverse=True)
+            if (kw.get('history_term_id') or '').isdigit():
+                selected_history_term_id = int(kw['history_term_id'])
+                history_lines = history_lines.filtered(
+                    lambda l: l.term_id.id == selected_history_term_id)
+            else:
+                selected_history_term_id = None
             open_terms = request.env['eaut_showcase.term'].sudo().search(
                 [('state', '=', 'open')], order='date_start desc')
             for term in open_terms:
                 capacities_by_term[term.id] = self._get_capacity_for_term(creator, term)
+        else:
+            history_terms = request.env['eaut_showcase.term']
+            selected_history_term_id = None
         values = {
             'creator': creator,
             'pending_lines': pending_lines,
             'approved_lines': approved_lines,
             'history_lines': history_lines,
+            'history_terms': history_terms,
+            'selected_history_term_id': selected_history_term_id,
             'open_terms': open_terms,
             'capacities_by_term': capacities_by_term,
             'done': kw.get('done'),

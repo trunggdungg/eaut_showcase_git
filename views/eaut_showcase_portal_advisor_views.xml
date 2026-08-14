@@ -250,6 +250,20 @@
                             </table>
                         </div>
                         <div class="tab-pane fade" id="tab-history" role="tabpanel">
+                            <form t-if="history_terms" method="get" action="/my/advisor-requests"
+                                  class="mb-3 d-flex align-items-center gap-2">
+                                <input type="hidden" name="tab" value="history"/>
+                                <label class="mb-0 small text-muted">Lọc theo kỳ:</label>
+                                <select name="history_term_id" class="form-select form-select-sm"
+                                        style="width: auto;" onchange="this.form.submit()">
+                                    <option value="">Tất cả các kỳ</option>
+                                    <t t-foreach="history_terms" t-as="hterm">
+                                        <option t-att-value="hterm.id"
+                                                t-att-selected="'selected' if selected_history_term_id == hterm.id else None"
+                                                t-esc="hterm.name"/>
+                                    </t>
+                                </select>
+                            </form>
                             <p t-if="not history_lines">Chưa có lịch sử xử lý nào.</p>
                             <table t-else="" class="table">
                                 <thead>
