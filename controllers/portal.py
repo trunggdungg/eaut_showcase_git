@@ -109,7 +109,19 @@ class AdvisorPortalController(http.Controller):
 
         # Validate trước khi tạo bất kỳ record nào — tránh để lại hồ sơ rác ở
         # trạng thái "Chưa nộp" khi submit thiếu/sai (không chọn giảng viên nào...).
-        creator_ids = [int(v) for v in request.httprequest.form.getlist('creator_ids') if v]
+        # Đọc theo index (creator_1, creator_2, ...) thay vì list dùng chung 1
+        # tên — để giới thiệu/đề tài của đúng nguyện vọng đó không bị lệch vị
+        # trí khi SV bỏ trống 1 vài nguyện vọng ở giữa.
+        creator_ids = []
+        notes = []
+        topics = []
+        for idx in range(1, term.max_preferences + 1):
+            raw_creator_id = (post.get('creator_%d' % idx) or '').strip()
+            if not raw_creator_id:
+                continue
+            creator_ids.append(int(raw_creator_id))
+            notes.append((post.get('note_%d' % idx) or '').strip())
+            topics.append((post.get('topic_%d' % idx) or '').strip())
         if not creator_ids:
             error = urllib.parse.quote('Vui lòng chọn ít nhất 1 giảng viên.')
             return request.redirect(f'/my/advisor?error={error}')
@@ -122,7 +134,7 @@ class AdvisorPortalController(http.Controller):
         })
 
         try:
-            registration.action_submit(creator_ids)
+            registration.action_submit(creator_ids, notes=notes, topics=topics)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
@@ -290,6 +302,31 @@ class AdvisorPortalController(http.Controller):
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor-requests/profile?error={urllib.parse.quote(str(e))}')
         return request.redirect('/my/advisor-requests/profile?done=1')
+
+    @http.route(['/my/advisor-requests/<int:line_id>'], type='http', auth='user',
+                website=True, sitemap=False)
+    def my_advisor_request_detail(self, line_id, **kw):
+        creator = self._get_creator_for_current_user()
+        line = request.env['eaut_showcase.advisor.registration.line'].sudo().browse(line_id).exists()
+        if not creator or not line or line.creator_id.id != creator.id:
+            return request.redirect('/my/advisor-requests?error=1')
+        values = {
+            'creator': creator,
+            'line': line,
+            'error': kw.get('error'),
+        }
+        return request.render('eaut_showcase.portal_my_advisor_request_detail', values)
+
+    @http.route(['/my/advisor-requests/<int:line_id>/student-avatar'], type='http', auth='user',
+                website=True, sitemap=False)
+    def my_advisor_request_student_avatar(self, line_id, **kw):
+        creator = self._get_creator_for_current_user()
+        line = request.env['eaut_showcase.advisor.registration.line'].sudo().browse(line_id).exists()
+        if not creator or not line or line.creator_id.id != creator.id:
+            return request.not_found()
+        return request.env['ir.binary']._get_image_stream_from(
+            line.student_id, field_name='image_1920'
+        ).get_response()
 
     def _decide_request(self, line_id, approve, reason=None):
         creator = self._get_creator_for_current_user()

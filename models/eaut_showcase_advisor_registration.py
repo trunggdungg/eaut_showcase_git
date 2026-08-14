@@ -106,21 +106,28 @@ class ShowcaseAdvisorRegistration(models.Model):
             approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
-    def action_submit(self, creator_ids):
+    def action_submit(self, creator_ids, notes=None, topics=None):
         """creator_ids: danh sách id giảng viên theo đúng thứ tự ưu tiên
-        (tối đa term.max_preferences phần tử)."""
+        (tối đa term.max_preferences phần tử). notes/topics (nếu có): cùng
+        độ dài với creator_ids, giới thiệu bản thân + đề tài dự kiến riêng
+        cho từng nguyện vọng."""
         self.ensure_one()
         if self.line_ids:
             raise UserError('Hồ sơ này đã được nộp, không thể nộp lại.')
         if len(creator_ids) > self.term_id.max_preferences:
             raise UserError('Vượt quá số nguyện vọng tối đa cho phép.')
+        notes = notes or [''] * len(creator_ids)
+        topics = topics or [''] * len(creator_ids)
         Line = self.env['eaut_showcase.advisor.registration.line']
-        for sequence, creator_id in enumerate(creator_ids, start=1):
+        for sequence, (creator_id, note, topic) in enumerate(
+                zip(creator_ids, notes, topics), start=1):
             Line.create({
                 'registration_id': self.id,
                 'creator_id': creator_id,
                 'sequence': sequence,
                 'state': 'waiting',
+                'note': note or False,
+                'proposed_topic': topic or False,
             })
         self.state = 'in_progress'
         self._activate_next_line()
@@ -239,7 +246,8 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     )
     creator_id = fields.Many2one('eaut_showcase.creator', string='Giảng viên', required=True)
     sequence = fields.Integer(string='Nguyện vọng số')
-    note = fields.Text(string='Lời giới thiệu')
+    note = fields.Text(string='Giới thiệu bản thân')
+    proposed_topic = fields.Char(string='Đề tài dự kiến')
 
     state = fields.Selection([
         ('waiting', 'Chờ kích hoạt'),

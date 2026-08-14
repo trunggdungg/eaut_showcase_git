@@ -106,14 +106,19 @@
                     <form action="/my/advisor/submit" method="post">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <t t-foreach="range(1, max_preferences + 1)" t-as="idx">
-                            <div class="mb-3">
+                            <div class="mb-3 border rounded p-3">
                                 <label t-attf-for="creator_{{idx}}">Nguyện vọng <t t-esc="idx"/></label>
-                                <select name="creator_ids" t-attf-id="creator_{{idx}}" class="form-select">
+                                <select t-attf-name="creator_{{idx}}" t-attf-id="creator_{{idx}}"
+                                        class="form-select mb-2">
                                     <option value="">-- Không chọn --</option>
                                     <option t-foreach="capacities" t-as="cap"
                                             t-att-value="cap.creator_id.id"
                                             t-esc="'%s (còn %s chỗ)' % (cap.creator_id.name, cap.remaining_slots)"/>
                                 </select>
+                                <input type="text" t-attf-name="topic_{{idx}}" class="form-control mb-2"
+                                       placeholder="Đề tài dự kiến (không bắt buộc)"/>
+                                <textarea t-attf-name="note_{{idx}}" class="form-control" rows="2"
+                                          placeholder="Giới thiệu bản thân với thầy/cô này (không bắt buộc)"/>
                             </div>
                         </t>
                         <button type="submit" class="btn btn-primary">Nộp nguyện vọng</button>
@@ -186,20 +191,20 @@
                                     <tr>
                                         <th>Sinh viên</th>
                                         <th>MSSV / Lớp / Ngành</th>
-                                        <th>Lời giới thiệu</th>
                                         <th>Hạn phản hồi</th>
                                         <th>Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr t-foreach="pending_lines" t-as="line">
-                                        <td t-esc="line.student_id.name"/>
+                                        <td>
+                                            <a t-attf-href="/my/advisor-requests/#{line.id}" t-esc="line.student_id.name"/>
+                                        </td>
                                         <td>
                                             <t t-esc="line.student_id.showcase_student_code"/> /
                                             <t t-esc="line.student_id.showcase_student_class"/> /
                                             <t t-esc="line.student_id.showcase_student_major"/>
                                         </td>
-                                        <td t-esc="line.note"/>
                                         <td>
                                             <span t-if="line.deadline" class="uikick-countdown"
                                                   t-att-data-deadline="line.deadline.strftime('%Y-%m-%dT%H:%M:%SZ')">
@@ -212,13 +217,8 @@
                                                 <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                 <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
                                             </form>
-                                            <form t-attf-action="/my/advisor-requests/#{line.id}/reject"
-                                                  method="post" class="d-inline-flex gap-1 mt-1">
-                                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                                                <input type="text" name="reason" placeholder="Lý do (không bắt buộc)"
-                                                       class="form-control form-control-sm" style="width: 150px;"/>
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">Từ chối</button>
-                                            </form>
+                                            <a t-attf-href="/my/advisor-requests/#{line.id}"
+                                               class="btn btn-sm btn-outline-secondary">Chi tiết</a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -231,19 +231,19 @@
                                     <tr>
                                         <th>Sinh viên</th>
                                         <th>MSSV / Lớp / Ngành</th>
-                                        <th>Lời giới thiệu</th>
                                         <th>Ngày duyệt</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr t-foreach="approved_lines" t-as="line">
-                                        <td t-esc="line.student_id.name"/>
+                                        <td>
+                                            <a t-attf-href="/my/advisor-requests/#{line.id}" t-esc="line.student_id.name"/>
+                                        </td>
                                         <td>
                                             <t t-esc="line.student_id.showcase_student_code"/> /
                                             <t t-esc="line.student_id.showcase_student_class"/> /
                                             <t t-esc="line.student_id.showcase_student_major"/>
                                         </td>
-                                        <td t-esc="line.note"/>
                                         <td t-esc="line.decided_date"/>
                                     </tr>
                                 </tbody>
@@ -262,7 +262,9 @@
                                 </thead>
                                 <tbody>
                                     <tr t-foreach="history_lines" t-as="line">
-                                        <td t-esc="line.student_id.name"/>
+                                        <td>
+                                            <a t-attf-href="/my/advisor-requests/#{line.id}" t-esc="line.student_id.name"/>
+                                        </td>
                                         <td>
                                             <t t-esc="line.student_id.showcase_student_code"/> /
                                             <t t-esc="line.student_id.showcase_student_class"/> /
@@ -272,9 +274,6 @@
                                             <span t-if="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ chối</span>
                                             <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn phản hồi</span>
                                             <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ</span>
-                                            <div t-if="line.reject_reason" class="small text-muted mt-1">
-                                                Lý do: <t t-esc="line.reject_reason"/>
-                                            </div>
                                         </td>
                                         <td t-esc="line.decided_date"/>
                                     </tr>
@@ -331,6 +330,99 @@
                             </t>
                         </div>
                     </div>
+                </t>
+            </div>
+            <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- GIẢNG VIÊN: /my/advisor-requests/<id> (chi tiết 1 SV)         -->
+    <!-- ============================================================ -->
+    <template id="portal_my_advisor_request_detail" name="Portal - Chi tiết sinh viên">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+            <div class="container my-4">
+                <a href="/my/advisor-requests" class="btn btn-outline-secondary btn-sm mb-3">
+                    ← Quay lại danh sách
+                </a>
+                <h2>Chi tiết sinh viên</h2>
+
+                <div t-if="error" class="alert alert-danger">
+                    <t t-if="error != '1'" t-esc="error"/>
+                    <t t-else="">Có lỗi xảy ra hoặc bạn không có quyền thực hiện thao tác này.</t>
+                </div>
+
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <img t-if="line.student_id.image_1920"
+                         t-attf-src="/my/advisor-requests/#{line.id}/student-avatar"
+                         style="width:80px; height:80px; border-radius:50%; object-fit:cover;" alt=""/>
+                    <div>
+                        <h4 class="mb-0" t-esc="line.student_id.name"/>
+                        <div t-if="line.student_id.email" class="text-muted" t-esc="line.student_id.email"/>
+                        <div t-if="line.student_id.phone or line.student_id.mobile" class="text-muted">
+                            <t t-esc="line.student_id.phone or line.student_id.mobile"/>
+                        </div>
+                    </div>
+                </div>
+
+                <table class="table table-borderless w-auto">
+                    <tr><th>MSSV</th><td t-esc="line.student_id.showcase_student_code"/></tr>
+                    <tr><th>Lớp</th><td t-esc="line.student_id.showcase_student_class"/></tr>
+                    <tr><th>Ngành</th><td t-esc="line.student_id.showcase_student_major"/></tr>
+                    <tr><th>Nguyện vọng số</th><td t-esc="line.sequence"/></tr>
+                    <tr>
+                        <th>Trạng thái</th>
+                        <td>
+                            <span t-if="line.state == 'pending'" class="badge text-bg-warning">Đang chờ duyệt</span>
+                            <span t-elif="line.state == 'approved'" class="badge text-bg-success">Đã duyệt</span>
+                            <span t-elif="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ chối</span>
+                            <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn phản hồi</span>
+                            <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ</span>
+                            <span t-else="" class="badge text-bg-light">Chờ kích hoạt</span>
+                        </td>
+                    </tr>
+                    <tr t-if="line.state == 'pending' and line.deadline">
+                        <th>Hạn phản hồi</th>
+                        <td>
+                            <span class="uikick-countdown"
+                                  t-att-data-deadline="line.deadline.strftime('%Y-%m-%dT%H:%M:%SZ')">
+                                <t t-esc="line.deadline"/>
+                            </span>
+                        </td>
+                    </tr>
+                    <tr t-if="line.decided_date">
+                        <th>Ngày quyết định</th>
+                        <td t-esc="line.decided_date"/>
+                    </tr>
+                </table>
+
+                <div class="mb-3" t-if="line.proposed_topic">
+                    <h5>Đề tài dự kiến</h5>
+                    <p t-esc="line.proposed_topic"/>
+                </div>
+                <div class="mb-3" t-if="line.note">
+                    <h5>Giới thiệu bản thân</h5>
+                    <p style="white-space: pre-wrap;" t-esc="line.note"/>
+                </div>
+                <div class="mb-3" t-if="line.reject_reason">
+                    <h5>Lý do từ chối</h5>
+                    <p t-esc="line.reject_reason"/>
+                </div>
+
+                <t t-if="line.state == 'pending'">
+                    <form t-attf-action="/my/advisor-requests/#{line.id}/approve" method="post" class="d-inline">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <button type="submit" class="btn btn-success">Duyệt</button>
+                    </form>
+                    <form t-attf-action="/my/advisor-requests/#{line.id}/reject" method="post" class="mt-3">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="mb-2">
+                            <label>Lý do từ chối (không bắt buộc)</label>
+                            <textarea name="reason" class="form-control" rows="3"/>
+                        </div>
+                        <button type="submit" class="btn btn-outline-danger">Từ chối</button>
+                    </form>
                 </t>
             </div>
             <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
