@@ -337,7 +337,8 @@
                                             <t t-else="">Bạn chưa đăng ký nhận hướng dẫn kỳ này.</t>
                                         </div>
                                         <form action="/my/advisor-requests/capacity/register" method="post"
-                                              class="d-inline-flex align-items-center gap-2">
+                                              class="d-inline-flex align-items-center gap-2 uikick-confirm-form"
+                                              data-confirm-message="Gửi yêu cầu tham gia nhận hướng dẫn kỳ này? Cần Admin duyệt mới thật sự có hiệu lực.">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="hidden" name="term_id" t-att-value="oterm.id"/>
                                             <input type="number" min="1" name="max_students" value="1"
