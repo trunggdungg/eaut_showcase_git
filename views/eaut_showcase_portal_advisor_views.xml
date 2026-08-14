@@ -368,7 +368,6 @@
                     <tr><th>MSSV</th><td t-esc="line.student_id.showcase_student_code"/></tr>
                     <tr><th>Lớp</th><td t-esc="line.student_id.showcase_student_class"/></tr>
                     <tr><th>Ngành</th><td t-esc="line.student_id.showcase_student_major"/></tr>
-                    <tr><th>Nguyện vọng số</th><td t-esc="line.sequence"/></tr>
                     <tr>
                         <th>Trạng thái</th>
                         <td>
@@ -389,7 +388,7 @@
                             </span>
                         </td>
                     </tr>
-                    <tr t-if="line.decided_date">
+                    <tr t-if="line.decided_date and line.state != 'pending'">
                         <th>Ngày quyết định</th>
                         <td t-esc="line.decided_date"/>
                     </tr>
