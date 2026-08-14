@@ -308,8 +308,8 @@
                                         </form>
                                         <form t-if="cap.pending_action != 'withdraw'"
                                               t-attf-action="/my/advisor-requests/capacity/#{cap.id}/withdraw"
-                                              method="post" class="d-inline"
-                                              onsubmit="return confirm('Gửi yêu cầu rút khỏi kỳ này? Cần Admin duyệt mới thật sự có hiệu lực.');">
+                                              method="post" class="d-inline uikick-confirm-form"
+                                              data-confirm-message="Gửi yêu cầu rút khỏi kỳ này? Cần Admin duyệt mới thật sự có hiệu lực.">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Rút khỏi kỳ</button>
                                         </form>
@@ -356,6 +356,15 @@
                         </div>
                     </div>
                 </t>
+            </div>
+            <div id="uikick-confirm-overlay" class="uikick-confirm-overlay">
+                <div class="uikick-confirm-box">
+                    <p id="uikick-confirm-message"></p>
+                    <div class="uikick-confirm-actions">
+                        <button type="button" id="uikick-confirm-cancel" class="btn btn-outline-secondary btn-sm">Huỷ</button>
+                        <button type="button" id="uikick-confirm-ok" class="btn btn-primary btn-sm">Xác nhận</button>
+                    </div>
+                </div>
             </div>
             <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
         </t>

@@ -23,7 +23,54 @@
         });
     }
 
+    /** Modal xác nhận tự dựng (thay cho window.confirm() mặc định của trình
+     * duyệt, hiện dạng "localhost:8069 cho biết" xấu và không style được) —
+     * chỉ dùng HTML/CSS/JS thuần, không phụ thuộc API nào của Odoo. */
+    function initConfirmForms() {
+        var overlay = document.getElementById("uikick-confirm-overlay");
+        if (!overlay) {
+            return;
+        }
+        var messageEl = document.getElementById("uikick-confirm-message");
+        var okBtn = document.getElementById("uikick-confirm-ok");
+        var cancelBtn = document.getElementById("uikick-confirm-cancel");
+        var pendingForm = null;
+
+        function close() {
+            overlay.style.display = "none";
+            pendingForm = null;
+        }
+
+        document.querySelectorAll(".uikick-confirm-form").forEach(function (form) {
+            form.addEventListener("submit", function (ev) {
+                if (form.dataset.confirmed === "1") {
+                    return;
+                }
+                ev.preventDefault();
+                pendingForm = form;
+                messageEl.textContent = form.dataset.confirmMessage || "Bạn có chắc chắn?";
+                overlay.style.display = "flex";
+            });
+        });
+
+        okBtn.addEventListener("click", function () {
+            var form = pendingForm;
+            close();
+            if (form) {
+                form.dataset.confirmed = "1";
+                form.submit();
+            }
+        });
+        cancelBtn.addEventListener("click", close);
+        overlay.addEventListener("click", function (ev) {
+            if (ev.target === overlay) {
+                close();
+            }
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
+        initConfirmForms();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
             return;
         }

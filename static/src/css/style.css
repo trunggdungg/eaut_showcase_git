@@ -363,3 +363,15 @@ img.uikick-creator-avatar { object-fit: cover; }
     .uikick-creator-about { flex-direction: column; gap: 4px; }
     .uikick-creator-about-label { width: auto; }
 }
+
+/* Modal xác nhận tự dựng — portal giảng viên (thay window.confirm()) */
+.uikick-confirm-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5);
+    z-index: 1080; align-items: center; justify-content: center; padding: 16px;
+}
+.uikick-confirm-box {
+    background: var(--bs-body-bg, #fff); border-radius: 8px; max-width: 420px;
+    width: 100%; padding: 20px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+.uikick-confirm-box p { margin: 0 0 20px; }
+.uikick-confirm-box .uikick-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
