@@ -360,9 +360,7 @@
                     <div>
                         <h4 class="mb-0" t-esc="line.student_id.name"/>
                         <div t-if="line.student_id.email" class="text-muted" t-esc="line.student_id.email"/>
-                        <div t-if="line.student_id.phone or line.student_id.mobile" class="text-muted">
-                            <t t-esc="line.student_id.phone or line.student_id.mobile"/>
-                        </div>
+                        <div t-if="line.student_id.phone" class="text-muted" t-esc="line.student_id.phone"/>
                     </div>
                 </div>
 
