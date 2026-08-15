@@ -105,7 +105,19 @@ class AdvisorPortalController(http.Controller):
             error = urllib.parse.quote('Bạn đã nộp nguyện vọng cho kỳ này rồi.')
             return request.redirect(f'/my/advisor?error={error}')
 
-        creator_ids = [int(v) for v in request.httprequest.form.getlist('creator_ids') if v]
+        # Đọc theo index (creator_1, creator_2, ...) thay vì list dùng chung 1
+        # tên — để giới thiệu/đề tài của đúng nguyện vọng đó không bị lệch vị
+        # trí khi SV bỏ trống 1 vài nguyện vọng ở giữa.
+        creator_ids = []
+        notes = []
+        topics = []
+        for idx in range(1, term.max_preferences + 1):
+            raw_creator_id = (post.get('creator_%d' % idx) or '').strip()
+            if not raw_creator_id:
+                continue
+            creator_ids.append(int(raw_creator_id))
+            notes.append((post.get('note_%d' % idx) or '').strip())
+            topics.append((post.get('topic_%d' % idx) or '').strip())
         if not creator_ids:
             error = urllib.parse.quote('Vui lòng chọn ít nhất 1 giảng viên.')
             return request.redirect(f'/my/advisor?error={error}')
@@ -118,7 +130,7 @@ class AdvisorPortalController(http.Controller):
         })
 
         try:
-            registration.action_submit(creator_ids)
+            registration.action_submit(creator_ids, notes=notes, topics=topics)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
@@ -151,15 +163,28 @@ class AdvisorPortalController(http.Controller):
                 ('creator_id', '=', creator.id),
                 ('state', 'in', ('rejected', 'expired', 'cancelled')),
             ], order='decided_date desc')
+            history_terms = history_lines.mapped('term_id').sorted(
+                key=lambda t: t.date_start, reverse=True)
+            if (kw.get('history_term_id') or '').isdigit():
+                selected_history_term_id = int(kw['history_term_id'])
+                history_lines = history_lines.filtered(
+                    lambda l: l.term_id.id == selected_history_term_id)
+            else:
+                selected_history_term_id = None
             open_terms = request.env['eaut_showcase.term'].sudo().search(
                 [('state', '=', 'open')], order='date_start desc')
             for term in open_terms:
                 capacities_by_term[term.id] = self._get_capacity_for_term(creator, term)
+        else:
+            history_terms = request.env['eaut_showcase.term']
+            selected_history_term_id = None
         values = {
             'creator': creator,
             'pending_lines': pending_lines,
             'approved_lines': approved_lines,
             'history_lines': history_lines,
+            'history_terms': history_terms,
+            'selected_history_term_id': selected_history_term_id,
             'open_terms': open_terms,
             'capacities_by_term': capacities_by_term,
             'done': kw.get('done'),
@@ -179,31 +204,38 @@ class AdvisorPortalController(http.Controller):
     def my_advisor_capacity_register(self, **post):
         creator = self._get_creator_for_current_user()
         if not creator:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         term = request.env['eaut_showcase.term'].sudo().browse(
             int(post.get('term_id') or 0)).exists()
         if not term or term.state != 'open':
             error = urllib.parse.quote('Kỳ này hiện không mở đăng ký.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
             max_students = int(post.get('max_students') or 0)
         except ValueError:
             max_students = 0
         if max_students < 1:
             error = urllib.parse.quote('Số sinh viên tối đa phải lớn hơn 0.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
 
         capacity = self._get_capacity_for_term(creator, term)
+        if capacity and capacity.pending_action != 'none':
+            error = urllib.parse.quote('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
             if capacity:
-                capacity.write({'max_students': max_students, 'withdrawn': False})
+                # Đang 'đã rút' (withdrawn=True) — chỉ tạo yêu cầu tham gia
+                # lại, chưa active ngay, chờ Admin duyệt.
+                capacity.write({'max_students': max_students, 'pending_action': 'join'})
             else:
                 request.env['eaut_showcase.term.capacity'].sudo().create({
                     'term_id': term.id, 'creator_id': creator.id, 'max_students': max_students,
+                    'withdrawn': True, 'pending_action': 'join',
                 })
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
     @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/update'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
@@ -211,19 +243,20 @@ class AdvisorPortalController(http.Controller):
         creator = self._get_creator_for_current_user()
         capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
         if not creator or not capacity or capacity.creator_id.id != creator.id:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         try:
             max_students = int(post.get('max_students') or 0)
         except ValueError:
             max_students = 0
         if max_students < 1:
             error = urllib.parse.quote('Số sinh viên tối đa phải lớn hơn 0.')
-            return request.redirect(f'/my/advisor-requests?error={error}')
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
             capacity.write({'max_students': max_students})
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
     @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/withdraw'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
@@ -231,14 +264,29 @@ class AdvisorPortalController(http.Controller):
         creator = self._get_creator_for_current_user()
         capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
         if not creator or not capacity or capacity.creator_id.id != creator.id:
-            return request.redirect('/my/advisor-requests?error=1')
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
         try:
-            capacity.action_withdraw()
+            capacity.action_gv_request_withdraw()
         except (UserError, ValidationError) as e:
-            return request.redirect(f'/my/advisor-requests/capacity?error={urllib.parse.quote(str(e))}')
-        return request.redirect('/my/advisor-requests/capacity?done=1')
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
 
-        # ============ GIẢNG VIÊN: QUẢN LÝ HỒ SƠ ============
+    @http.route(['/my/advisor-requests/capacity/<int:capacity_id>/cancel-request'], type='http', auth='user',
+                website=True, methods=['POST'], csrf=True)
+    def my_advisor_capacity_cancel_request(self, capacity_id, **post):
+        creator = self._get_creator_for_current_user()
+        capacity = request.env['eaut_showcase.term.capacity'].sudo().browse(capacity_id).exists()
+        if not creator or not capacity or capacity.creator_id.id != creator.id:
+            return request.redirect('/my/advisor-requests?error=1&tab=capacity')
+        try:
+            capacity.action_gv_cancel_request()
+        except (UserError, ValidationError) as e:
+            error = urllib.parse.quote(str(e))
+            return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
+        return request.redirect('/my/advisor-requests?done=1&tab=capacity')
+
+    # ============ GIẢNG VIÊN: QUẢN LÝ HỒ SƠ ============
 
     @http.route(['/my/advisor-requests/profile'], type='http', auth='user', website=True,
                 methods=['GET'], sitemap=False)
@@ -288,6 +336,31 @@ class AdvisorPortalController(http.Controller):
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor-requests/profile?error={urllib.parse.quote(str(e))}')
         return request.redirect('/my/advisor-requests/profile?done=1')
+
+    @http.route(['/my/advisor-requests/<int:line_id>'], type='http', auth='user',
+                website=True, sitemap=False)
+    def my_advisor_request_detail(self, line_id, **kw):
+        creator = self._get_creator_for_current_user()
+        line = request.env['eaut_showcase.advisor.registration.line'].sudo().browse(line_id).exists()
+        if not creator or not line or line.creator_id.id != creator.id:
+            return request.redirect('/my/advisor-requests?error=1')
+        values = {
+            'creator': creator,
+            'line': line,
+            'error': kw.get('error'),
+        }
+        return request.render('eaut_showcase.portal_my_advisor_request_detail', values)
+
+    @http.route(['/my/advisor-requests/<int:line_id>/student-avatar'], type='http', auth='user',
+                website=True, sitemap=False)
+    def my_advisor_request_student_avatar(self, line_id, **kw):
+        creator = self._get_creator_for_current_user()
+        line = request.env['eaut_showcase.advisor.registration.line'].sudo().browse(line_id).exists()
+        if not creator or not line or line.creator_id.id != creator.id:
+            return request.not_found()
+        return request.env['ir.binary']._get_image_stream_from(
+            line.student_id, field_name='image_1920'
+        ).get_response()
 
     def _decide_request(self, line_id, approve, reason=None):
         creator = self._get_creator_for_current_user()

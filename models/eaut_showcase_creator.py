@@ -89,7 +89,7 @@ class ShowcaseCreator(models.Model):
             Capacity.create({'term_id': term_id, 'creator_id': self.id, 'max_students': 1})
         # self.with_context(creator_internal_write=True).write({'kanban_term_id': term_id})
         elif existing.withdrawn:
-            existing.withdrawn = False
+            existing.write({'withdrawn': False, 'pending_action': 'none'})
 
     def action_view_projects(self):
         self.ensure_one()

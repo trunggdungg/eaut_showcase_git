@@ -75,6 +75,15 @@
                                     <field name="pending_count"/>
                                     <field name="remaining_slots"/>
                                     <field name="withdrawn"/>
+                                     <field name="pending_action" widget="badge"
+                                           decoration-info="pending_action == 'join'"
+                                           decoration-warning="pending_action == 'withdraw'"/>
+                                    <button name="action_admin_approve_request" type="object"
+                                            string="Duyệt yêu cầu" icon="fa-check"
+                                            invisible="pending_action == 'none'"/>
+                                    <button name="action_admin_reject_request" type="object"
+                                            string="Từ chối yêu cầu" icon="fa-times"
+                                            invisible="pending_action == 'none'"/>
                                     <button name="action_withdraw" type="object"
                                             string="Rút khỏi kỳ" icon="fa-sign-out"
                                             invisible="withdrawn"/>
@@ -114,4 +123,18 @@
         </field>
     </record>
 
+    <record id="view_eaut_showcase_term_close_warning_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.close.warning.form</field>
+        <field name="model">eaut_showcase.term.close.warning</field>
+        <field name="arch" type="xml">
+            <form string="Đóng kỳ">
+                     <field name="term_id" invisible="1"/>
+                <field name="message" readonly="1" nolabel="1"/>
+                <footer>
+                    <button string="Đóng kỳ" name="action_confirm" type="object" class="btn-primary"/>
+                    <button string="Huỷ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
 </odoo>

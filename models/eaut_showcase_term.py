@@ -134,21 +134,29 @@ class ShowcaseTerm(models.Model):
     def action_close(self):
         self.ensure_one()
         unassigned = self.unassigned_count
-        self.write({'state': 'closed'})
+
         if unassigned:
-            # Dùng kênh bus riêng (notify_warning) thay vì return thẳng
-            # ir.actions.client — trả action từ nút sẽ THAY THẾ hành vi
-            # refresh mặc định của form, khiến statusbar hiện vẫn còn "Đang
-            # mở" tới khi F5 lại. notify_warning không đụng tới giá trị trả
-            # về của nút nên form vẫn tự reload đúng như bình thường.
-            self.env.user.notify_warning(
-                title='Đã đóng kỳ — vẫn còn sinh viên chưa có GVHD',
-                message=(
-                            '%s sinh viên chưa được gán giảng viên hướng dẫn. '
-                            'Vào "Sinh viên chưa có GVHD" để gán tay.'
-                        ) % unassigned,
-                sticky=True,
-            )
+
+            warning = self.env['eaut_showcase.term.close.warning'].create({
+                'term_id': self.id,
+                'message': (
+                               'Kỳ này vẫn còn %s sinh viên chưa được gán giảng viên '
+                               'hướng dẫn. Bạn có chắc muốn đóng kỳ không? Vào "Phân '
+                               'bổ GVHD" để gán tay trước nếu cần.'
+                           ) % unassigned,
+            })
+            return {
+                'type': 'ir.actions.act_window',
+                'name': 'Đóng kỳ',
+                'res_model': 'eaut_showcase.term.close.warning',
+                'view_mode': 'form',
+                'res_id': warning.id,
+                'view_id': self.env.ref(
+                    'eaut_showcase.view_eaut_showcase_term_close_warning_form').id,
+                'target': 'new',
+
+            }
+        self.write({'state': 'closed'})
         return True
 
     def action_view_registrations(self):

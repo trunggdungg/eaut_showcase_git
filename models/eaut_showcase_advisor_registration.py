@@ -97,21 +97,28 @@ class ShowcaseAdvisorRegistration(models.Model):
             approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
-    def action_submit(self, creator_ids):
+    def action_submit(self, creator_ids, notes=None, topics=None):
         """creator_ids: danh sách id giảng viên theo đúng thứ tự ưu tiên
-        (tối đa term.max_preferences phần tử)."""
+        (tối đa term.max_preferences phần tử). notes/topics (nếu có): cùng
+        độ dài với creator_ids, giới thiệu bản thân + đề tài dự kiến riêng
+        cho từng nguyện vọng."""
         self.ensure_one()
         if self.line_ids:
             raise UserError('Hồ sơ này đã được nộp, không thể nộp lại.')
         if len(creator_ids) > self.term_id.max_preferences:
             raise UserError('Vượt quá số nguyện vọng tối đa cho phép.')
+        notes = notes or [''] * len(creator_ids)
+        topics = topics or [''] * len(creator_ids)
         Line = self.env['eaut_showcase.advisor.registration.line']
-        for sequence, creator_id in enumerate(creator_ids, start=1):
+        for sequence, (creator_id, note, topic) in enumerate(
+                zip(creator_ids, notes, topics), start=1):
             Line.create({
                 'registration_id': self.id,
                 'creator_id': creator_id,
                 'sequence': sequence,
                 'state': 'waiting',
+                'note': note or False,
+                'proposed_topic': topic or False,
             })
         self.state = 'in_progress'
         self._activate_next_line()
@@ -139,14 +146,22 @@ class ShowcaseAdvisorRegistration(models.Model):
                 partner_ids=self.student_id.ids,
             )
 
-    def action_reset_for_withdrawal(self):
+    def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
         để sinh viên vote lại từ đầu (ngoại lệ duy nhất cho quy tắc SV không
-        được tự đổi nguyện vọng)."""
+          được tự đổi nguyện vọng). creator (nếu có): GV vừa rút, để báo rõ
+        cho SV biết vì sao hồ sơ của họ bị reset."""
         for reg in self:
             reg.line_ids.unlink()
             reg.write({'state': 'draft'})
             reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+            if creator:
+                reg.message_post(
+                    body='Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
+                         'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
+                         'viên hướng dẫn.' % creator.name,
+                    partner_ids=reg.student_id.ids,
+                )
 
     def action_unassign(self):
         """Nút "Bỏ gán" trên thẻ Kanban — đưa SV về "Chưa có GVHD" ngay lập
@@ -229,7 +244,8 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     )
     creator_id = fields.Many2one('eaut_showcase.creator', string='Giảng viên', required=True)
     sequence = fields.Integer(string='Nguyện vọng số')
-    note = fields.Text(string='Lời giới thiệu')
+    note = fields.Text(string='Giới thiệu bản thân')
+    proposed_topic = fields.Char(string='Đề tài dự kiến')
 
     state = fields.Selection([
         ('waiting', 'Chờ kích hoạt'),
