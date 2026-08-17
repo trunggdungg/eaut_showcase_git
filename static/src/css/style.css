@@ -78,6 +78,13 @@
 .uikick-card.is-playing .uikick-card-img { opacity: 0; }
 .uikick-card.is-playing .uikick-card-video { opacity: 1; }
 .uikick-card.is-playing .uikick-card-video-frame { opacity: 1; }
+
+/* Card ảnh đại diện giảng viên — ảnh chân dung (đầu ở trên) khác hẳn ảnh
+   thumbnail dự án (màn hình rộng 16:9), nên dùng tỉ lệ vuông hơn + neo crop
+   lên phía trên để không bị cắt mất đầu. */
+.uikick-card-media-avatar { aspect-ratio: 1/1; }
+.uikick-card-media-avatar .uikick-card-img { object-position: top center; }
+
 .uikick-badge {
     position: absolute; top: 8px; left: 8px; background: var(--bs-white, #fff); color: var(--bs-body-color, #1f2937);
     font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500;
@@ -327,11 +334,13 @@ img.uikick-creator-avatar { object-fit: cover; }
     background: var(--bs-tertiary-bg, #f3f4f6); padding: 48px 24px; text-align: center;
 }
 .uikick-creator-page-avatar {
-    width: 128px; height: 128px; border-radius: 999px; margin: 0 auto 20px; overflow: hidden;
+    width: 176px; height: 176px; border-radius: 999px; margin: 0 auto 20px; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
-    background: var(--bs-dark, #111827); color: var(--bs-white, #fff); font-size: 42px; font-weight: 700;
+    background: var(--bs-dark, #111827); color: var(--bs-white, #fff); font-size: 56px; font-weight: 700;
+     border: 1px solid #211e1e; box-shadow: 0 0 0 1px rgba(0, 0, 0, .08);
+
 }
-.uikick-creator-page-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.uikick-creator-page-avatar img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%;}
 .uikick-creator-page-name { font-size: 28px; font-weight: 700; margin: 0 0 4px; color: var(--bs-dark, #111827); }
 .uikick-creator-page-role { font-size: 14px; color: var(--bs-secondary-color, #6b7280); margin: 0 0 8px; }
 .uikick-creator-page-meta { font-size: 14px; color: var(--bs-secondary-color, #6b7280); }
@@ -352,6 +361,25 @@ img.uikick-creator-avatar { object-fit: cover; }
 }
 .uikick-creator-about-text { flex: 1; font-size: 15px; line-height: 1.7; color: var(--bs-body-color, #374151); white-space: pre-line; }
 
+/* Toolbar định dạng kiểu Word cho ô Html trên Portal (Giới thiệu, Đề tài
+   gợi ý) — xem initRichEditors() trong portal_advisor.js. */
+.uikick-richtoolbar {
+    display: flex; flex-wrap: wrap; gap: 2px; padding: 4px;
+    border: 1px solid var(--bs-border-color, #ced4da); border-bottom: 0;
+    border-radius: 4px 4px 0 0; background: var(--bs-tertiary-bg, #f8f9fa);
+}
+.uikick-richtoolbar button {
+    min-width: 32px; padding: 4px 8px; border: 1px solid transparent; border-radius: 4px;
+    background: none; font-size: 13px; line-height: 1.2; cursor: pointer;
+    color: var(--bs-body-color, #212529);
+}
+.uikick-richtoolbar button:hover { background: var(--bs-secondary-bg, #e9ecef); border-color: var(--bs-border-color, #ced4da); }
+.uikick-rich-editor {
+    min-height: 120px; max-height: 400px; overflow-y: auto; border-radius: 0 0 4px 4px;
+}
+.uikick-rich-editor:empty::before { content: attr(data-placeholder); color: var(--bs-secondary-color, #6c757d); }
+.uikick-rich-editor p { margin: 0 0 8px; }
+.uikick-rich-editor p:last-child { margin-bottom: 0; }
 
 
 /* Modal xác nhận tự dựng — portal giảng viên (thay window.confirm()) */

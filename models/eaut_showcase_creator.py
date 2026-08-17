@@ -2,6 +2,7 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError
 
+
 class ShowcaseCreator(models.Model):
     _name = 'eaut_showcase.creator'
     _description = 'Tác giả / nhóm thực hiện sản phẩm'
@@ -10,7 +11,13 @@ class ShowcaseCreator(models.Model):
     name = fields.Char(string='Tên tác giả', required=True)
     avatar = fields.Image(string='Ảnh đại diện', max_width=512, max_height=512)
     role = fields.Char(string='Vai trò', default='Tác giả sản phẩm')
-    bio = fields.Text(string='Giới thiệu')
+    bio = fields.Html(string='Giới thiệu', sanitize=True)
+    suggested_topics = fields.Html(
+        string='Đề tài gợi ý', sanitize=True,
+        help="GV tự viết sẵn 1 vài đề tài dự kiến để SV tham khảo trước khi "
+             "chọn làm nguyện vọng — hiển thị công khai trên trang chi tiết "
+             "giảng viên.",
+    )
     location_id = fields.Many2one(
         'res.country.state', string='Địa điểm',
         domain="[('country_id.code', '=', 'VN')]",
@@ -39,6 +46,28 @@ class ShowcaseCreator(models.Model):
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
 
+    def get_open_capacity_for_partner(self, partner):
+        """Tìm đúng sức chứa (chưa rút) của GV này ở đúng kỳ đang mở mà
+        `partner` đủ điều kiện — dùng cho trang chi tiết GV công khai để
+        quyết định có hiện nút "Chọn làm giảng viên hướng dẫn" hay không.
+        Khi có nhiều kỳ mở song song (nhiều khoa), không được chỉ lấy đại 1
+        kỳ mở mới nhất chung cho mọi người — mỗi kỳ có thể giới hạn danh
+        sách 'Sinh viên đủ điều kiện' riêng, và GV có thể chỉ tham gia 1
+        trong số các kỳ đó."""
+        self.ensure_one()
+        terms = self.env['eaut_showcase.term'].sudo().search(
+            [('state', '=', 'open')], order='date_start desc')
+        for term in terms:
+            if term.eligible_student_ids and partner not in term.eligible_student_ids:
+                continue
+            capacity = self.env['eaut_showcase.term.capacity'].sudo().search([
+                ('term_id', '=', term.id), ('creator_id', '=', self.id),
+                ('withdrawn', '=', False),
+            ], limit=1)
+            if capacity:
+                return capacity
+        return self.env['eaut_showcase.term.capacity']
+
     kanban_term_id = fields.Many2one(
         'eaut_showcase.term', string='Kỳ đồ án',
         compute='_compute_kanban_term_id', inverse='_inverse_kanban_term_id', store=True,
@@ -66,7 +95,6 @@ class ShowcaseCreator(models.Model):
         for creator in self:
             creator._assign_to_term(creator.kanban_term_id.id)
 
-
     @api.model
     def _group_expand_kanban_terms(self, terms, domain):
         # Luôn hiện đủ các kỳ draft/open làm cột, kể cả kỳ chưa có giảng
@@ -74,7 +102,6 @@ class ShowcaseCreator(models.Model):
         # tồn tại, không có chỗ để kéo giảng viên vào 1 kỳ mới toanh.
         return self.env['eaut_showcase.term'].search(
             [('state', 'in', ('draft', 'open'))], order='date_start desc')
-
 
     def _assign_to_term(self, term_id):
         self.ensure_one()

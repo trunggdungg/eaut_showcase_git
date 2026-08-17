@@ -56,7 +56,7 @@
      <template id="advisor_card" name="EAUT Showcase - Advisor Card">
         <div class="uikick-card">
             <a t-att-href="'/showcase/creator/' + str(capacity.creator_id.id)">
-                <div class="uikick-card-media">
+                <div class="uikick-card-media uikick-card-media-avatar">
                     <img t-if="capacity.creator_id.avatar"
                          t-att-src="'/showcase/creator/' + str(capacity.creator_id.id) + '/avatar'"
                          t-att-alt="capacity.creator_id.name" class="uikick-card-img"/>
@@ -78,17 +78,17 @@
 <!--                    <p class="uikick-card-creator text-muted">-->
 <!--                        <t t-esc="capacity.term_id.name"/>-->
 <!--                    </p>-->
-                    <div t-if="capacity.creator_id.location_id" class="uikick-card-location">
-                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" clip-rule="evenodd"
-                                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>
-                        </svg>
+<!--                    <div t-if="capacity.creator_id.location_id" class="uikick-card-location">-->
+<!--                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">-->
+<!--                            <path fill-rule="evenodd" clip-rule="evenodd"-->
+<!--                                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>-->
+<!--                        </svg>-->
 <!--                        <span t-esc="capacity.creator_id.location_id.name"/>-->
-                    </div>
+<!--                    </div>-->
                 </div>
             </a>
             <a href="/my/advisor" class="btn btn-primary btn-sm rounded-pill uikick-btn-block mt-2">
-                Chọn làm nguyện vọng
+                Chọn làm giảng viên hướng dẫn
             </a>
         </div>
     </template>

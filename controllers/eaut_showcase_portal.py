@@ -3,6 +3,7 @@ import base64
 import logging
 import urllib.parse
 
+
 from odoo import fields,http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
@@ -321,6 +322,7 @@ class AdvisorPortalController(http.Controller):
         vals = {
             'role': (post.get('role') or '').strip(),
             'bio': (post.get('bio') or '').strip(),
+            'suggested_topics': (post.get('suggested_topics') or '').strip(),
             'website_url': (post.get('website_url') or '').strip(),
             'location_id': int(post.get('location_id')) if post.get('location_id') else False,
             'category_ids': [(6, 0, category_ids)],

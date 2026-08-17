@@ -51,7 +51,12 @@
                     </group>
                     <notebook>
                         <page string="Giới thiệu">
-                            <field name="bio" nolabel="1" placeholder="Giới thiệu ngắn về tác giả/nhóm..."/>
+                           <field name="bio" widget="html" nolabel="1"
+                                   placeholder="Giới thiệu ngắn về tác giả/nhóm..." style="width: 100%;"/>
+                        </page>
+                         <page string="Đề tài gợi ý" name="suggested_topics">
+                            <field name="suggested_topics" widget="html" nolabel="1"
+                                   placeholder="Vài đề tài dự kiến để sinh viên tham khảo..." style="width: 100%;"/>
                         </page>
                     </notebook>
 <!--                    <group string="Giới thiệu">-->

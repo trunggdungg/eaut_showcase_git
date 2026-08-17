@@ -69,6 +69,57 @@
         });
     }
 
+    /** Toolbar định dạng gọn nhẹ kiểu Word (Đậm/Nghiêng/Danh sách/Link...)
+     * cho các ô Html trên Portal (Giới thiệu, Đề tài gợi ý) — dùng
+     * document.execCommand trên 1 div contenteditable, không phụ thuộc
+     * trình soạn thảo web_editor của Odoo (tránh rủi ro khác bản Odoo, và
+     * không cần thêm asset bundle nào). Textarea cùng tên field vẫn được
+     * giữ (ẩn) để form submit HTML ra đúng như cũ, controller không cần
+     * đổi gì. */
+    function initRichEditors() {
+        document.querySelectorAll(".uikick-rich-editor[contenteditable]").forEach(function (editor) {
+            var hidden = document.getElementById(editor.id.replace(/_editor$/, ""));
+            if (!hidden) {
+                return;
+            }
+            var toolbar = document.querySelector('.uikick-richtoolbar[data-target="' + editor.id + '"]');
+
+             // Nội dung HTML ban đầu được đưa qua attribute data-content (QWeb
+            // t-att-* tự escape đúng chuẩn HTML attribute) thay vì để QWeb
+            // chèn thẳng HTML vào giữa thẻ — tránh phụ thuộc t-out/t-raw,
+            // vốn không hiển thị đúng trên bản Odoo đang dùng.
+            if (editor.dataset.content) {
+                editor.innerHTML = editor.dataset.content;
+            }
+
+            function syncHidden() {
+                hidden.value = editor.innerHTML;
+            }
+
+            if (toolbar) {
+                toolbar.querySelectorAll("button[data-cmd]").forEach(function (btn) {
+                    btn.addEventListener("click", function () {
+                        var cmd = btn.dataset.cmd;
+                        editor.focus();
+                        if (cmd === "createLink") {
+                            var url = window.prompt("Nhập URL:");
+                            if (!url) {
+                                return;
+                            }
+                            document.execCommand(cmd, false, url);
+                        } else {
+                            document.execCommand(cmd, false, null);
+                        }
+                        syncHidden();
+                    });
+                });
+            }
+            editor.addEventListener("input", syncHidden);
+            editor.closest("form").addEventListener("submit", syncHidden);
+            syncHidden();
+        });
+    }
+
     /** Bootstrap tab tự reset về tab "active" hardcode trong HTML mỗi khi
      * trang load lại (F5/redirect sau khi submit form) — không nhớ tab
      * người dùng đang đứng. Đọc query string ?tab=<id> (id không có tiền tố
@@ -90,6 +141,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmForms();
+        initRichEditors();
         restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
             return;

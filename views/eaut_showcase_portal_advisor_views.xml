@@ -85,9 +85,9 @@
                             <strong t-esc="registration.approved_creator_id.name"/>.
                         </div>
                         <div t-elif="registration.state == 'unassigned'" class="alert alert-warning">
-                            Cả
-                            <t t-esc="max_preferences"/>
-                            nguyện vọng đều không thành công.
+                              <t t-if="len(registration.line_ids) == 1">Nguyện vọng của bạn</t>
+                            <t t-else="">Cả <t t-esc="len(registration.line_ids)"/> nguyện vọng đều</t>
+                            không thành công.
                             Nhà trường sẽ liên hệ để phân giảng viên hướng dẫn cho bạn.
                         </div>
                     </t>
@@ -384,7 +384,7 @@
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Rút khỏi kỳ
                                             </button>
                                         </form>
-                                          <form t-if="cap.pending_action != 'none'"
+                                        <form t-if="cap.pending_action != 'none'"
                                               t-attf-action="/my/advisor-requests/capacity/#{cap.id}/cancel-request"
                                               method="post" class="d-inline">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -628,13 +628,57 @@
                     </div>
                     <div class="mb-3">
                         <label for="bio">Giới thiệu</label>
-                        <textarea name="bio" id="bio" class="form-control" rows="4" t-esc="creator.bio"/>
+                        <div class="uikick-richtoolbar" data-target="bio_editor">
+                            <button type="button" data-cmd="bold" title="Đậm">
+                                <b>B</b>
+                            </button>
+                            <button type="button" data-cmd="italic" title="Nghiêng">
+                                <i>I</i>
+                            </button>
+                            <button type="button" data-cmd="underline" title="Gạch chân">
+                                <u>U</u>
+                            </button>
+                            <button type="button" data-cmd="insertUnorderedList" title="Danh sách">&#8226; List</button>
+                            <button type="button" data-cmd="insertOrderedList" title="Danh sách số">1. List</button>
+                            <button type="button" data-cmd="createLink" title="Chèn link">Link</button>
+                            <button type="button" data-cmd="removeFormat" title="Xoá định dạng">Xoá định dạng</button>
+                        </div>
+                        <div id="bio_editor" class="form-control uikick-rich-editor" contenteditable="true"
+                             style="min-height: 120px; height: auto; overflow-y: auto; display: block; border: 1px solid #ced4da; border-radius: 0 0 .375rem .375rem; padding: .375rem .75rem;"
+                             data-placeholder="Giới thiệu ngắn về bản thân/kinh nghiệm hướng dẫn..."
+                             t-att-data-content="creator.bio or ''"></div>
+                        <textarea name="bio" id="bio" class="d-none"/>
+                        <div class="form-text">Định dạng bằng thanh công cụ phía trên, giống soạn thảo văn bản.</div>
                     </div>
-
+                    <div class="mb-3">
+                        <label for="suggested_topics">Đề tài gợi ý</label>
+                        <div class="uikick-richtoolbar" data-target="suggested_topics_editor">
+                            <button type="button" data-cmd="bold" title="Đậm">
+                                <b>B</b>
+                            </button>
+                            <button type="button" data-cmd="italic" title="Nghiêng">
+                                <i>I</i>
+                            </button>
+                            <button type="button" data-cmd="underline" title="Gạch chân">
+                                <u>U</u>
+                            </button>
+                            <button type="button" data-cmd="insertUnorderedList" title="Danh sách">&#8226; List</button>
+                            <button type="button" data-cmd="insertOrderedList" title="Danh sách số">1. List</button>
+                            <button type="button" data-cmd="createLink" title="Chèn link">Link</button>
+                            <button type="button" data-cmd="removeFormat" title="Xoá định dạng">Xoá định dạng</button>
+                        </div>
+                        <div id="suggested_topics_editor" class="form-control uikick-rich-editor" contenteditable="true"
+                             style="min-height: 120px; height: auto; overflow-y: auto; display: block; border: 1px solid #ced4da; border-radius: 0 0 .375rem .375rem; padding: .375rem .75rem;"
+                             data-placeholder="Vài đề tài dự kiến để sinh viên tham khảo trước khi chọn nguyện vọng..."
+                                 t-att-data-content="creator.suggested_topics or ''"></div>
+                        <textarea name="suggested_topics" id="suggested_topics" class="d-none"/>
+                        <div class="form-text">Hiển thị công khai trên trang giới thiệu của bạn.</div>
+                    </div>
                     <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
                     <a href="/my/advisor-requests" class="btn btn-outline-secondary">Quay lại</a>
                 </form>
             </div>
         </t>
+        <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
     </template>
 </odoo>

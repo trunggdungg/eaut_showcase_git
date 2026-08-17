@@ -310,18 +310,21 @@ class ShowcaseController(http.Controller):
         creator = request.env['eaut_showcase.creator'].sudo().browse(creator_id).exists()
         if not creator:
             return request.not_found()
-        term = request.env['eaut_showcase.term'].sudo().search(
-            [('state', '=', 'open')], order='date_start desc', limit=1)
-        advisor_capacity = request.env['eaut_showcase.term.capacity'].sudo().search([
-            ('term_id', '=', term.id),
-            ('creator_id', '=', creator.id),
-            ('withdrawn', '=', False),
-        ], limit=1) if term else request.env['eaut_showcase.term.capacity']
+        advisor_capacity = creator.get_open_capacity_for_partner(request.env.user.partner_id)
+
+        # Đề tài đã hướng dẫn — chỉ lấy tên đề tài, KHÔNG kèm tên sinh viên
+        # (trang này công khai, không đăng nhập cũng xem được).
+        supervised_lines = request.env['eaut_showcase.advisor.registration.line'].sudo().search([
+            ('creator_id', '=', creator.id), ('state', '=', 'approved'),
+            ('proposed_topic', '!=', False),
+        ])
+        supervised_topics = sorted(set(supervised_lines.mapped('proposed_topic')) - {''})
 
         values = {
             'creator': creator,
             'projects': creator.project_ids,
             'advisor_capacity': advisor_capacity,
+            'supervised_topics': supervised_topics,
         }
         return request.render('eaut_showcase.creator_detail_page', values)
 

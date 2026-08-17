@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import timedelta
 
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -129,11 +131,14 @@ class ShowcaseAdvisorRegistration(models.Model):
         if not next_line:
             self.write({'state': 'unassigned'})
             self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
-            self.message_post(
-                body='Cả %s nguyện vọng đều không thành công. Nhà trường sẽ liên hệ '
-                     'để phân giảng viên hướng dẫn cho bạn.' % self.term_id.max_preferences,
-                partner_ids=self.student_id.ids,
+            submitted_count = len(self.line_ids)
+            body = (
+                'Nguyện vọng của bạn không thành công. Nhà trường sẽ liên hệ để phân '
+                'giảng viên hướng dẫn cho bạn.' if submitted_count == 1 else
+                'Cả %s nguyện vọng đều không thành công. Nhà trường sẽ liên hệ '
+                'để phân giảng viên hướng dẫn cho bạn.' % submitted_count
             )
+            self.message_post(body=body, partner_ids=self.student_id.ids)
             return
         next_line._activate()
         if next_line.state == 'pending':
@@ -141,8 +146,10 @@ class ShowcaseAdvisorRegistration(models.Model):
                 'assigned_creator_id': next_line.creator_id.id,
             })
             self.message_post(
-                body='Nguyện vọng của bạn đang được chuyển sang giảng viên <b>%s</b>, '
-                     'chờ phản hồi.' % next_line.creator_id.name,
+                body=Markup(
+                    'Nguyện vọng của bạn đang được chuyển sang giảng viên <b>%s</b>, '
+                    'chờ phản hồi.'
+                ) % next_line.creator_id.name,
                 partner_ids=self.student_id.ids,
             )
 
@@ -157,9 +164,11 @@ class ShowcaseAdvisorRegistration(models.Model):
             reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
             if creator:
                 reg.message_post(
-                    body='Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
-                         'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
-                         'viên hướng dẫn.' % creator.name,
+                    body=Markup(
+                        'Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
+                        'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
+                        'viên hướng dẫn.'
+                    ) % creator.name,
                     partner_ids=reg.student_id.ids,
                 )
 
@@ -325,8 +334,10 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         })
         self._notify(
             self.creator_id.user_id.partner_id,
-            'Có sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn — '
-            'vào /my/advisor-requests để duyệt.' % self.student_id.name,
+            Markup(
+                'Có sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn — '
+                'vào /my/advisor-requests để duyệt.'
+            ) % self.student_id.name,
         )
 
     def action_approve(self):
@@ -363,8 +374,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         })
         self._notify(
             self.student_id,
-            'Chúc mừng! Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn.'
-            % self.creator_id.name,
+            Markup(
+                'Chúc mừng! Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn.'
+            ) % self.creator_id.name,
         )
 
     def action_reject(self, reason=None):
@@ -380,11 +392,13 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             'state': 'rejected', 'decided_date': fields.Datetime.now(),
             'reject_reason': reason or False,
         })
-        reason_txt = (' Lý do: %s' % reason) if reason else ''
+        reason_txt = (Markup(' Lý do: %s') % reason) if reason else ''
         self._notify(
             self.student_id,
-            'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s Hệ thống sẽ tự '
-            'động chuyển sang nguyện vọng kế tiếp (nếu có).' % (self.creator_id.name, reason_txt),
+            Markup(
+                'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s Hệ thống sẽ tự '
+                'động chuyển sang nguyện vọng kế tiếp (nếu có).'
+            ) % (self.creator_id.name, reason_txt),
         )
         self.registration_id._activate_next_line()
 
@@ -398,8 +412,10 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             line.write({'state': 'expired', 'decided_date': now})
             line._notify(
                 line.student_id,
-                'Giảng viên <b>%s</b> không phản hồi trong thời hạn. Hệ thống sẽ tự '
-                'động chuyển sang nguyện vọng kế tiếp (nếu có).' % line.creator_id.name,
+                Markup(
+                    'Giảng viên <b>%s</b> không phản hồi trong thời hạn. Hệ thống sẽ tự '
+                    'động chuyển sang nguyện vọng kế tiếp (nếu có).'
+                ) % line.creator_id.name,
             )
             line.registration_id._activate_next_line()
 
@@ -427,7 +443,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         for line in soon_due:
             line._notify(
                 line.creator_id.user_id.partner_id,
-                'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
-                '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.' % line.student_id.name,
+                Markup(
+                    'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
+                    '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.'
+                ) % line.student_id.name,
             )
             line.reminder_sent = True

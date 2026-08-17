@@ -81,12 +81,22 @@
                     <div class="uikick-tab-content active" data-tab="About">
                         <div class="uikick-creator-about">
                             <div class="uikick-creator-about-label">Giới thiệu</div>
-                            <div class="uikick-creator-about-text">
-                                <t t-if="creator.bio">
-                                    <t t-esc="creator.bio"/>
-                                </t>
-                                <t t-else="">Tác giả chưa cập nhật phần giới thiệu.</t>
+                               <div class="uikick-creator-about-text" t-if="creator.bio" t-field="creator.bio"/>
+                            <div class="uikick-creator-about-text" t-else="">
+                                Tác giả chưa cập nhật phần giới thiệu.
                             </div>
+                        </div>
+                          <div class="uikick-creator-about" t-if="creator.suggested_topics">
+                            <div class="uikick-creator-about-label">Đề tài gợi ý</div>
+                               <div class="uikick-creator-about-text" t-field="creator.suggested_topics"/>
+                        </div>
+                        <div class="uikick-creator-about" t-if="supervised_topics">
+                            <div class="uikick-creator-about-label">Đề tài đã hướng dẫn</div>
+                            <ul class="uikick-creator-about-text mb-0 ps-3">
+                                <t t-foreach="supervised_topics" t-as="topic">
+                                    <li t-esc="topic"/>
+                                </t>
+                            </ul>
                         </div>
                         <div class="uikick-creator-about" t-if="creator.email">
                             <div class="uikick-creator-about-label">Email</div>
