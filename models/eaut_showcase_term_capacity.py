@@ -21,11 +21,18 @@ class ShowcaseTermCapacity(models.Model):
         ('none', 'Không có'),
         ('join', 'Chờ duyệt tham gia'),
         ('withdraw', 'Chờ duyệt rút'),
+        ('update', 'Chờ duyệt đổi số lượng'),
     ], string='Yêu cầu đang chờ', default='none', required=True,
-        help="GV tự đăng ký tham gia/rút khỏi kỳ qua Portal chỉ tạo ra yêu "
-             "cầu ở đây — phải Admin duyệt (action_admin_approve_request) "
-             "mới thật sự có hiệu lực, tránh GV tự do tham gia/rút tuỳ ý. "
-             "Sửa 'Số sinh viên tối đa' vẫn không cần duyệt.")
+        help="GV tự đăng ký tham gia/rút/đổi số lượng qua Portal chỉ tạo ra "
+             "yêu cầu ở đây — phải Admin duyệt "
+             "mới thật sự có hiệu lực, tránh GV tự do thay đổi tuỳ ý. Sửa "
+             "trực tiếp 'Số sinh viên tối đa' ở backend (form/list) thì "
+             "không cần duyệt — chỉ áp dụng cho GV tự sửa qua Portal.")
+    pending_max_students = fields.Integer(
+        string='Số SV tối đa (yêu cầu mới)',
+        help="Giá trị GV muốn đổi 'Số sinh viên tối đa' thành — chỉ có ý "
+             "nghĩa khi pending_action = 'update', chưa áp dụng cho tới khi "
+             "Admin duyệt.")
 
     approved_count = fields.Integer(string='Đã duyệt', compute='_compute_counts')
     pending_count = fields.Integer(string='Đang chờ duyệt', compute='_compute_counts')
@@ -60,21 +67,27 @@ class ShowcaseTermCapacity(models.Model):
 
     @api.constrains('max_students')
     def _check_max_students(self):
-        Line = self.env['eaut_showcase.advisor.registration.line']
         for capacity in self:
-            approved = Line.search_count([
-                ('term_id', '=', capacity.term_id.id),
-                ('creator_id', '=', capacity.creator_id.id),
-                ('state', '=', 'approved'),
-            ])
-            if capacity.max_students < approved:
-                raise ValidationError(
-                    'Không thể đặt "Số sinh viên tối đa" (%s) thấp hơn số sinh viên đã '
-                    'duyệt hiện có (%s) của giảng viên "%s" trong kỳ "%s". Dùng nút "Bỏ '
-                    'gán" cho SV thừa trước, hoặc giữ nguyên số lớn hơn/bằng %s.'
-                    % (capacity.max_students, approved, capacity.creator_id.name,
-                       capacity.term_id.name, approved)
-                )
+            capacity._check_new_max_students(capacity.max_students)
+
+    def _check_new_max_students(self, max_students):
+        """Dùng chung cho _check_max_students (khi ghi trực tiếp) và cho lúc
+        GV gửi/Admin duyệt yêu cầu đổi số lượng qua Portal (khi đó giá trị
+        mới nằm ở pending_max_students, chưa ghi vào max_students nên
+        constrains không tự bắt được)."""
+        self.ensure_one()
+        approved = self.env['eaut_showcase.advisor.registration.line'].search_count([
+            ('term_id', '=', self.term_id.id),
+            ('creator_id', '=', self.creator_id.id),
+            ('state', '=', 'approved'),
+        ])
+        if max_students < approved:
+            raise ValidationError(
+                'Không thể đặt "Số sinh viên tối đa" (%s) thấp hơn số sinh viên đã '
+                'duyệt hiện có (%s) của giảng viên "%s" trong kỳ "%s". Dùng nút "Bỏ '
+                'gán" cho SV thừa trước, hoặc giữ nguyên số lớn hơn/bằng %s.'
+                % (max_students, approved, self.creator_id.name, self.term_id.name, approved)
+            )
 
     def unlink(self):
         Line = self.env['eaut_showcase.advisor.registration.line']
@@ -121,14 +134,30 @@ class ShowcaseTermCapacity(models.Model):
             raise UserError('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
         self.pending_action = 'withdraw'
 
+    def action_gv_request_update(self, max_students):
+        """GV tự bấm 'Cập nhật' số lượng nhận hướng dẫn trên Portal — chỉ tạo
+        yêu cầu chờ Admin duyệt, KHÔNG áp dụng ngay. max_students hiện tại
+        vẫn giữ nguyên cho tới khi Admin duyệt (action_admin_approve_request)."""
+        self.ensure_one()
+        if self.term_id.state != 'open':
+            raise UserError('Chỉ có thể gửi yêu cầu đổi số lượng trong lúc kỳ còn đang mở đăng ký.')
+        if self.withdrawn:
+            raise UserError('Bạn đã rút khỏi kỳ này — cần đăng ký tham gia lại trước.')
+        if self.pending_action != 'none':
+            raise UserError('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
+        if max_students < 1:
+            raise UserError('Số sinh viên tối đa phải lớn hơn 0.')
+        self._check_new_max_students(max_students)
+        self.write({'pending_action': 'update', 'pending_max_students': max_students})
+
     def action_gv_cancel_request(self):
-        """GV tự huỷ yêu cầu tham gia/rút do chính mình gửi, trước khi Admin
-        kịp xử lý — không cần Admin can thiệp cho việc rút lại ý định của
-        chính GV."""
+        """GV tự huỷ yêu cầu tham gia/rút/đổi số lượng do chính mình gửi,
+        trước khi Admin kịp xử lý — không cần Admin can thiệp cho việc rút
+        lại ý định của chính GV."""
         self.ensure_one()
         if self.pending_action == 'none':
             raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
-        self.pending_action = 'none'
+        self.write({'pending_action': 'none', 'pending_max_students': 0})
 
     def action_admin_approve_request(self):
         self.ensure_one()
@@ -137,6 +166,15 @@ class ShowcaseTermCapacity(models.Model):
         elif self.pending_action == 'withdraw':
             self.action_withdraw()
             self.pending_action = 'none'
+        elif self.pending_action == 'update':
+            # Đếm lại ngay lúc duyệt (không chỉ tin số đã kiểm tra lúc GV gửi
+            # yêu cầu) — phòng trường hợp có thêm SV được duyệt trong lúc
+            # yêu cầu này đang chờ xử lý.
+            self._check_new_max_students(self.pending_max_students)
+            self.write({
+                'max_students': self.pending_max_students,
+                'pending_action': 'none', 'pending_max_students': 0,
+            })
         else:
             raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
 
@@ -144,4 +182,4 @@ class ShowcaseTermCapacity(models.Model):
         self.ensure_one()
         if self.pending_action == 'none':
             raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
-        self.pending_action = 'none'
+        self.write({'pending_action': 'none', 'pending_max_students': 0})

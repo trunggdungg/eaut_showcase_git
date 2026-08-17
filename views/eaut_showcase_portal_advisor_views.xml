@@ -283,7 +283,7 @@
                             </table>
                         </div>
                         <div class="tab-pane fade" id="tab-history" role="tabpanel">
-                               <form t-if="history_terms" method="get" action="/my/advisor-requests"
+                            <form t-if="history_terms" method="get" action="/my/advisor-requests"
                                   class="mb-3 d-flex align-items-center gap-2">
                                 <input type="hidden" name="tab" value="history"/>
                                 <label class="mb-0 small text-muted">Lọc theo kỳ:</label>
@@ -358,16 +358,25 @@
                                             Đã gửi yêu cầu rút khỏi kỳ này — đang chờ Admin duyệt.
                                             Trong lúc chờ, bạn vẫn nhận SV bình thường.
                                         </div>
-                                        <form t-attf-action="/my/advisor-requests/capacity/#{cap.id}/update"
+                                        <div t-if="cap.pending_action == 'update'" class="alert alert-info py-2">
+                                            Đã gửi yêu cầu đổi số lượng tối đa thành
+                                            <t t-esc="cap.pending_max_students"/>
+                                            SV — đang chờ Admin duyệt. Số hiện tại (
+                                            <t t-esc="cap.max_students"/>
+                                            ) vẫn giữ nguyên cho tới khi được duyệt.
+                                        </div>
+                                        <form t-if="cap.pending_action == 'none'"
+                                              t-attf-action="/my/advisor-requests/capacity/#{cap.id}/update"
                                               method="post" class="d-inline-flex align-items-center gap-2">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <input type="number" min="1" name="max_students"
                                                    t-att-value="cap.max_students"
                                                    class="form-control form-control-sm" style="width: 80px;"/>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Cập nhật
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Gửi yêu cầu
+                                                đổi
                                             </button>
                                         </form>
-                                        <form t-if="cap.pending_action != 'withdraw'"
+                                        <form t-if="cap.pending_action == 'none'"
                                               t-attf-action="/my/advisor-requests/capacity/#{cap.id}/withdraw"
                                               method="post" class="d-inline uikick-confirm-form"
                                               data-confirm-message="Gửi yêu cầu rút khỏi kỳ này? Cần Admin duyệt mới thật sự có hiệu lực.">
@@ -375,7 +384,7 @@
                                             <button type="submit" class="btn btn-sm btn-outline-danger">Rút khỏi kỳ
                                             </button>
                                         </form>
-                                        <form t-if="cap.pending_action == 'withdraw'"
+                                          <form t-if="cap.pending_action != 'none'"
                                               t-attf-action="/my/advisor-requests/capacity/#{cap.id}/cancel-request"
                                               method="post" class="d-inline">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
@@ -574,13 +583,15 @@
 
                     <div class="mb-3">
                         <label for="name">Tên hiển thị</label>
-                        <input type="text" name="name" id="name" class="form-control" required="required"
-                               t-att-value="creator.name" readonly="false"/>
+                        <input type="text" name="name" id="name" class="form-control bg-light"
+                               t-att-value="creator.name" readonly="readonly"/>
+                        <div class="form-text">Không thể tự sửa — liên hệ Admin nếu cần đổi.</div>
                     </div>
                     <div class="mb-3">
                         <label for="email">Email liên hệ</label>
-                        <input type="email" name="email" id="email" class="form-control"
-                               t-att-value="creator.email" readonly="false"/>
+                        <input type="email" name="email" id="email" class="form-control bg-light"
+                               t-att-value="creator.email" readonly="readonly"/>
+                        <div class="form-text">Không thể tự sửa — liên hệ Admin nếu cần đổi.</div>
                     </div>
                     <div class="mb-3">
                         <label for="role">Vai trò</label>
@@ -593,17 +604,17 @@
                         <input type="text" name="website_url" id="website_url" class="form-control"
                                t-att-value="creator.website_url"/>
                     </div>
-<!--                    <div class="mb-3">-->
-<!--                        <label for="location_id">Địa điểm</label>-->
-<!--                        <select name="location_id" id="location_id" class="form-select">-->
-<!--                            <option value="">&#45;&#45; Không chọn &#45;&#45;</option>-->
-<!--                            <t t-foreach="all_locations" t-as="loc">-->
-<!--                                <option t-att-value="loc.id"-->
-<!--                                        t-att-selected="'selected' if creator.location_id.id == loc.id else None"-->
-<!--                                        t-esc="loc.name"/>-->
-<!--                            </t>-->
-<!--                        </select>-->
-<!--                    </div>-->
+                    <!--                    <div class="mb-3">-->
+                    <!--                        <label for="location_id">Địa điểm</label>-->
+                    <!--                        <select name="location_id" id="location_id" class="form-select">-->
+                    <!--                            <option value="">&#45;&#45; Không chọn &#45;&#45;</option>-->
+                    <!--                            <t t-foreach="all_locations" t-as="loc">-->
+                    <!--                                <option t-att-value="loc.id"-->
+                    <!--                                        t-att-selected="'selected' if creator.location_id.id == loc.id else None"-->
+                    <!--                                        t-esc="loc.name"/>-->
+                    <!--                            </t>-->
+                    <!--                        </select>-->
+                    <!--                    </div>-->
                     <div class="mb-3">
                         <label>Lĩnh vực</label>
                         <div>

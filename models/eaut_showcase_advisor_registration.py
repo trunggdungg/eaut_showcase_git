@@ -331,6 +331,10 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
 
     def action_approve(self):
         self.ensure_one()
+        if self.state == 'pending' and self.deadline and self.deadline < fields.Datetime.now():
+            self._expire()
+            raise UserError(
+                'Yêu cầu này đã quá hạn phản hồi.')
         if self.state != 'pending':
             raise UserError('Nguyện vọng này không ở trạng thái chờ duyệt.')
         capacity = self._get_capacity()
@@ -365,6 +369,10 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
 
     def action_reject(self, reason=None):
         self.ensure_one()
+        if self.state == 'pending' and self.deadline and self.deadline < fields.Datetime.now():
+            self._expire()
+            raise UserError(
+                'Yêu cầu này đã quá hạn phản hồi.')
         if self.state != 'pending':
             raise UserError('Nguyện vọng này không ở trạng thái chờ duyệt.')
         reason = (reason or '').strip()
@@ -380,14 +388,13 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         )
         self.registration_id._activate_next_line()
 
-    @api.model
-    def _cron_expire_pending_lines(self):
+    def _expire(self):
+        """Chuyển các dòng 'pending' này sang 'expired' ngay lập tức — dùng
+        chung cho cron định kỳ và cho lúc phát hiện trễ hạn ngay tại thời
+        điểm GV vào portal/bấm duyệt, không đợi tới lượt cron chạy tiếp theo
+        (tối đa 1 giờ) mới cập nhật đúng trạng thái."""
         now = fields.Datetime.now()
-        expired_lines = self.search([
-            ('state', '=', 'pending'),
-            ('deadline', '<', now),
-        ])
-        for line in expired_lines:
+        for line in self:
             line.write({'state': 'expired', 'decided_date': now})
             line._notify(
                 line.student_id,
@@ -395,6 +402,14 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
                 'động chuyển sang nguyện vọng kế tiếp (nếu có).' % line.creator_id.name,
             )
             line.registration_id._activate_next_line()
+
+    @api.model
+    def _cron_expire_pending_lines(self):
+        now = fields.Datetime.now()
+        self.search([
+            ('state', '=', 'pending'),
+            ('deadline', '<', now),
+        ])._expire()
 
     @api.model
     def _cron_remind_pending_lines(self):

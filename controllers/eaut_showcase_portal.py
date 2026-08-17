@@ -3,7 +3,7 @@ import base64
 import logging
 import urllib.parse
 
-from odoo import http
+from odoo import fields,http
 from odoo.exceptions import UserError, ValidationError
 from odoo.http import request
 
@@ -153,6 +153,13 @@ class AdvisorPortalController(http.Controller):
         open_terms = request.env['eaut_showcase.term']
         capacities_by_term = {}
         if creator:
+            # Chốt hết hạn ngay lúc GV mở trang, không đợi cron (tối đa 1 giờ
+            # mới quét 1 lần) — tránh dòng đã hết hạn vẫn còn nút Duyệt/Từ
+            # chối do state trong DB chưa kịp cập nhật.
+            Line.sudo().search([
+                ('creator_id', '=', creator.id), ('state', '=', 'pending'),
+                ('deadline', '<', fields.Datetime.now()),
+            ])._expire()
             pending_lines = Line.sudo().search([
                 ('creator_id', '=', creator.id), ('state', '=', 'pending'),
             ], order='activated_date asc')
@@ -252,7 +259,7 @@ class AdvisorPortalController(http.Controller):
             error = urllib.parse.quote('Số sinh viên tối đa phải lớn hơn 0.')
             return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
         try:
-            capacity.write({'max_students': max_students})
+            capacity.action_gv_request_update(max_students)
         except (UserError, ValidationError) as e:
             error = urllib.parse.quote(str(e))
             return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
@@ -312,17 +319,17 @@ class AdvisorPortalController(http.Controller):
         if not creator:
             return request.redirect('/my/advisor-requests?error=1')
 
-        name = (post.get('name') or '').strip()
-        if not name:
-            error = urllib.parse.quote('Vui lòng nhập tên hiển thị.')
-            return request.redirect(f'/my/advisor-requests/profile?error={error}')
+        # name = (post.get('name') or '').strip()
+        # if not name:
+        #     error = urllib.parse.quote('Vui lòng nhập tên hiển thị.')
+        #     return request.redirect(f'/my/advisor-requests/profile?error={error}')
 
         category_ids = [int(v) for v in request.httprequest.form.getlist('category_ids') if v]
         vals = {
-            'name': name,
+            # 'name': name,
             'role': (post.get('role') or '').strip(),
             'bio': (post.get('bio') or '').strip(),
-            'email': (post.get('email') or '').strip(),
+            # 'email': (post.get('email') or '').strip(),
             'website_url': (post.get('website_url') or '').strip(),
             'location_id': int(post.get('location_id')) if post.get('location_id') else False,
             'category_ids': [(6, 0, category_ids)],
@@ -344,6 +351,8 @@ class AdvisorPortalController(http.Controller):
         line = request.env['eaut_showcase.advisor.registration.line'].sudo().browse(line_id).exists()
         if not creator or not line or line.creator_id.id != creator.id:
             return request.redirect('/my/advisor-requests?error=1')
+        if line.state == 'pending' and line.deadline and line.deadline < fields.Datetime.now():
+            line._expire()
         values = {
             'creator': creator,
             'line': line,

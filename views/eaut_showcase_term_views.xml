@@ -76,8 +76,10 @@
                                     <field name="remaining_slots"/>
                                     <field name="withdrawn"/>
                                      <field name="pending_action" widget="badge"
-                                           decoration-info="pending_action == 'join'"
+                                           decoration-info="pending_action in ('join', 'update')"
                                            decoration-warning="pending_action == 'withdraw'"/>
+                                    <field name="pending_max_students"
+                                           invisible="pending_action != 'update'"/>
                                     <button name="action_admin_approve_request" type="object"
                                             string="Duyệt yêu cầu" icon="fa-check"
                                             invisible="pending_action == 'none'"/>
