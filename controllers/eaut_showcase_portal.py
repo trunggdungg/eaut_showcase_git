@@ -233,12 +233,10 @@ class AdvisorPortalController(http.Controller):
             if capacity:
                 # Đang 'đã rút' (withdrawn=True) — chỉ tạo yêu cầu tham gia
                 # lại, chưa active ngay, chờ Admin duyệt.
-                capacity.write({'max_students': max_students, 'pending_action': 'join'})
+                capacity.action_gv_request_join(max_students)
             else:
-                request.env['eaut_showcase.term.capacity'].sudo().create({
-                    'term_id': term.id, 'creator_id': creator.id, 'max_students': max_students,
-                    'withdrawn': True, 'pending_action': 'join',
-                })
+                request.env['eaut_showcase.term.capacity'].sudo().create_join_request(
+                    term, creator, max_students)
         except (UserError, ValidationError) as e:
             error = urllib.parse.quote(str(e))
             return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
@@ -319,17 +317,10 @@ class AdvisorPortalController(http.Controller):
         if not creator:
             return request.redirect('/my/advisor-requests?error=1')
 
-        # name = (post.get('name') or '').strip()
-        # if not name:
-        #     error = urllib.parse.quote('Vui lòng nhập tên hiển thị.')
-        #     return request.redirect(f'/my/advisor-requests/profile?error={error}')
-
         category_ids = [int(v) for v in request.httprequest.form.getlist('category_ids') if v]
         vals = {
-            # 'name': name,
             'role': (post.get('role') or '').strip(),
             'bio': (post.get('bio') or '').strip(),
-            # 'email': (post.get('email') or '').strip(),
             'website_url': (post.get('website_url') or '').strip(),
             'location_id': int(post.get('location_id')) if post.get('location_id') else False,
             'category_ids': [(6, 0, category_ids)],

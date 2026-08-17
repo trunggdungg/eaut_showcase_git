@@ -389,7 +389,6 @@
                                               method="post" class="d-inline">
                                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                             <button type="submit" class="btn btn-sm btn-outline-secondary">Huỷ yêu cầu
-                                                rút
                                             </button>
                                         </form>
                                     </t>

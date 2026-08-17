@@ -5,6 +5,7 @@ DEFAULT_SLA_HOURS = 24
 
 class ShowcaseTerm(models.Model):
     _name = 'eaut_showcase.term'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = 'Kỳ đồ án — đợt đăng ký chọn giảng viên hướng dẫn'
     _order = 'date_start desc'
 

@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
+import logging
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
+_logger = logging.getLogger(__name__)
+
+ADVISOR_REQUEST_ACTIVITY_XMLID = 'eaut_showcase.mail_activity_type_advisor_request'
 
 class ShowcaseTermCapacity(models.Model):
     _name = 'eaut_showcase.term.capacity'
@@ -106,6 +110,67 @@ class ShowcaseTermCapacity(models.Model):
                 )
         return super().unlink()
 
+    def _get_admin_users(self):
+        """Lấy danh sách user thuộc nhóm Admin (base.group_system) — dò field
+        many2many còn tồn tại trên res.groups thay vì hard-code 1 tên cụ
+        thể, vì tên field này đã đổi giữa các bản Odoo (users/user_ids/...).
+        Không tìm được field nào phù hợp thì trả rỗng, không raise lỗi —
+        tính năng nhắc Admin là phụ, không được làm hỏng thao tác chính
+        (gửi/duyệt yêu cầu) của GV/Admin."""
+        group_system = self.env.ref('base.group_system', raise_if_not_found=False)
+        if not group_system:
+            return self.env['res.users']
+        for fname in ('user_ids', 'users', 'all_user_ids'):
+            if fname in group_system._fields:
+                return group_system[fname]
+        return self.env['res.users']
+
+    def _sync_admin_activity(self):
+        """Gọi _do_sync_admin_activity() nhưng nuốt mọi lỗi phát sinh — đây
+               chỉ là tính năng phụ (nhắc Admin), lỗi ở đây (VD: field của
+               mail.activity/res.groups đổi tên giữa các bản Odoo) không được phép
+               làm hỏng thao tác chính (gửi/duyệt yêu cầu) của GV/Admin."""
+        try:
+            self._do_sync_admin_activity()
+        except Exception:
+            _logger.warning(
+                'Không tạo/cập nhật được hoạt động nhắc Admin cho yêu cầu GV — '
+                'bỏ qua, không ảnh hưởng thao tác chính.', exc_info=True)
+
+    def _do_sync_admin_activity(self):
+        """Đồng bộ hoạt động nhắc Admin (chuông "Hoạt động" hiện ở mọi trang
+        trong Odoo, không cần mở đúng menu mới thấy) trên record Kỳ tương
+        ứng — còn yêu cầu GV nào đang chờ duyệt thì tạo/giữ hoạt động (1 cái
+        cho mỗi Admin), hết yêu cầu thì tự đánh dấu hoàn thành. Gọi lại mỗi
+        khi pending_action của 1 dòng capacity thay đổi (gửi/huỷ/duyệt/từ
+        chối) để chuông luôn đúng thực tế."""
+        activity_type = self.env.ref(ADVISOR_REQUEST_ACTIVITY_XMLID, raise_if_not_found=False)
+        if not activity_type:
+            return
+        admins = self._get_admin_users()
+        if not admins:
+            return
+        for term in self.mapped('term_id'):
+            pending = term.capacity_ids.filtered(lambda c: c.pending_action != 'none')
+            open_activities = term.activity_ids.filtered(
+                lambda a: a.activity_type_id == activity_type)
+            if not pending:
+                for act in open_activities:
+                    act.action_feedback(feedback='Đã xử lý hết yêu cầu đang chờ.')
+                continue
+            summary = 'Có %s yêu cầu từ giảng viên đang chờ duyệt' % len(pending)
+            already_notified = open_activities.mapped('user_id')
+            for admin in admins:
+                if admin in already_notified:
+                    open_activities.filtered(lambda a: a.user_id == admin).write({'summary': summary})
+                else:
+                    term.activity_schedule(
+                        act_type_xmlid=ADVISOR_REQUEST_ACTIVITY_XMLID,
+                        summary=summary,
+                        note='Vào tab "Giảng viên nhận hướng dẫn" để duyệt/từ chối.',
+                        user_id=admin.id,
+                    )
+
 
     def action_withdraw(self):
         """Rút thật — chỉ nên gọi bởi Admin (form/list backend) hoặc bởi
@@ -122,6 +187,32 @@ class ShowcaseTermCapacity(models.Model):
         ])
         affected_lines.registration_id.action_reset_for_withdrawal(creator=self.creator_id)
 
+    def action_gv_request_join(self, max_students):
+        """GV tự bấm 'Đăng ký lại' trên Portal (đã có record capacity từ
+        trước, đang withdrawn=True) — chỉ tạo yêu cầu chờ Admin duyệt, KHÔNG
+        active ngay."""
+        self.ensure_one()
+        if self.pending_action != 'none':
+            raise UserError('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
+        if max_students < 1:
+            raise UserError('Số sinh viên tối đa phải lớn hơn 0.')
+        self.write({'max_students': max_students, 'pending_action': 'join'})
+        self._sync_admin_activity()
+
+    @api.model
+    def create_join_request(self, term, creator, max_students):
+        """GV tự bấm 'Đăng ký nhận hướng dẫn' lần đầu trên Portal (chưa từng
+        có record capacity ở kỳ này) — tạo mới ở trạng thái chờ Admin duyệt,
+        KHÔNG active ngay."""
+        if max_students < 1:
+            raise UserError('Số sinh viên tối đa phải lớn hơn 0.')
+        capacity = self.create({
+            'term_id': term.id, 'creator_id': creator.id, 'max_students': max_students,
+            'withdrawn': True, 'pending_action': 'join',
+        })
+        capacity._sync_admin_activity()
+        return capacity
+
     def action_gv_request_withdraw(self):
         """GV tự bấm 'Rút khỏi kỳ' trên Portal — chỉ tạo yêu cầu chờ Admin
         duyệt, KHÔNG rút ngay. Trong lúc chờ, GV vẫn hoạt động bình thường
@@ -133,6 +224,7 @@ class ShowcaseTermCapacity(models.Model):
         if self.pending_action != 'none':
             raise UserError('Bạn đang có 1 yêu cầu chờ Admin duyệt cho kỳ này rồi.')
         self.pending_action = 'withdraw'
+        self._sync_admin_activity()
 
     def action_gv_request_update(self, max_students):
         """GV tự bấm 'Cập nhật' số lượng nhận hướng dẫn trên Portal — chỉ tạo
@@ -149,6 +241,7 @@ class ShowcaseTermCapacity(models.Model):
             raise UserError('Số sinh viên tối đa phải lớn hơn 0.')
         self._check_new_max_students(max_students)
         self.write({'pending_action': 'update', 'pending_max_students': max_students})
+        self._sync_admin_activity()
 
     def action_gv_cancel_request(self):
         """GV tự huỷ yêu cầu tham gia/rút/đổi số lượng do chính mình gửi,
@@ -158,6 +251,7 @@ class ShowcaseTermCapacity(models.Model):
         if self.pending_action == 'none':
             raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
         self.write({'pending_action': 'none', 'pending_max_students': 0})
+        self._sync_admin_activity()
 
     def action_admin_approve_request(self):
         self.ensure_one()
@@ -177,9 +271,11 @@ class ShowcaseTermCapacity(models.Model):
             })
         else:
             raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
+        self._sync_admin_activity()
 
     def action_admin_reject_request(self):
         self.ensure_one()
         if self.pending_action == 'none':
             raise UserError('Hiện không có yêu cầu nào đang chờ duyệt.')
         self.write({'pending_action': 'none', 'pending_max_students': 0})
+        self._sync_admin_activity()

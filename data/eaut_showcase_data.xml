@@ -1,12 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo noupdate="1">
-    <record id="seq_eaut_showcase_project" model="ir.sequence">
-        <field name="name">UIKick Project Code</field>
-        <field name="code">eaut_showcase.project</field>
-        <field name="padding">0</field>
-        <field name="number_next">13</field>
-        <field name="number_increment">1</field>
-    </record>
     <!-- ============================================================ -->
     <!-- CATEGORIES (cấu hình danh mục)                                -->
     <!-- ============================================================ -->
