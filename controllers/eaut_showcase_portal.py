@@ -48,12 +48,27 @@ class AdvisorPortalController(http.Controller):
             capacities = request.env['eaut_showcase.term.capacity'].sudo().search([
                 ('term_id', '=', term.id), ('withdrawn', '=', False),
             ])
+        max_preferences = term.max_preferences if term else 5
+        all_lines = registration.line_ids if registration else request.env['eaut_showcase.advisor.registration.line']
+        # Giỏ nguyện vọng (chưa nộp) hiển thị riêng khỏi các dòng đã nộp
+        # (waiting/pending/approved/rejected/expired/cancelled) — SV tự do
+        # thêm/xoá/đổi thứ tự trong giỏ, chỉ khoá lại sau khi bấm "Nộp".
+        cart_lines = all_lines.filtered(lambda l: l.state == 'cart').sorted('sequence')
+        submitted_lines = (all_lines - cart_lines).sorted('sequence')
+        has_submitted = bool(registration) and registration.state != 'draft'
+        tried_creator_ids = cart_lines.mapped('creator_id').ids
+        available_capacities = capacities.filtered(
+            lambda c: c.creator_id.id not in tried_creator_ids)
         values = {
             'lecturer_profile': False,
             'term': term,
             'registration': registration,
-            'capacities': capacities,
-            'max_preferences': term.max_preferences if term else 5,
+            'capacities': available_capacities,
+            'max_preferences': max_preferences,
+            'cart_lines': cart_lines,
+            'submitted_lines': submitted_lines,
+            'cart_full': len(cart_lines) >= max_preferences,
+            'has_submitted': has_submitted,
             'partner': request.env.user.partner_id,
             'submitted': kw.get('submitted'),
             'error': kw.get('error'),
@@ -82,9 +97,9 @@ class AdvisorPortalController(http.Controller):
         })
         return request.redirect('/my/advisor')
 
-    @http.route(['/my/advisor/submit'], type='http', auth='user', website=True,
+    @http.route(['/my/advisor/cart/add'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
-    def my_advisor_submit(self, **post):
+    def my_advisor_cart_add(self, **post):
         if self._get_creator_for_current_user():
             error = urllib.parse.quote(
                 'Tài khoản này đã đăng ký làm giảng viên hướng dẫn, không thể dùng để '
@@ -99,43 +114,68 @@ class AdvisorPortalController(http.Controller):
             error = urllib.parse.quote('Vui lòng hoàn thiện hồ sơ (MSSV, lớp, ngành) trước.')
             return request.redirect(f'/my/advisor?error={error}')
         Registration = request.env['eaut_showcase.advisor.registration'].sudo()
-        existing = Registration.search([
-            ('term_id', '=', term.id), ('student_id', '=', partner.id),
-        ], limit=1)
-        if existing and existing.line_ids:
-            error = urllib.parse.quote('Bạn đã nộp nguyện vọng cho kỳ này rồi.')
-            return request.redirect(f'/my/advisor?error={error}')
-
-        # Đọc theo index (creator_1, creator_2, ...) thay vì list dùng chung 1
-        # tên — để giới thiệu/đề tài của đúng nguyện vọng đó không bị lệch vị
-        # trí khi SV bỏ trống 1 vài nguyện vọng ở giữa.
-        creator_ids = []
-        notes = []
-        topics = []
-        for idx in range(1, term.max_preferences + 1):
-            raw_creator_id = (post.get('creator_%d' % idx) or '').strip()
-            if not raw_creator_id:
-                continue
-            creator_ids.append(int(raw_creator_id))
-            notes.append((post.get('note_%d' % idx) or '').strip())
-            topics.append((post.get('topic_%d' % idx) or '').strip())
-        if not creator_ids:
-            error = urllib.parse.quote('Vui lòng chọn ít nhất 1 giảng viên.')
-            return request.redirect(f'/my/advisor?error={error}')
-        if len(creator_ids) != len(set(creator_ids)):
-            error = urllib.parse.quote('Không được chọn trùng 1 giảng viên ở nhiều nguyện vọng.')
-            return request.redirect(f'/my/advisor?error={error}')
-
-        registration = existing or Registration.create({
+        registration = self._get_registration(term) or Registration.create({
             'term_id': term.id, 'student_id': partner.id,
         })
 
+        raw_creator_id = (post.get('creator_id') or '').strip()
+        if not raw_creator_id:
+            error = urllib.parse.quote('Vui lòng chọn 1 giảng viên.')
+            return request.redirect(f'/my/advisor?error={error}')
+        note = (post.get('note') or '').strip()
+        topic = (post.get('topic') or '').strip()
+
         try:
-            registration.action_submit(creator_ids, notes=notes, topics=topics)
+            registration.action_cart_add(int(raw_creator_id), note=note, topic=topic)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
-            _logger.error('Lỗi khi sinh viên nộp nguyện vọng chọn giảng viên: %s', e, exc_info=True)
+            _logger.error('Lỗi khi sinh viên thêm vào giỏ nguyện vọng: %s', e, exc_info=True)
+            error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
+            return request.redirect(f'/my/advisor?error={error}')
+
+        return request.redirect('/my/advisor')
+
+    @http.route(['/my/advisor/cart/<int:line_id>/remove'], type='http', auth='user',
+                website=True, methods=['POST'], csrf=True)
+    def my_advisor_cart_remove(self, line_id, **post):
+        term = self._get_open_term()
+        registration = self._get_registration(term) if term else None
+        if not registration:
+            return request.redirect('/my/advisor?error=1')
+        try:
+            registration.action_cart_remove(line_id)
+        except (UserError, ValidationError) as e:
+            return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
+        return request.redirect('/my/advisor')
+
+    @http.route(['/my/advisor/cart/<int:line_id>/move'], type='http', auth='user',
+                website=True, methods=['POST'], csrf=True)
+    def my_advisor_cart_move(self, line_id, **post):
+        term = self._get_open_term()
+        registration = self._get_registration(term) if term else None
+        if not registration:
+            return request.redirect('/my/advisor?error=1')
+        direction = (post.get('direction') or '').strip()
+        try:
+            registration.action_cart_move(line_id, direction)
+        except (UserError, ValidationError) as e:
+            return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
+        return request.redirect('/my/advisor')
+
+    @http.route(['/my/advisor/cart/submit'], type='http', auth='user', website=True,
+                methods=['POST'], csrf=True)
+    def my_advisor_cart_submit(self, **post):
+        term = self._get_open_term()
+        registration = self._get_registration(term) if term else None
+        if not registration:
+            return request.redirect('/my/advisor?error=1')
+        try:
+            registration.action_submit_cart()
+        except (UserError, ValidationError) as e:
+            return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
+        except Exception as e:
+            _logger.error('Lỗi khi sinh viên nộp giỏ nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
 
