@@ -62,7 +62,7 @@
                             <strong t-esc="term.name"/>
                         </p>
 
-                        <!-- Đã nộp giỏ nguyện vọng — chỉ xem, không sửa được nữa -->
+                        <!-- Đã nộp nguyện vọng — chỉ xem, không sửa được nữa -->
                         <t t-if="has_submitted">
                             <table t-if="submitted_lines" class="table">
                                 <thead>
@@ -120,19 +120,19 @@
                                 Nhà trường sẽ liên hệ để phân giảng viên hướng dẫn cho bạn.
                             </div>
                             <div t-else="" class="alert alert-info">
-                                Bạn đã nộp giỏ nguyện vọng — nguyện vọng số 1 đang được xử lý trước,
+                                Bạn đã nộp nguyện vọng — nguyện vọng số 1 đang được xử lý trước,
                                 các nguyện vọng còn lại sẽ tự động được chuyển tới khi nguyện vọng
                                 trước bị từ chối/hết hạn. Không thể sửa/nộp lại nữa.
                             </div>
                         </t>
 
-                        <!-- Chưa nộp — có thể thêm/xoá/đổi thứ tự trong giỏ -->
+                        <!-- Chưa nộp — có thể thêm/xoá/đổi thứ tự trước khi nộp -->
                         <t t-else="">
-                            <t t-if="cart_lines">
-                                <h5>Giỏ nguyện vọng (<t t-esc="len(cart_lines)"/> / <t t-esc="max_preferences"/>)</h5>
+                            <t t-if="draft_lines">
+                                <h5>Danh sách nguyện vọng (<t t-esc="len(draft_lines)"/> / <t t-esc="max_preferences"/>)</h5>
                                 <p class="text-muted small">
-                                    Thứ tự trong giỏ là thứ tự xét nguyện vọng. Dùng nút mũi tên để đổi
-                                    thứ tự trước khi nộp — sau khi nộp sẽ không sửa được nữa.
+                                    Thứ tự trong danh sách là thứ tự xét nguyện vọng. Dùng nút mũi tên
+                                    để đổi thứ tự trước khi nộp — sau khi nộp sẽ không sửa được nữa.
                                 </p>
                                 <table class="table align-middle">
                                     <thead>
@@ -144,12 +144,12 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr t-foreach="cart_lines" t-as="line">
+                                        <tr t-foreach="draft_lines" t-as="line">
                                             <td t-esc="line.sequence"/>
                                             <td t-esc="line.creator_id.name"/>
                                             <td t-esc="line.proposed_topic or '—'"/>
                                             <td class="text-end">
-                                                <form t-att-action="'/my/advisor/cart/%s/move' % line.id" method="post"
+                                                <form t-att-action="'/my/advisor/preference/%s/move' % line.id" method="post"
                                                       class="d-inline">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <input type="hidden" name="direction" value="up"/>
@@ -157,17 +157,17 @@
                                                             t-att-disabled="line.sequence == 1 or None">↑
                                                     </button>
                                                 </form>
-                                                <form t-att-action="'/my/advisor/cart/%s/move' % line.id" method="post"
+                                                <form t-att-action="'/my/advisor/preference/%s/move' % line.id" method="post"
                                                       class="d-inline">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <input type="hidden" name="direction" value="down"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary"
-                                                            t-att-disabled="line.sequence == len(cart_lines) or None">↓
+                                                            t-att-disabled="line.sequence == len(draft_lines) or None">↓
                                                     </button>
                                                 </form>
-                                                <form t-att-action="'/my/advisor/cart/%s/remove' % line.id" method="post"
+                                                <form t-att-action="'/my/advisor/preference/%s/remove' % line.id" method="post"
                                                       class="d-inline uikick-confirm-form"
-                                                      data-confirm-message="Bỏ giảng viên này khỏi giỏ nguyện vọng?">
+                                                      data-confirm-message="Bỏ giảng viên này khỏi danh sách nguyện vọng?">
                                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                                     <button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
                                                 </form>
@@ -176,23 +176,23 @@
                                     </tbody>
                                 </table>
 
-                                <form action="/my/advisor/cart/submit" method="post"
+                                <form action="/my/advisor/preference/submit" method="post"
                                       class="mb-4 uikick-confirm-form"
-                                      data-confirm-message="Nộp giỏ nguyện vọng theo đúng thứ tự trên? Sau khi nộp sẽ không sửa/nộp lại được nữa.">
+                                      data-confirm-message="Nộp nguyện vọng theo đúng thứ tự trên? Sau khi nộp sẽ không sửa/nộp lại được nữa.">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <button type="submit" class="btn btn-primary">Nộp nguyện vọng</button>
                                 </form>
                             </t>
                             <t t-else="">
                                 <div class="alert alert-info">
-                                    Giỏ nguyện vọng của bạn đang trống — hãy thêm ít nhất 1 giảng viên
-                                    bên dưới, sau đó bấm "Nộp nguyện vọng".
+                                    Bạn chưa chọn giảng viên nào — hãy thêm ít nhất 1 giảng viên bên
+                                    dưới, sau đó bấm "Nộp nguyện vọng".
                                 </div>
                             </t>
 
-                            <t t-if="not cart_full">
-                                <h5>Thêm giảng viên vào giỏ</h5>
-                                <form action="/my/advisor/cart/add" method="post">
+                            <t t-if="not preferences_full">
+                                <h5>Thêm giảng viên vào danh sách nguyện vọng</h5>
+                                <form action="/my/advisor/preference/add" method="post">
                                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                                     <div class="mb-3 border rounded p-3">
                                         <label for="creator_id">Giảng viên</label>
@@ -208,12 +208,12 @@
                                         <textarea name="note" class="form-control" rows="2"
                                                   placeholder="Giới thiệu bản thân với thầy/cô này"/>
                                     </div>
-                                    <button type="submit" class="btn btn-outline-primary">Thêm vào giỏ</button>
+                                    <button type="submit" class="btn btn-outline-primary">Thêm nguyện vọng</button>
                                 </form>
                             </t>
                             <t t-else="">
                                 <div class="alert alert-secondary">
-                                    Giỏ nguyện vọng đã đầy (tối đa <t t-esc="max_preferences"/> giảng viên) —
+                                    Đã đủ số nguyện vọng cho phép (tối đa <t t-esc="max_preferences"/> giảng viên) —
                                     bấm "Nộp nguyện vọng" ở trên, hoặc xoá 1 dòng để thêm giảng viên khác.
                                 </div>
                             </t>

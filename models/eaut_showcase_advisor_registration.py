@@ -99,82 +99,83 @@ class ShowcaseAdvisorRegistration(models.Model):
             approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
-    def action_cart_add(self, creator_id, note=None, topic=None):
-        """SV thêm 1 giảng viên vào giỏ nguyện vọng — giống thêm vào giỏ
-        hàng, chưa gửi cho giảng viên nào cả. Có thể thêm/xoá/đổi thứ tự
-        tự do trong giỏ, miễn hồ sơ chưa nộp (state == 'draft')."""
+    def action_add_preference(self, creator_id, note=None, topic=None):
+        """SV thêm 1 giảng viên vào danh sách nguyện vọng đang chuẩn bị —
+        chưa gửi cho giảng viên nào cả. Có thể thêm/xoá/đổi thứ tự tự do,
+        miễn hồ sơ chưa nộp (state == 'draft')."""
         self.ensure_one()
         if self.state != 'draft':
-            raise UserError('Bạn đã nộp nguyện vọng rồi, không thể thêm vào giỏ nữa.')
-        cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
-        if len(cart_lines) >= self.term_id.max_preferences:
+            raise UserError('Bạn đã nộp nguyện vọng rồi, không thể thêm nữa.')
+        draft_lines = self.line_ids.filtered(lambda l: l.state == 'draft')
+        if len(draft_lines) >= self.term_id.max_preferences:
             raise UserError(
-                'Giỏ nguyện vọng đã đầy (tối đa %s giảng viên).' % self.term_id.max_preferences)
-        if creator_id in cart_lines.mapped('creator_id').ids:
-            raise UserError('Giảng viên này đã có trong giỏ nguyện vọng của bạn rồi.')
+                'Đã đủ số nguyện vọng cho phép (tối đa %s giảng viên).' % self.term_id.max_preferences)
+        if creator_id in draft_lines.mapped('creator_id').ids:
+            raise UserError('Giảng viên này đã có trong danh sách nguyện vọng của bạn rồi.')
         self.env['eaut_showcase.advisor.registration.line'].create({
             'registration_id': self.id,
             'creator_id': creator_id,
-            'sequence': len(cart_lines) + 1,
-            'state': 'cart',
+            'sequence': len(draft_lines) + 1,
+            'state': 'draft',
             'note': (note or '').strip() or False,
             'proposed_topic': (topic or '').strip() or False,
         })
 
-    def action_cart_remove(self, line_id):
+    def action_remove_preference(self, line_id):
         self.ensure_one()
         if self.state != 'draft':
-            raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa giỏ nữa.')
-        line = self.line_ids.filtered(lambda l: l.id == line_id and l.state == 'cart')
+            raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa nữa.')
+        line = self.line_ids.filtered(lambda l: l.id == line_id and l.state == 'draft')
         if not line:
-            raise UserError('Không tìm thấy giảng viên này trong giỏ nguyện vọng.')
+            raise UserError('Không tìm thấy giảng viên này trong danh sách nguyện vọng.')
         line.unlink()
-        self._resequence_cart()
+        self._resequence_draft_lines()
 
-    def _resequence_cart(self):
+    def _resequence_draft_lines(self):
         self.ensure_one()
-        cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
-        for index, line in enumerate(cart_lines, start=1):
+        draft_lines = self.line_ids.filtered(lambda l: l.state == 'draft').sorted('sequence')
+        for index, line in enumerate(draft_lines, start=1):
             if line.sequence != index:
                 line.write({'sequence': index})
 
-    def action_cart_move(self, line_id, direction):
-        """Đổi thứ tự 1 dòng trong giỏ lên/xuống 1 bậc — dùng nút bấm thay
-        vì kéo-thả, đủ dùng cho danh sách ngắn (tối đa vài giảng viên).
-        Đi qua sequence tạm -1 để tránh vi phạm unique constraint tạm thời
-        khi hoán đổi 2 dòng liền kề."""
+    def action_move_preference(self, line_id, direction):
+        """Đổi thứ tự 1 nguyện vọng lên/xuống 1 bậc — dùng nút bấm thay vì
+        kéo-thả, đủ dùng cho danh sách ngắn (tối đa vài giảng viên). Đi qua
+        sequence tạm -1 để tránh vi phạm unique constraint tạm thời khi
+        hoán đổi 2 dòng liền kề."""
         self.ensure_one()
         if self.state != 'draft':
-            raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa giỏ nữa.')
+            raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa nữa.')
         if direction not in ('up', 'down'):
             raise UserError('Hướng di chuyển không hợp lệ.')
-        cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
-        line = cart_lines.filtered(lambda l: l.id == line_id)
+        draft_lines = self.line_ids.filtered(lambda l: l.state == 'draft').sorted('sequence')
+        line = draft_lines.filtered(lambda l: l.id == line_id)
         if not line:
-            raise UserError('Không tìm thấy giảng viên này trong giỏ nguyện vọng.')
-        index = list(cart_lines).index(line)
+            raise UserError('Không tìm thấy giảng viên này trong danh sách nguyện vọng.')
+        index = list(draft_lines).index(line)
         target_index = index - 1 if direction == 'up' else index + 1
-        if target_index < 0 or target_index >= len(cart_lines):
+        if target_index < 0 or target_index >= len(draft_lines):
             return
-        other = cart_lines[target_index]
+        other = draft_lines[target_index]
         line_seq, other_seq = line.sequence, other.sequence
         line.write({'sequence': -1})
         other.write({'sequence': line_seq})
         line.write({'sequence': other_seq})
 
-    def action_submit_cart(self):
-        """Nộp cả giỏ nguyện vọng 1 lần theo đúng thứ tự đã sắp — sau đó
-        khoá lại, không sửa được nữa. Nguyện vọng số 1 (sequence nhỏ nhất)
-        được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
-        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn."""
+    def action_submit_preferences(self):
+        """Nộp toàn bộ danh sách nguyện vọng 1 lần theo đúng thứ tự đã
+        sắp — sau đó khoá lại, không sửa được nữa. Nguyện vọng số 1
+        (sequence nhỏ nhất) được kích hoạt gửi giảng viên trước; các
+        nguyện vọng sau chỉ được kích hoạt tự động khi nguyện vọng trước
+        bị từ chối/hết hạn."""
         self.ensure_one()
         if self.state != 'draft':
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
-        cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
-        if not cart_lines:
+        draft_lines = self.line_ids.filtered(lambda l: l.state == 'draft').sorted('sequence')
+        if not draft_lines:
             raise UserError(
-                'Giỏ nguyện vọng đang trống — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
-        cart_lines.write({'state': 'waiting'})
+                'Bạn chưa chọn giảng viên nào — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
+        draft_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
 
@@ -310,7 +311,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     proposed_topic = fields.Char(string='Đề tài dự kiến')
 
     state = fields.Selection([
-        ('cart', 'Trong giỏ'),
+        ('draft', 'Chưa nộp'),
         ('waiting', 'Chờ kích hoạt'),
         ('pending', 'Đang chờ giảng viên duyệt'),
         ('approved', 'Đã duyệt'),

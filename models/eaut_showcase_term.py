@@ -102,8 +102,9 @@ class ShowcaseTerm(models.Model):
         ở trạng thái "Chưa có GVHD" cho họ (nếu chưa có) — để họ được tính
         vào số đếm và xuất hiện sẵn trên Kanban phân bổ, kể cả khi họ chưa
         từng tự đăng nhập nộp nguyện vọng. Nếu sau đó SV tự nộp thật, hệ
-        thống dùng lại đúng bản ghi này (action_cart_add/action_submit_cart
-        chỉ cần state == 'draft', không quan tâm state ban đầu là gì)."""
+        thống dùng lại đúng bản ghi này (action_add_preference/
+        action_submit_preferences chỉ cần state == 'draft', không quan
+        tâm state ban đầu là gì)."""
         Registration = self.env['eaut_showcase.advisor.registration']
         for term in self:
             existing_student_ids = set(

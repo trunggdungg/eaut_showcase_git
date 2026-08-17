@@ -50,13 +50,13 @@ class AdvisorPortalController(http.Controller):
             ])
         max_preferences = term.max_preferences if term else 5
         all_lines = registration.line_ids if registration else request.env['eaut_showcase.advisor.registration.line']
-        # Giỏ nguyện vọng (chưa nộp) hiển thị riêng khỏi các dòng đã nộp
-        # (waiting/pending/approved/rejected/expired/cancelled) — SV tự do
-        # thêm/xoá/đổi thứ tự trong giỏ, chỉ khoá lại sau khi bấm "Nộp".
-        cart_lines = all_lines.filtered(lambda l: l.state == 'cart').sorted('sequence')
-        submitted_lines = (all_lines - cart_lines).sorted('sequence')
+        # Nguyện vọng đang chuẩn bị (chưa nộp) hiển thị riêng khỏi các dòng
+        # đã nộp (waiting/pending/approved/rejected/expired/cancelled) — SV
+        # tự do thêm/xoá/đổi thứ tự, chỉ khoá lại sau khi bấm "Nộp".
+        draft_lines = all_lines.filtered(lambda l: l.state == 'draft').sorted('sequence')
+        submitted_lines = (all_lines - draft_lines).sorted('sequence')
         has_submitted = bool(registration) and registration.state != 'draft'
-        tried_creator_ids = cart_lines.mapped('creator_id').ids
+        tried_creator_ids = draft_lines.mapped('creator_id').ids
         available_capacities = capacities.filtered(
             lambda c: c.creator_id.id not in tried_creator_ids)
         values = {
@@ -65,9 +65,9 @@ class AdvisorPortalController(http.Controller):
             'registration': registration,
             'capacities': available_capacities,
             'max_preferences': max_preferences,
-            'cart_lines': cart_lines,
+            'draft_lines': draft_lines,
             'submitted_lines': submitted_lines,
-            'cart_full': len(cart_lines) >= max_preferences,
+            'preferences_full': len(draft_lines) >= max_preferences,
             'has_submitted': has_submitted,
             'partner': request.env.user.partner_id,
             'submitted': kw.get('submitted'),
@@ -97,9 +97,9 @@ class AdvisorPortalController(http.Controller):
         })
         return request.redirect('/my/advisor')
 
-    @http.route(['/my/advisor/cart/add'], type='http', auth='user', website=True,
+    @http.route(['/my/advisor/preference/add'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
-    def my_advisor_cart_add(self, **post):
+    def my_advisor_preference_add(self, **post):
         if self._get_creator_for_current_user():
             error = urllib.parse.quote(
                 'Tài khoản này đã đăng ký làm giảng viên hướng dẫn, không thể dùng để '
@@ -126,56 +126,56 @@ class AdvisorPortalController(http.Controller):
         topic = (post.get('topic') or '').strip()
 
         try:
-            registration.action_cart_add(int(raw_creator_id), note=note, topic=topic)
+            registration.action_add_preference(int(raw_creator_id), note=note, topic=topic)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
-            _logger.error('Lỗi khi sinh viên thêm vào giỏ nguyện vọng: %s', e, exc_info=True)
+            _logger.error('Lỗi khi sinh viên thêm nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
 
         return request.redirect('/my/advisor')
 
-    @http.route(['/my/advisor/cart/<int:line_id>/remove'], type='http', auth='user',
+    @http.route(['/my/advisor/preference/<int:line_id>/remove'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
-    def my_advisor_cart_remove(self, line_id, **post):
+    def my_advisor_preference_remove(self, line_id, **post):
         term = self._get_open_term()
         registration = self._get_registration(term) if term else None
         if not registration:
             return request.redirect('/my/advisor?error=1')
         try:
-            registration.action_cart_remove(line_id)
+            registration.action_remove_preference(line_id)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         return request.redirect('/my/advisor')
 
-    @http.route(['/my/advisor/cart/<int:line_id>/move'], type='http', auth='user',
+    @http.route(['/my/advisor/preference/<int:line_id>/move'], type='http', auth='user',
                 website=True, methods=['POST'], csrf=True)
-    def my_advisor_cart_move(self, line_id, **post):
+    def my_advisor_preference_move(self, line_id, **post):
         term = self._get_open_term()
         registration = self._get_registration(term) if term else None
         if not registration:
             return request.redirect('/my/advisor?error=1')
         direction = (post.get('direction') or '').strip()
         try:
-            registration.action_cart_move(line_id, direction)
+            registration.action_move_preference(line_id, direction)
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         return request.redirect('/my/advisor')
 
-    @http.route(['/my/advisor/cart/submit'], type='http', auth='user', website=True,
+    @http.route(['/my/advisor/preference/submit'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
-    def my_advisor_cart_submit(self, **post):
+    def my_advisor_preference_submit(self, **post):
         term = self._get_open_term()
         registration = self._get_registration(term) if term else None
         if not registration:
             return request.redirect('/my/advisor?error=1')
         try:
-            registration.action_submit_cart()
+            registration.action_submit_preferences()
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
-            _logger.error('Lỗi khi sinh viên nộp giỏ nguyện vọng: %s', e, exc_info=True)
+            _logger.error('Lỗi khi sinh viên nộp nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
 
