@@ -8,6 +8,41 @@ from odoo.exceptions import UserError, ValidationError
 
 from .eaut_showcase_term import DEFAULT_SLA_HOURS
 
+# ============ NỘI DUNG THÔNG BÁO (chatter + email) ============
+# Tách riêng khỏi logic nghiệp vụ để dễ tìm/sửa chữ khi cần — chỗ nào có %s thì
+# điền bằng % operator ngay tại nơi dùng. Các message "kết quả" (MSG_MOVED_TO_NEXT,
+# MSG_ALL_FAILED_*) được ghép nối với 1 "lý do" (vì sao có kết quả này — bị từ chối
+# hay hết hạn) thành 1 email duy nhất cho sinh viên, xem _activate_next_line().
+MSG_LINE_REJECTED = 'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s'
+MSG_LINE_REJECTED_REASON_SUFFIX = ' Lý do: %s'
+MSG_LINE_EXPIRED = 'Giảng viên <b>%s</b> không phản hồi trong thời hạn.'
+MSG_MOVED_TO_NEXT = (
+    'Nguyện vọng của bạn đang được chuyển sang giảng viên <b>%s</b>, chờ phản hồi.'
+)
+MSG_ALL_FAILED_SINGLE = (
+    'Nguyện vọng của bạn không thành công. Nhà trường sẽ liên hệ để phân '
+    'giảng viên hướng dẫn cho bạn.'
+)
+MSG_ALL_FAILED_MULTI = (
+    'Cả %s nguyện vọng đều không thành công. Nhà trường sẽ liên hệ để phân '
+    'giảng viên hướng dẫn cho bạn.'
+)
+MSG_NEW_PENDING_REQUEST = (
+    'Có sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn — '
+    'vào /my/advisor-requests để duyệt.'
+)
+MSG_LINE_APPROVED = 'Chúc mừng! Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn.'
+MSG_CREATOR_WITHDRAWN_RESET = (
+    'Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
+    'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
+    'viên hướng dẫn.'
+)
+MSG_REMINDER_DEADLINE_SOON = (
+    'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
+    '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.'
+)
+
+
 class ShowcaseAdvisorRegistration(models.Model):
     _name = 'eaut_showcase.advisor.registration'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -125,33 +160,33 @@ class ShowcaseAdvisorRegistration(models.Model):
         self.state = 'in_progress'
         self._activate_next_line()
 
-    def _activate_next_line(self):
+    def _activate_next_line(self, reason=None):
+        """reason (nếu có): lý do dẫn tới lượt kích hoạt này (bị từ chối/hết hạn),
+        được ghép vào chung 1 email với kết quả (chuyển sang GV kế tiếp/thất bại
+        hết) — tránh gửi 2 email liên tiếp cho cùng 1 sinh viên trong 1 lượt xử
+        lý. Khi tự dò qua các dòng bị auto-loại (GV đã rút/đầy chỗ) mà không có
+        kết quả cuối ngay, reason được truyền tiếp xuống để không bị mất."""
         self.ensure_one()
         next_line = self.line_ids.filtered(lambda l: l.state == 'waiting').sorted('sequence')[:1]
         if not next_line:
             self.write({'state': 'unassigned'})
             self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
             submitted_count = len(self.line_ids)
-            body = (
-                'Nguyện vọng của bạn không thành công. Nhà trường sẽ liên hệ để phân '
-                'giảng viên hướng dẫn cho bạn.' if submitted_count == 1 else
-                'Cả %s nguyện vọng đều không thành công. Nhà trường sẽ liên hệ '
-                'để phân giảng viên hướng dẫn cho bạn.' % submitted_count
-            )
-            self.message_post(body=body, partner_ids=self.student_id.ids)
+            outcome = Markup(MSG_ALL_FAILED_SINGLE) if submitted_count == 1 \
+                else Markup(MSG_ALL_FAILED_MULTI) % submitted_count
+            body = Markup('%s %s') % (reason, outcome) if reason else outcome
+            self.with_context(mail_notify_force_send=False).message_post(
+                body=body, partner_ids=self.student_id.ids)
             return
-        next_line._activate()
+        next_line._activate(reason=reason)
         if next_line.state == 'pending':
             self.with_context(advisor_internal_write=True).write({
                 'assigned_creator_id': next_line.creator_id.id,
             })
-            self.message_post(
-                body=Markup(
-                    'Nguyện vọng của bạn đang được chuyển sang giảng viên <b>%s</b>, '
-                    'chờ phản hồi.'
-                ) % next_line.creator_id.name,
-                partner_ids=self.student_id.ids,
-            )
+            outcome = Markup(MSG_MOVED_TO_NEXT) % next_line.creator_id.name
+            body = Markup('%s %s') % (reason, outcome) if reason else outcome
+            self.with_context(mail_notify_force_send=False).message_post(
+                body=body, partner_ids=self.student_id.ids)
 
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
@@ -163,12 +198,8 @@ class ShowcaseAdvisorRegistration(models.Model):
             reg.write({'state': 'draft'})
             reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
             if creator:
-                reg.message_post(
-                    body=Markup(
-                        'Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
-                        'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
-                        'viên hướng dẫn.'
-                    ) % creator.name,
+                reg.with_context(mail_notify_force_send=False).message_post(
+                    body=Markup(MSG_CREATOR_WITHDRAWN_RESET) % creator.name,
                     partner_ids=reg.student_id.ids,
                 )
 
@@ -314,16 +345,19 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     def _notify(self, partner, body):
         self.ensure_one()
         if partner:
-            self.registration_id.message_post(body=body, partner_ids=partner.ids)
+            self.registration_id.with_context(mail_notify_force_send=False).message_post(
+                body=body, partner_ids=partner.ids)
 
-    def _activate(self):
+    def _activate(self, reason=None):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
-        luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu."""
+        luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu — reason (nếu có) được
+        truyền tiếp cho _activate_next_line() khi phải dò tiếp, để không mất lý
+        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng."""
         self.ensure_one()
         capacity = self._get_capacity()
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
             self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
-            self.registration_id._activate_next_line()
+            self.registration_id._activate_next_line(reason=reason)
             return
         now = fields.Datetime.now()
         self.write({
@@ -334,10 +368,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         })
         self._notify(
             self.creator_id.user_id.partner_id,
-            Markup(
-                'Có sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn — '
-                'vào /my/advisor-requests để duyệt.'
-            ) % self.student_id.name,
+            Markup(MSG_NEW_PENDING_REQUEST) % self.student_id.name,
         )
 
     def action_approve(self):
@@ -374,9 +405,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         })
         self._notify(
             self.student_id,
-            Markup(
-                'Chúc mừng! Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn.'
-            ) % self.creator_id.name,
+            Markup(MSG_LINE_APPROVED) % self.creator_id.name,
         )
 
     def action_reject(self, reason=None):
@@ -392,15 +421,12 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             'state': 'rejected', 'decided_date': fields.Datetime.now(),
             'reject_reason': reason or False,
         })
-        reason_txt = (Markup(' Lý do: %s') % reason) if reason else ''
-        self._notify(
-            self.student_id,
-            Markup(
-                'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s Hệ thống sẽ tự '
-                'động chuyển sang nguyện vọng kế tiếp (nếu có).'
-            ) % (self.creator_id.name, reason_txt),
-        )
-        self.registration_id._activate_next_line()
+        # Không gửi email riêng ở đây nữa — ghép chung với email kết quả
+        # (chuyển sang GV kế tiếp/thất bại hết) trong _activate_next_line(),
+        # tránh sinh viên nhận 2 email liên tiếp cho cùng 1 lượt xử lý.
+        reason_txt = (Markup(MSG_LINE_REJECTED_REASON_SUFFIX) % reason) if reason else ''
+        notify_reason = Markup(MSG_LINE_REJECTED) % (self.creator_id.name, reason_txt)
+        self.registration_id._activate_next_line(reason=notify_reason)
 
     def _expire(self):
         """Chuyển các dòng 'pending' này sang 'expired' ngay lập tức — dùng
@@ -410,14 +436,10 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         now = fields.Datetime.now()
         for line in self:
             line.write({'state': 'expired', 'decided_date': now})
-            line._notify(
-                line.student_id,
-                Markup(
-                    'Giảng viên <b>%s</b> không phản hồi trong thời hạn. Hệ thống sẽ tự '
-                    'động chuyển sang nguyện vọng kế tiếp (nếu có).'
-                ) % line.creator_id.name,
-            )
-            line.registration_id._activate_next_line()
+            # Cùng cơ chế gộp email như action_reject() — không _notify() riêng ở
+            # đây, để _activate_next_line() ghép chung với email kết quả.
+            notify_reason = Markup(MSG_LINE_EXPIRED) % line.creator_id.name
+            line.registration_id._activate_next_line(reason=notify_reason)
 
     @api.model
     def _cron_expire_pending_lines(self):
@@ -443,9 +465,6 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         for line in soon_due:
             line._notify(
                 line.creator_id.user_id.partner_id,
-                Markup(
-                    'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
-                    '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.'
-                ) % line.student_id.name,
+                Markup(MSG_REMINDER_DEADLINE_SOON) % line.student_id.name,
             )
             line.reminder_sent = True
