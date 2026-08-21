@@ -32,65 +32,7 @@
                         </div>
                     </t>
 
-                    <t t-elif="registration and registration.line_ids">
-                        <p>Kỳ:
-                            <strong t-esc="term.name"/>
-                        </p>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Nguyện vọng</th>
-                                    <th>Giảng viên</th>
-                                    <th>Trạng thái</th>
-                                    <th>Hạn phản hồi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="registration.line_ids.sorted('sequence')" t-as="line">
-                                    <td t-esc="line.sequence"/>
-                                    <td t-esc="line.creator_id.name"/>
-                                    <td>
-                                        <span t-if="line.state == 'pending'" class="badge text-bg-warning">Đang chờ
-                                            duyệt
-                                        </span>
-                                        <span t-elif="line.state == 'approved'" class="badge text-bg-success">Đã duyệt
-                                        </span>
-                                        <span t-elif="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ
-                                            chối
-                                        </span>
-                                        <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn
-                                            phản
-                                            hồi
-                                        </span>
-                                        <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ
-                                        </span>
-                                        <span t-else="" class="badge text-bg-light">Chờ kích hoạt</span>
-                                        <div t-if="line.state == 'rejected' and line.reject_reason"
-                                             class="small text-muted mt-1">
-                                            Lý do:
-                                            <t t-esc="line.reject_reason"/>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span t-if="line.state == 'pending' and line.deadline" class="uikick-countdown"
-                                              t-att-data-deadline="line.deadline.strftime('%Y-%m-%dT%H:%M:%SZ')">
-                                            <t t-esc="line.deadline"/>
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div t-if="registration.state == 'approved'" class="alert alert-success">
-                            Bạn đã có giảng viên hướng dẫn:
-                            <strong t-esc="registration.approved_creator_id.name"/>.
-                        </div>
-                        <div t-elif="registration.state == 'unassigned'" class="alert alert-warning">
-                              <t t-if="len(registration.line_ids) == 1">Nguyện vọng của bạn</t>
-                            <t t-else="">Cả <t t-esc="len(registration.line_ids)"/> nguyện vọng đều</t>
-                            không thành công.
-                            Nhà trường sẽ liên hệ để phân giảng viên hướng dẫn cho bạn.
-                        </div>
-                    </t>
+
                     <t t-elif="not partner.showcase_student_code">
                         <div class="alert alert-info">
                             Vui lòng hoàn thiện hồ sơ trước khi chọn giảng viên hướng dẫn.
@@ -116,37 +58,178 @@
                         </form>
                     </t>
                     <t t-else="">
-                        <p>
-                            Chọn tối đa
-                            <strong t-esc="max_preferences"/>
-                            giảng viên, theo đúng
-                            thứ tự ưu tiên bạn mong muốn. Không thể thay đổi sau khi đã nộp.
+                          <p>Kỳ:
+                            <strong t-esc="term.name"/>
                         </p>
-                        <form action="/my/advisor/submit" method="post">
-                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                            <t t-foreach="range(1, max_preferences + 1)" t-as="idx">
-                                <div class="mb-3 border rounded p-3">
-                                    <label t-attf-for="creator_{{idx}}">Nguyện vọng
-                                        <t t-esc="idx"/>
-                                    </label>
-                                    <select t-attf-name="creator_{{idx}}" t-attf-id="creator_{{idx}}"
-                                            class="form-select mb-2">
-                                        <option value="">-- Không chọn --</option>
-                                        <option t-foreach="capacities" t-as="cap"
-                                                t-att-value="cap.creator_id.id"
-                                                t-esc="'%s (còn %s chỗ)' % (cap.creator_id.name, cap.remaining_slots)"/>
-                                    </select>
-                                    <input type="text" t-attf-name="topic_{{idx}}" class="form-control mb-2"
-                                           placeholder="Đề tài dự kiến"/>
-                                    <textarea t-attf-name="note_{{idx}}" class="form-control" rows="2"
-                                              placeholder="Giới thiệu bản thân với thầy/cô này"/>
+                          <!-- Đã nộp Hàng chờ nguyện vọng — chỉ xem, không sửa được nữa -->
+                        <t t-if="has_submitted">
+                            <table t-if="submitted_lines" class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Nguyện vọng</th>
+                                        <th>Giảng viên</th>
+                                        <th>Trạng thái</th>
+                                        <th>Hạn phản hồi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="submitted_lines" t-as="line">
+                                        <td t-esc="line.sequence"/>
+                                        <td t-esc="line.creator_id.name"/>
+                                        <td>
+                                            <span t-if="line.state == 'pending'" class="badge text-bg-warning">Đang chờ
+                                                duyệt
+                                            </span>
+                                            <span t-elif="line.state == 'approved'" class="badge text-bg-success">Đã duyệt
+                                            </span>
+                                            <span t-elif="line.state == 'rejected'" class="badge text-bg-secondary">Bị từ
+                                                chối
+                                            </span>
+                                            <span t-elif="line.state == 'expired'" class="badge text-bg-secondary">Hết hạn
+                                                phản
+                                                hồi
+                                            </span>
+                                            <span t-elif="line.state == 'cancelled'" class="badge text-bg-secondary">Đã huỷ
+                                            </span>
+                                            <span t-else="" class="badge text-bg-light">Chờ kích hoạt</span>
+                                            <div t-if="line.state == 'rejected' and line.reject_reason"
+                                                 class="small text-muted mt-1">
+                                                Lý do:
+                                                <t t-esc="line.reject_reason"/>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span t-if="line.state == 'pending' and line.deadline" class="uikick-countdown"
+                                                  t-att-data-deadline="line.deadline.strftime('%Y-%m-%dT%H:%M:%SZ')">
+                                                <t t-esc="line.deadline"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div t-if="registration.state == 'approved'" class="alert alert-success">
+                                Bạn đã có giảng viên hướng dẫn:
+                                <strong t-esc="registration.approved_creator_id.name"/>.
+                            </div>
+                            <div t-elif="registration.state == 'unassigned'" class="alert alert-warning">
+                                <t t-if="len(submitted_lines) == 1">Nguyện vọng của bạn</t>
+                                <t t-else="">Cả <t t-esc="len(submitted_lines)"/> nguyện vọng đều</t>
+                                không thành công.
+                                Nhà trường sẽ liên hệ để phân giảng viên hướng dẫn cho bạn.
+                            </div>
+                            <div t-else="" class="alert alert-info">
+                                Bạn đã nộp hàng chờ nguyện vọng — nguyện vọng số 1 đang được xử lý trước,
+                                các nguyện vọng còn lại sẽ tự động được chuyển tới khi nguyện vọng
+                                trước bị từ chối/hết hạn. Không thể sửa/nộp lại nữa.
+                            </div>
+                        </t>
+
+                        <!-- Chưa nộp — có thể thêm/xoá/đổi thứ tự trong Hàng chờ -->
+                        <t t-else="">
+                            <t t-if="cart_lines">
+                                <h5>Hàng chờ nguyện vọng (<t t-esc="len(cart_lines)"/> / <t t-esc="max_preferences"/>)</h5>
+                                <p class="text-muted small">
+                                    Thứ tự trong hàng chờ là thứ tự xét nguyện vọng. Dùng nút mũi tên để đổi
+                                    thứ tự trước khi nộp — sau khi nộp sẽ không sửa được nữa.
+                                </p>
+                                <table class="table align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Nguyện vọng</th>
+                                            <th>Giảng viên</th>
+                                            <th>Đề tài dự kiến</th>
+                                            <th class="text-end">Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr t-foreach="cart_lines" t-as="line">
+                                            <td t-esc="line.sequence"/>
+                                            <td t-esc="line.creator_id.name"/>
+                                            <td t-esc="line.proposed_topic or '—'"/>
+                                            <td class="text-end">
+                                                <form t-att-action="'/my/advisor/cart/%s/move' % line.id" method="post"
+                                                      class="d-inline">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <input type="hidden" name="direction" value="up"/>
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                            t-att-disabled="line.sequence == 1 or None">↑
+                                                    </button>
+                                                </form>
+                                                <form t-att-action="'/my/advisor/cart/%s/move' % line.id" method="post"
+                                                      class="d-inline">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <input type="hidden" name="direction" value="down"/>
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                            t-att-disabled="line.sequence == len(cart_lines) or None">↓
+                                                    </button>
+                                                </form>
+                                                <form t-att-action="'/my/advisor/cart/%s/remove' % line.id" method="post"
+                                                      class="d-inline uikick-confirm-form"
+                                                      data-confirm-message="Bỏ giảng viên này khỏi hàng chờ nguyện vọng?">
+                                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <form action="/my/advisor/cart/submit" method="post"
+                                      class="mb-4 uikick-confirm-form"
+                                      data-confirm-message="Nộp hàng chờ nguyện vọng theo đúng thứ tự trên? Sau khi nộp sẽ không sửa/nộp lại được nữa.">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button type="submit" class="btn btn-primary">Nộp nguyện vọng</button>
+                                </form>
+                            </t>
+                            <t t-else="">
+                                <div class="alert alert-info">
+                                    Hàng chờ nguyện vọng của bạn đang trống — hãy thêm ít nhất 1 giảng viên
+                                    bên dưới, sau đó bấm "Nộp nguyện vọng".
+
                                 </div>
                             </t>
-                            <button type="submit" class="btn btn-primary">Nộp nguyện vọng</button>
-                        </form>
+                             <t t-if="not cart_full">
+                                <h5>Thêm giảng viên vào hàng chờ</h5>
+                                <form action="/my/advisor/cart/add" method="post">
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <div class="mb-3 border rounded p-3">
+                                        <label for="creator_id">Giảng viên</label>
+                                        <select name="creator_id" id="creator_id" class="form-select mb-2"
+                                                required="required">
+                                            <option value="">-- Chọn giảng viên --</option>
+                                            <option t-foreach="capacities" t-as="cap"
+                                                    t-att-value="cap.creator_id.id"
+                                                    t-esc="'%s (còn %s chỗ)' % (cap.creator_id.name, cap.remaining_slots)"/>
+                                        </select>
+                                        <input type="text" name="topic" class="form-control mb-2"
+                                               placeholder="Đề tài dự kiến"/>
+                                        <textarea name="note" class="form-control" rows="2"
+                                                  placeholder="Giới thiệu bản thân với thầy/cô này"/>
+                                    </div>
+                                    <button type="submit" class="btn btn-outline-primary">Thêm vào hàng chờ</button>
+                                </form>
+                            </t>
+                            <t t-else="">
+                                <div class="alert alert-secondary">
+                                    Hàng chờ nguyện vọng đã đầy (tối đa <t t-esc="max_preferences"/> giảng viên) —
+                                    bấm "Nộp nguyện vọng" ở trên, hoặc xoá 1 dòng để thêm giảng viên khác.
+                                </div>
+                            </t>
+                        </t>
                     </t>
                 </t>
 
+            </div>
+              <div id="uikick-confirm-overlay" class="uikick-confirm-overlay">
+                <div class="uikick-confirm-box">
+                    <p id="uikick-confirm-message"></p>
+                    <div class="uikick-confirm-actions">
+                        <button type="button" id="uikick-confirm-cancel" class="btn btn-outline-secondary btn-sm">Huỷ
+                        </button>
+                        <button type="button" id="uikick-confirm-ok" class="btn btn-primary btn-sm">Xác nhận</button>
+                    </div>
+                </div>
             </div>
             <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
         </t>
