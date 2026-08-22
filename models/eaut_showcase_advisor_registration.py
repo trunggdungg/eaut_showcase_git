@@ -13,6 +13,8 @@ from .eaut_showcase_term import DEFAULT_SLA_HOURS
 # điền bằng % operator ngay tại nơi dùng. Các message "kết quả" (MSG_MOVED_TO_NEXT,
 # MSG_ALL_FAILED_*) được ghép nối với 1 "lý do" (vì sao có kết quả này — bị từ chối
 # hay hết hạn) thành 1 email duy nhất cho sinh viên, xem _activate_next_line().
+# Chỉ chứa CÂU CHỮ thuần — phần khung/badge/nút CTA nằm ở khối EMAIL_* + _email_*()
+# ngay dưới, ghép lại tại nơi gọi message_post().
 MSG_LINE_REJECTED = 'Giảng viên <b>%s</b> đã từ chối nguyện vọng của bạn.%s'
 MSG_LINE_REJECTED_REASON_SUFFIX = ' Lý do: %s'
 MSG_LINE_EXPIRED = 'Giảng viên <b>%s</b> không phản hồi trong thời hạn.'
@@ -27,20 +29,70 @@ MSG_ALL_FAILED_MULTI = (
     'Cả %s nguyện vọng đều không thành công. Nhà trường sẽ liên hệ để phân '
     'giảng viên hướng dẫn cho bạn.'
 )
-MSG_NEW_PENDING_REQUEST = (
-    'Có sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn — '
-    'vào /my/advisor-requests để duyệt.'
+MSG_NEW_PENDING_REQUEST = 'Sinh viên <b>%s</b> vừa đăng ký chọn bạn làm giảng viên hướng dẫn.'
+MSG_LINE_APPROVED = (
+    'Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn. Chúc mừng bạn!'
 )
-MSG_LINE_APPROVED = 'Chúc mừng! Giảng viên <b>%s</b> đã duyệt làm giảng viên hướng dẫn của bạn.'
 MSG_CREATOR_WITHDRAWN_RESET = (
-    'Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của '
-    'bạn đã được reset — vui lòng vào /my/advisor để chọn lại giảng '
-    'viên hướng dẫn.'
+    'Giảng viên <b>%s</b> đã rút khỏi kỳ này. Nguyện vọng trước đó của bạn đã '
+    'được reset — vui lòng chọn lại giảng viên hướng dẫn.'
 )
 MSG_REMINDER_DEADLINE_SOON = (
-    'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới '
-    '6 giờ) — vào /my/advisor-requests để duyệt/từ chối.'
+    'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới 6 giờ).'
 )
+
+# ============ KHUNG/MÀU EMAIL — dùng chung với layout eaut_showcase.mail_layout_advisor_notification ============
+# Khung ngoài (thanh tên trường + footer) nằm trong template QWeb ở
+# views/eaut_showcase_mail_layout_views.xml, truyền qua email_layout_xmlid mỗi lần
+# message_post() ở dưới. 3 hàm _email_* chỉ dựng phần "thẻ" nội dung bên trong:
+# lời chào, badge trạng thái theo màu, và nút CTA — đổi màu brand thì sửa duy nhất
+# EMAIL_BRAND_COLOR.
+EMAIL_BRAND_COLOR = '#7b3f61'
+EMAIL_BADGE_COLORS = {
+    'success': ('#e6f4ea', '#1e7e34'),
+    'danger': ('#fdecea', '#b02a37'),
+    'info': ('#e8f0fe', '#1a56db'),
+    'warning': ('#fff4e5', '#b25e00'),
+}
+EMAIL_STUDENT_PATH = '/my/advisor'
+EMAIL_LECTURER_PATH = '/my/advisor-requests'
+EMAIL_LAYOUT_XMLID = 'eaut_showcase.mail_layout_advisor_notification'
+
+
+def _email_badge(text, kind):
+    bg, fg = EMAIL_BADGE_COLORS.get(kind, ('#f0f0f0', '#555555'))
+    return Markup(
+        '<span style="background:%s;color:%s;padding:2px 10px;border-radius:4px;'
+        'font-weight:600;font-size:13px;white-space:nowrap;">%s</span>'
+    ) % (bg, fg, text)
+
+
+def _email_cta(url, label):
+    return Markup(
+        '<div style="margin-top:16px;">'
+        '<a href="%s" style="display:inline-block;background:%s;color:#ffffff;'
+        'padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;'
+        'font-size:14px;">%s</a></div>'
+    ) % (url, EMAIL_BRAND_COLOR, label)
+
+
+def _email_body(greeting_name, paragraphs, cta_url=None, cta_label=None):
+    """Dựng phần nội dung "thẻ" bên trong khung email — lời chào + các đoạn nội
+    dung (mỗi đoạn tự chèn badge nếu cần, xem các nơi gọi) + 1 nút CTA cuối
+    (nếu có). paragraphs: list các đoạn Markup, đoạn nào rỗng/None bị bỏ qua —
+    tiện cho trường hợp không có "reason" (VD: submit lần đầu)."""
+    html = Markup(
+        '<p style="margin:0 0 12px;font-size:14px;color:#333333;">Chào <b>%s</b>,</p>'
+    ) % greeting_name
+    for p in paragraphs:
+        if not p:
+            continue
+        html += Markup(
+            '<p style="margin:0 0 12px;font-size:14px;color:#333333;line-height:1.6;">%s</p>'
+        ) % p
+    if cta_url:
+        html += _email_cta(cta_url, cta_label)
+    return html
 
 
 class ShowcaseAdvisorRegistration(models.Model):
@@ -225,21 +277,29 @@ class ShowcaseAdvisorRegistration(models.Model):
             self.write({'state': 'unassigned'})
             self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
             submitted_count = len(self.line_ids)
-            outcome = Markup(MSG_ALL_FAILED_SINGLE) if submitted_count == 1 \
+            outcome_text = MSG_ALL_FAILED_SINGLE if submitted_count == 1 \
                 else Markup(MSG_ALL_FAILED_MULTI) % submitted_count
-            body = Markup('%s %s') % (reason, outcome) if reason else outcome
+            outcome = Markup('%s %s') % (_email_badge('Chưa có GVHD', 'danger'), outcome_text)
+            body = _email_body(
+                self.student_id.name, [reason, outcome],
+                self.get_base_url() + EMAIL_STUDENT_PATH, 'Xem trạng thái nguyện vọng',
+            )
             self.with_context(mail_notify_force_send=False).message_post(
-                body=body, partner_ids=self.student_id.ids)
+                body=body, partner_ids=self.student_id.ids, email_layout_xmlid=EMAIL_LAYOUT_XMLID)
             return
         next_line._activate(reason=reason)
         if next_line.state == 'pending':
             self.with_context(advisor_internal_write=True).write({
                 'assigned_creator_id': next_line.creator_id.id,
             })
-            outcome = Markup(MSG_MOVED_TO_NEXT) % next_line.creator_id.name
-            body = Markup('%s %s') % (reason, outcome) if reason else outcome
+            outcome_text = Markup(MSG_MOVED_TO_NEXT) % next_line.creator_id.name
+            outcome = Markup('%s %s') % (_email_badge('Đang chuyển tiếp', 'info'), outcome_text)
+            body = _email_body(
+                self.student_id.name, [reason, outcome],
+                self.get_base_url() + EMAIL_STUDENT_PATH, 'Xem trạng thái nguyện vọng',
+            )
             self.with_context(mail_notify_force_send=False).message_post(
-                body=body, partner_ids=self.student_id.ids)
+                body=body, partner_ids=self.student_id.ids, email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
@@ -251,9 +311,17 @@ class ShowcaseAdvisorRegistration(models.Model):
             reg.write({'state': 'draft'})
             reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
             if creator:
+                outcome = Markup('%s %s') % (
+                    _email_badge('Cần chọn lại', 'warning'),
+                    Markup(MSG_CREATOR_WITHDRAWN_RESET) % creator.name,
+                )
+                body = _email_body(
+                    reg.student_id.name, [outcome],
+                    reg.get_base_url() + EMAIL_STUDENT_PATH, 'Chọn lại giảng viên hướng dẫn',
+                )
                 reg.with_context(mail_notify_force_send=False).message_post(
-                    body=Markup(MSG_CREATOR_WITHDRAWN_RESET) % creator.name,
-                    partner_ids=reg.student_id.ids,
+                    body=body, partner_ids=reg.student_id.ids,
+                    email_layout_xmlid=EMAIL_LAYOUT_XMLID,
                 )
 
     def action_unassign(self):
@@ -400,7 +468,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         self.ensure_one()
         if partner:
             self.registration_id.with_context(mail_notify_force_send=False).message_post(
-                body=body, partner_ids=partner.ids)
+                body=body, partner_ids=partner.ids, email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
     def _activate(self, reason=None):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
@@ -422,7 +490,14 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         })
         self._notify(
             self.creator_id.user_id.partner_id,
-            Markup(MSG_NEW_PENDING_REQUEST) % self.student_id.name,
+            _email_body(
+                self.creator_id.name,
+                [Markup('%s %s') % (
+                    _email_badge('Yêu cầu mới', 'info'),
+                    Markup(MSG_NEW_PENDING_REQUEST) % self.student_id.name,
+                )],
+                self.get_base_url() + EMAIL_LECTURER_PATH, 'Vào duyệt yêu cầu',
+            ),
         )
 
     def action_approve(self):
@@ -459,7 +534,14 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         })
         self._notify(
             self.student_id,
-            Markup(MSG_LINE_APPROVED) % self.creator_id.name,
+            _email_body(
+                self.student_id.name,
+                [Markup('%s %s') % (
+                    _email_badge('Đã duyệt', 'success'),
+                    Markup(MSG_LINE_APPROVED) % self.creator_id.name,
+                )],
+                self.get_base_url() + EMAIL_STUDENT_PATH, 'Xem hồ sơ của tôi',
+            ),
         )
 
     def action_reject(self, reason=None):
@@ -519,6 +601,13 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         for line in soon_due:
             line._notify(
                 line.creator_id.user_id.partner_id,
-                Markup(MSG_REMINDER_DEADLINE_SOON) % line.student_id.name,
+                _email_body(
+                    line.creator_id.name,
+                    [Markup('%s %s') % (
+                        _email_badge('Sắp hết hạn', 'warning'),
+                        Markup(MSG_REMINDER_DEADLINE_SOON) % line.student_id.name,
+                    )],
+                    line.get_base_url() + EMAIL_LECTURER_PATH, 'Duyệt ngay',
+                ),
             )
             line.reminder_sent = True
