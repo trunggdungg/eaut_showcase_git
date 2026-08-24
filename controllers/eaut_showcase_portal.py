@@ -178,7 +178,7 @@ class AdvisorPortalController(http.Controller):
             _logger.error('Lỗi khi sinh viên nộp hàng chờ nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
-
+        return request.redirect('/my/advisor?submitted=1')
 
     # ============ GIẢNG VIÊN: DUYỆT YÊU CẦU HƯỚNG DẪN ============
     def _get_creator_for_current_user(self):

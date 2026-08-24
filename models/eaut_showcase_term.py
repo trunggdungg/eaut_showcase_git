@@ -170,13 +170,13 @@ class ShowcaseTerm(models.Model):
             'domain': [('term_id', '=', self.id), ('state', '=', 'unassigned')],
         }
 
-    def action_assign_creators_kanban(self):
-        """Mở thẳng Kanban kéo-thả giảng viên vào kỳ, thay vì phải "Thêm một
-        dòng" + tìm tên từng giảng viên trong tab capacity_ids."""
-        self.ensure_one()
-        return self.env['ir.actions.act_window']._for_xml_id(
-            'eaut_showcase.action_eaut_showcase_creator_kanban'
-        )
+    # def action_assign_creators_kanban(self):
+    #     """Mở thẳng Kanban kéo-thả giảng viên vào kỳ, thay vì phải "Thêm một
+    #     dòng" + tìm tên từng giảng viên trong tab capacity_ids."""
+    #     self.ensure_one()
+    #     return self.env['ir.actions.act_window']._for_xml_id(
+    #         'eaut_showcase.action_eaut_showcase_creator_kanban'
+    #     )
     def action_view_eligible_students(self):
         self.ensure_one()
         return {
