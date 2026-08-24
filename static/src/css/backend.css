@@ -1,0 +1,8 @@
+/* Nội dung thông báo (chatter) do Odoo gửi cho SV/GV mang theo màu chữ
+   hardcode cho nền sáng (vd: color: #454748), nên ở dark mode gần như
+   biến mất. Ép các đoạn có style màu cứng bên trong chatter kế thừa lại
+   màu chữ mặc định của theme thay vì giữ màu hardcode đó. */
+.o-mail-Message-content [style*="color"],
+.o-mail-Message-content [style*="color"] * {
+    color: inherit !important;
+}
