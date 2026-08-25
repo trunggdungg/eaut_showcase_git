@@ -360,7 +360,7 @@
                                             /
                                             <t t-esc="line.student_id.showcase_student_major"/>
                                         </td>
-                                        <td t-esc="format_datetime(line.decided_date, dt_format='short')"/>
+                                        <td t-field="line.decided_date"/>
                                     </tr>
                                 </tbody>
                             </table>
@@ -415,7 +415,7 @@
                                             </span>
 
                                         </td>
-                                        <td t-esc="format_datetime(line.decided_date, dt_format='short')"/>
+                                        <td t-field="line.decided_date"/>
                                     </tr>
                                 </tbody>
                             </table>
@@ -599,7 +599,7 @@
                     </tr>
                     <tr t-if="line.decided_date and line.state != 'pending'">
                         <th>Đã duyệt vào</th>
-                        <td t-esc="format_datetime(line.decided_date, dt_format='short')"/>
+                        <td t-field="line.decided_date"/>
                     </tr>
                 </table>
 
