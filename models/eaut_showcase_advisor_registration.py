@@ -44,9 +44,14 @@ MSG_REMINDER_DEADLINE_SOON = (
 # ============ KHUNG/MÀU EMAIL — dùng chung với layout eaut_showcase.mail_layout_advisor_notification ============
 # Khung ngoài (thanh tên trường + footer) nằm trong template QWeb ở
 # views/eaut_showcase_mail_layout_views.xml, truyền qua email_layout_xmlid mỗi lần
-# message_post() ở dưới. message_post() luôn gọi kèm sanitize=False — nếu không,
-# Odoo bóc mất thuộc tính style inline khi lưu message.body, làm badge/nút CTA
-# mất màu/khung cả trong Chatter lẫn email thật gửi ra ngoài.
+# message_post() ở dưới — CHỈ áp dụng cho email thật gửi ra ngoài (Chatter không
+# bao giờ render qua layout này, nó luôn hiện thẳng message.body). Widget hiển
+# thị Chatter tự lọc lại thuộc tính style mỗi lần render (giữ color/font-weight,
+# bỏ background/padding/border-radius) bất kể đã set sanitize=False lúc lưu, nên
+# mỗi thẻ badge/nút CTA còn gắn thêm class (o_eaut_notif_*, định nghĩa ở
+# static/src/css/backend.css, nạp qua bundle web.assets_backend) — CSS từ file
+# ngoài không nằm trong HTML của message nên không bị lọc theo cách này. Email
+# thật gửi ra ngoài thì đọc đúng style inline như bình thường.
 EMAIL_BRAND_COLOR = '#7b3f61'
 EMAIL_BADGE_COLORS = {
     'success': ('#e6f4ea', '#1e7e34'),
@@ -62,17 +67,18 @@ EMAIL_LAYOUT_XMLID = 'eaut_showcase.mail_layout_advisor_notification'
 def _email_badge(text, kind):
     bg, fg = EMAIL_BADGE_COLORS.get(kind, ('#f0f0f0', '#555555'))
     return Markup(
-        '<span style="background:%s;color:%s;padding:2px 10px;border-radius:4px;'
+        '<span class="o_eaut_notif_badge o_eaut_notif_badge_%s" '
+        'style="background:%s;color:%s;padding:2px 10px;border-radius:4px;'
         'font-weight:600;font-size:13px;white-space:nowrap;">%s</span>'
-    ) % (bg, fg, text)
+    ) % (kind, bg, fg, text)
 
 
 def _email_cta(url, label):
     return Markup(
-        '<div style="margin-top:16px;">'
-        '<a href="%s" style="display:inline-block;background:%s;color:#ffffff;'
-        'padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;'
-        'font-size:14px;">%s</a></div>'
+        '<div class="o_eaut_notif_cta_wrap" style="margin-top:16px;">'
+        '<a href="%s" class="o_eaut_notif_cta" style="display:inline-block;'
+        'background:%s;color:#ffffff;padding:10px 18px;border-radius:6px;'
+        'text-decoration:none;font-weight:600;font-size:14px;">%s</a></div>'
     ) % (url, EMAIL_BRAND_COLOR, label)
 
 
@@ -82,17 +88,19 @@ def _email_body(greeting_name, paragraphs, cta_url=None, cta_label=None):
     (nếu có). paragraphs: list các đoạn Markup, đoạn nào rỗng/None bị bỏ qua —
     tiện cho trường hợp không có "reason" (VD: submit lần đầu)."""
     html = Markup(
-        '<p style="margin:0 0 12px;font-size:14px;color:#333333;">Chào <b>%s</b>,</p>'
+        '<p class="o_eaut_notif_p" style="margin:0 0 12px;font-size:14px;'
+        'color:#333333;">Chào <b>%s</b>,</p>'
     ) % greeting_name
     for p in paragraphs:
         if not p:
             continue
         html += Markup(
-            '<p style="margin:0 0 12px;font-size:14px;color:#333333;line-height:1.6;">%s</p>'
+            '<p class="o_eaut_notif_p" style="margin:0 0 12px;font-size:14px;'
+            'color:#333333;line-height:1.6;">%s</p>'
         ) % p
     if cta_url:
         html += _email_cta(cta_url, cta_label)
-    return html
+    return Markup('<div class="o_eaut_notif_card">%s</div>') % html
 
 class ShowcaseAdvisorRegistration(models.Model):
     _name = 'eaut_showcase.advisor.registration'
