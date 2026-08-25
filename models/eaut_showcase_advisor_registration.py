@@ -45,13 +45,17 @@ MSG_REMINDER_DEADLINE_SOON = (
 # Khung ngoài (thanh tên trường + footer) nằm trong template QWeb ở
 # views/eaut_showcase_mail_layout_views.xml, truyền qua email_layout_xmlid mỗi lần
 # message_post() ở dưới — CHỈ áp dụng cho email thật gửi ra ngoài (Chatter không
-# bao giờ render qua layout này, nó luôn hiện thẳng message.body). Widget hiển
-# thị Chatter tự lọc lại thuộc tính style mỗi lần render (giữ color/font-weight,
-# bỏ background/padding/border-radius) bất kể đã set sanitize=False lúc lưu, nên
-# mỗi thẻ badge/nút CTA còn gắn thêm class (o_eaut_notif_*, định nghĩa ở
-# static/src/css/backend.css, nạp qua bundle web.assets_backend) — CSS từ file
-# ngoài không nằm trong HTML của message nên không bị lọc theo cách này. Email
-# thật gửi ra ngoài thì đọc đúng style inline như bình thường.
+# bao giờ render qua layout này, nó luôn hiện thẳng message.body). Các hàm
+# _email_* dưới đây đều trả về markupsafe.Markup nên message_post() coi nội
+# dung đã an toàn sẵn, không gọi html_sanitize() lại — KHÔNG được truyền
+# sanitize=False cho message_post() (Odoo 19 không còn chấp nhận tham số này,
+# gọi vào sẽ bị _notify_thread() raise ValueError). Widget hiển thị Chatter tự
+# lọc lại thuộc tính style mỗi lần render (giữ color/font-weight, bỏ
+# background/padding/border-radius), nên mỗi thẻ badge/nút CTA còn gắn thêm
+# class (o_eaut_notif_*, định nghĩa ở static/src/css/backend.css, nạp qua
+# bundle web.assets_backend) — CSS từ file ngoài không nằm trong HTML của
+# message nên không bị lọc theo cách này. Email thật gửi ra ngoài thì đọc đúng
+# style inline như bình thường.
 EMAIL_BRAND_COLOR = '#7b3f61'
 EMAIL_BADGE_COLORS = {
     'success': ('#e6f4ea', '#1e7e34'),
@@ -293,7 +297,7 @@ class ShowcaseAdvisorRegistration(models.Model):
             )
             self.with_context(mail_notify_force_send=False).message_post(
                 body=body, partner_ids=self.student_id.ids,
-                email_layout_xmlid=EMAIL_LAYOUT_XMLID, sanitize=False)
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID)
             return
         next_line._activate(reason=reason)
         if next_line.state == 'pending':
@@ -308,7 +312,7 @@ class ShowcaseAdvisorRegistration(models.Model):
             )
             self.with_context(mail_notify_force_send=False).message_post(
                 body=body, partner_ids=self.student_id.ids,
-                email_layout_xmlid=EMAIL_LAYOUT_XMLID, sanitize=False)
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
@@ -330,7 +334,7 @@ class ShowcaseAdvisorRegistration(models.Model):
                 )
                 reg.with_context(mail_notify_force_send=False).message_post(
                     body=body, partner_ids=reg.student_id.ids,
-                    email_layout_xmlid=EMAIL_LAYOUT_XMLID, sanitize=False,
+                    email_layout_xmlid=EMAIL_LAYOUT_XMLID,
                 )
 
     def action_unassign(self):
@@ -478,7 +482,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         if partner:
             self.registration_id.with_context(mail_notify_force_send=False).message_post(
                 body=body, partner_ids=partner.ids,
-                email_layout_xmlid=EMAIL_LAYOUT_XMLID, sanitize=False)
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
     def _activate(self, reason=None):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
