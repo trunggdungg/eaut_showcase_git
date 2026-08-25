@@ -55,6 +55,13 @@ class ShowcaseCreator(models.Model):
     def write(self, vals):
         self._sync_name_from_user_vals(vals)
         changed_fields = [f for f in ('name', 'email') if f in vals]
+        # showcase_skip_reverse_sync: đang được gọi NGƯỢC LẠI từ
+        # ResPartnerAdvisorSync (res.partner vừa đổi tên/email, đang đổ giá
+        # trị xuống đây) — bỏ qua ghi ngược lại partner (vô nghĩa, giá trị
+        # đang bằng nhau) và bỏ qua luôn việc đồng bộ login, vì đây không
+        # phải lúc GV chủ động đổi email liên hệ qua trang Hồ sơ giảng viên.
+        if self.env.context.get('showcase_skip_reverse_sync'):
+            return super().write(vals)
         if 'email' in changed_fields:
             self._check_login_conflict(vals['email'])
         result = super().write(vals)
@@ -260,3 +267,34 @@ class ShowcaseCreator(models.Model):
                 'sticky': False,
             },
         }
+
+
+class ResPartnerAdvisorSync(models.Model):
+    """GV đổi tên/email qua trang chuẩn của Odoo (VD: '/my/account' — form
+    địa chỉ Portal, hoặc Admin sửa trực tiếp Liên hệ ở backend) thì ghi
+    thẳng vào res.partner, KHÔNG đi qua ShowcaseCreator.write() nên không tự
+    đồng bộ ngược lại — bổ sung chiều còn thiếu này ở đây, đối xứng với
+    ShowcaseCreator._sync_account_from_creator() (chiều Creator -> partner).
+    Dùng context showcase_skip_reverse_sync để creator.write() không ghi
+    ngược lại partner (vô nghĩa, giá trị đang bằng nhau) và không đụng tới
+    login — đổi login là quyết định lớn hơn, chỉ nên xảy ra khi GV chủ động
+    đổi email liên hệ ngay trên trang Hồ sơ giảng viên, không phải như 1
+    tác dụng phụ của việc sửa Liên hệ ở nơi khác."""
+    _inherit = 'res.partner'
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'name' in vals or 'email' in vals:
+            creators = self.env['eaut_showcase.creator'].sudo().search([
+                ('user_id.partner_id', 'in', self.ids),
+            ])
+            for creator in creators:
+                partner = creator.user_id.partner_id
+                creator_vals = {}
+                if 'name' in vals and partner.name and creator.name != partner.name:
+                    creator_vals['name'] = partner.name
+                if 'email' in vals and partner.email and creator.email != partner.email:
+                    creator_vals['email'] = partner.email
+                if creator_vals:
+                    creator.with_context(showcase_skip_reverse_sync=True).write(creator_vals)
+        return result
