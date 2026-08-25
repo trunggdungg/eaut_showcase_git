@@ -49,8 +49,14 @@ class ShowcaseTermCapacity(models.Model):
 
     # Đếm chéo model advisor.registration.line — không có field liên kết trực
     # tiếp để dùng @api.depends chuẩn, nên chỉ khai depends trên field của
-    # chính record này; giá trị luôn được tính lại mới mỗi lần đọc record
-    # (mỗi request là 1 env/cache mới) nên vẫn đảm bảo đúng trong thực tế dùng.
+    # chính record này. LƯU Ý: giá trị chỉ chắc chắn mới ở request/cron MỚI
+    # (env/cache mới) — trong CÙNG 1 transaction, nếu record capacity này đã
+    # được đọc rồi (giá trị vào cache), 1 write() sau đó lên
+    # advisor.registration.line KHÔNG làm cache này bị invalidate (không có
+    # field liên kết để Odoo biết mà làm mới). Chỗ dùng field này để quyết
+    # định có còn chỗ hay không (eaut_showcase_advisor_registration.py) vì
+    # vậy KHÔNG đọc remaining_slots ở đây — mà khoá row rồi search_count()
+    # trực tiếp; chỉ dùng field này cho mục đích hiển thị (đọc-thôi) là an toàn.
     @api.depends('term_id', 'creator_id')
     def _compute_counts(self):
         Line = self.env['eaut_showcase.advisor.registration.line']

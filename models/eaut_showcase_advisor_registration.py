@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 from datetime import timedelta
 
 from markupsafe import Markup
@@ -7,6 +8,8 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from .eaut_showcase_term import DEFAULT_SLA_HOURS
+
+_logger = logging.getLogger(__name__)
 
 # ============ NỘI DUNG THÔNG BÁO (chatter + email) ============
 # Tách riêng khỏi logic nghiệp vụ để dễ tìm/sửa chữ khi cần — chỗ nào có %s thì
@@ -318,23 +321,35 @@ class ShowcaseAdvisorRegistration(models.Model):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
         để sinh viên vote lại từ đầu (ngoại lệ duy nhất cho quy tắc SV không
           được tự đổi nguyện vọng). creator (nếu có): GV vừa rút, để báo rõ
-        cho SV biết vì sao hồ sơ của họ bị reset."""
+        cho SV biết vì sao hồ sơ của họ bị reset. Từng hồ sơ chạy trong 1
+        savepoint riêng — 1 sinh viên lỗi (VD. gửi thông báo thất bại) không
+        được phép làm mất luôn việc reset của những sinh viên khác của cùng
+        giảng viên vừa rút trong cùng 1 lần gọi."""
         for reg in self:
-            reg.line_ids.unlink()
-            reg.write({'state': 'draft'})
-            reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
-            if creator:
-                outcome = Markup('%s %s') % (
-                    _email_badge('Cần chọn lại', 'warning'),
-                    Markup(MSG_CREATOR_WITHDRAWN_RESET) % creator.name,
-                )
-                body = _email_body(
-                    reg.student_id.name, [outcome],
-                    reg.get_base_url() + EMAIL_STUDENT_PATH, 'Chọn lại giảng viên hướng dẫn',
-                )
-                reg.with_context(mail_notify_force_send=False).message_post(
-                    body=body, partner_ids=reg.student_id.ids,
-                    email_layout_xmlid=EMAIL_LAYOUT_XMLID,
+            try:
+                with self.env.cr.savepoint():
+                    reg.line_ids.unlink()
+                    reg.write({'state': 'draft'})
+                    reg.with_context(advisor_internal_write=True).write(
+                        {'assigned_creator_id': False})
+                    if creator:
+                        outcome = Markup('%s %s') % (
+                            _email_badge('Cần chọn lại', 'warning'),
+                            Markup(MSG_CREATOR_WITHDRAWN_RESET) % creator.name,
+                        )
+                        body = _email_body(
+                            reg.student_id.name, [outcome],
+                            reg.get_base_url() + EMAIL_STUDENT_PATH,
+                            'Chọn lại giảng viên hướng dẫn',
+                        )
+                        reg.with_context(mail_notify_force_send=False).message_post(
+                            body=body, partner_ids=reg.student_id.ids,
+                            email_layout_xmlid=EMAIL_LAYOUT_XMLID,
+                        )
+            except Exception:
+                _logger.exception(
+                    'Lỗi khi reset hồ sơ đăng ký id=%s do giảng viên rút kỳ — '
+                    'bỏ qua, cần xử lý tay.', reg.id,
                 )
 
     def action_unassign(self):
@@ -491,7 +506,29 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng."""
         self.ensure_one()
         capacity = self._get_capacity()
-        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+        if not capacity or capacity.withdrawn:
+            self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
+            self.registration_id._activate_next_line(reason=reason)
+            return
+        # Khoá row sức chứa rồi đếm lại trực tiếp từ DB — cùng cơ chế khoá như
+        # action_approve()/_admin_assign(), KHÔNG dùng compute remaining_slots
+        # (nó chỉ khai @api.depends trên term_id/creator_id nên không tự làm
+        # mới khi 1 dòng khác của cùng giảng viên vừa được ghi state trong
+        # cùng transaction — VD. nhiều dòng cùng 1 giảng viên được xử lý nối
+        # tiếp trong 1 lượt cron _cron_expire_pending_lines). Nếu không khoá +
+        # đếm tươi, 2 nguyện vọng cùng nhắm 1 giảng viên được kích hoạt gần
+        # như đồng thời có thể cùng đọc "còn chỗ" và cùng lọt qua, vượt quá
+        # max_students.
+        self.env.cr.execute(
+            'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
+            (capacity.id,),
+        )
+        taken_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
+            ('term_id', '=', self.term_id.id),
+            ('creator_id', '=', self.creator_id.id),
+            ('state', 'in', ('approved', 'pending')),
+        ])
+        if taken_count >= capacity.max_students:
             self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
             self.registration_id._activate_next_line(reason=reason)
             return
@@ -582,14 +619,27 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         """Chuyển các dòng 'pending' này sang 'expired' ngay lập tức — dùng
         chung cho cron định kỳ và cho lúc phát hiện trễ hạn ngay tại thời
         điểm GV vào portal/bấm duyệt, không đợi tới lượt cron chạy tiếp theo
-        (tối đa 1 giờ) mới cập nhật đúng trạng thái."""
+        (tối đa 1 giờ) mới cập nhật đúng trạng thái. Mỗi dòng chạy trong 1
+        savepoint riêng — nếu dòng nào lỗi (VD. gửi thông báo thất bại) chỉ
+        dòng đó bị rollback, không kéo theo mất luôn kết quả của các dòng
+        khác đã xử lý xong trong cùng 1 lượt cron/thao tác, và các dòng còn
+        lại vẫn được tiếp tục xử lý thay vì bị chặn đứng ở dòng lỗi đầu tiên."""
         now = fields.Datetime.now()
         for line in self:
-            line.write({'state': 'expired', 'decided_date': now})
-            # Cùng cơ chế gộp email như action_reject() — không _notify() riêng ở
-            # đây, để _activate_next_line() ghép chung với email kết quả.
-            notify_reason = Markup(MSG_LINE_EXPIRED) % line.creator_id.name
-            line.registration_id._activate_next_line(reason=notify_reason)
+            try:
+                with self.env.cr.savepoint():
+                    line.write({'state': 'expired', 'decided_date': now})
+                    # Cùng cơ chế gộp email như action_reject() — không _notify()
+                    # riêng ở đây, để _activate_next_line() ghép chung với email
+                    # kết quả.
+                    notify_reason = Markup(MSG_LINE_EXPIRED) % line.creator_id.name
+                    line.registration_id._activate_next_line(reason=notify_reason)
+            except Exception:
+                _logger.exception(
+                    'Lỗi khi xử lý hết hạn nguyện vọng id=%s (registration=%s) — '
+                    'bỏ qua, sẽ thử lại ở lượt cron kế tiếp.',
+                    line.id, line.registration_id.id,
+                )
 
     @api.model
     def _cron_expire_pending_lines(self):
@@ -613,15 +663,25 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             ('deadline', '>', now),
         ])
         for line in soon_due:
-            line._notify(
-                line.creator_id.user_id.partner_id,
-                _email_body(
-                    line.creator_id.name,
-                    [Markup('%s %s') % (
-                        _email_badge('Sắp hết hạn', 'warning'),
-                        Markup(MSG_REMINDER_DEADLINE_SOON) % line.student_id.name,
-                    )],
-                    line.get_base_url() + EMAIL_LECTURER_PATH, 'Duyệt ngay',
-                ),
-            )
-            line.reminder_sent = True
+            # Savepoint riêng từng dòng — 1 dòng gửi thông báo lỗi không được
+            # phép rollback luôn reminder_sent của các dòng khác đã gửi thành
+            # công trong cùng lượt cron này.
+            try:
+                with self.env.cr.savepoint():
+                    line._notify(
+                        line.creator_id.user_id.partner_id,
+                        _email_body(
+                            line.creator_id.name,
+                            [Markup('%s %s') % (
+                                _email_badge('Sắp hết hạn', 'warning'),
+                                Markup(MSG_REMINDER_DEADLINE_SOON) % line.student_id.name,
+                            )],
+                            line.get_base_url() + EMAIL_LECTURER_PATH, 'Duyệt ngay',
+                        ),
+                    )
+                    line.reminder_sent = True
+            except Exception:
+                _logger.exception(
+                    'Lỗi khi gửi nhắc sắp hết hạn cho dòng nguyện vọng id=%s — '
+                    'bỏ qua, sẽ thử lại ở lượt cron kế tiếp.', line.id,
+                )
