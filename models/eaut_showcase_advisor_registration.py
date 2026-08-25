@@ -197,7 +197,12 @@ class ShowcaseAdvisorRegistration(models.Model):
     @api.depends('line_ids.state')
     def _compute_approved_creator(self):
         for reg in self:
-            approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')
+            # [:1] phòng trường hợp dữ liệu lỡ có >1 dòng 'approved' cùng lúc
+            # (đáng lẽ không thể xảy ra nhờ _check_single_active_line(), nhưng
+            # dữ liệu cũ từ trước khi có ràng buộc này vẫn có thể còn tồn tại)
+            # — approved_line.creator_id sẽ crash "Expected singleton" nếu để
+            # nguyên nhiều dòng.
+            approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')[:1]
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
     def action_cart_add(self, creator_id, note=None, topic=None):
@@ -458,6 +463,32 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
          'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.'),
     ]
 
+    @api.constrains('state')
+    def _check_single_active_line(self):
+        """Đảm bảo 1 hồ sơ đăng ký chỉ có tối đa 1 dòng đang 'pending' hoặc
+        'approved' tại 1 thời điểm — bất biến mà toàn bộ luồng nguyện vọng nối
+        tiếp (_activate_next_line/_activate/action_approve/_admin_assign) đều
+        giả định là đúng, nhưng trước đây chỉ được đảm bảo bằng cách viết code
+        cẩn thận ở từng nơi, không có gì chặn ở tầng dữ liệu — 1 lần sửa tay
+        state qua popup dòng nguyện vọng trong backend (bỏ qua hẳn các nút
+        Duyệt/Từ chối) là đủ để phá vỡ, dẫn tới 1 sinh viên có 2 giảng viên
+        cùng "đã duyệt" một lúc."""
+        for line in self:
+            if line.state not in ('pending', 'approved'):
+                continue
+            other_active = line.registration_id.line_ids.filtered(
+                lambda l: l.id != line.id and l.state in ('pending', 'approved'))
+            if other_active:
+                raise ValidationError(
+                    'Hồ sơ đăng ký của sinh viên "%s" đã có 1 nguyện vọng khác đang '
+                    '"%s" với giảng viên "%s" — không thể có 2 nguyện vọng cùng ở '
+                    'trạng thái chờ duyệt/đã duyệt trong 1 hồ sơ.' % (
+                        line.student_id.name,
+                        dict(line._fields['state'].selection).get(other_active[0].state),
+                        other_active[0].creator_id.name,
+                    )
+                )
+
     @api.model_create_multi
     def create(self, vals_list):
         lines = super().create(vals_list)
@@ -575,10 +606,15 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             ])
             if approved_count >= capacity.max_students:
                 raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
-        self.write({'state': 'approved', 'decided_date': fields.Datetime.now()})
+        # Huỷ các dòng nguyện vọng khác TRƯỚC khi duyệt dòng này — không phải
+        # ngược lại — để tại thời điểm dòng này chuyển sang 'approved', không
+        # còn dòng nào khác của cùng hồ sơ ở 'waiting'/'pending' nữa. Thứ tự
+        # này khớp với ràng buộc _check_single_active_line() bên dưới (chỉ
+        # cho phép tối đa 1 dòng đang pending/approved trên 1 hồ sơ).
         other_lines = (self.registration_id.line_ids - self).filtered(
             lambda l: l.state in ('waiting', 'pending'))
         other_lines.write({'state': 'cancelled', 'decided_date': fields.Datetime.now()})
+        self.write({'state': 'approved', 'decided_date': fields.Datetime.now()})
         self.registration_id.write({'state': 'approved'})
         self.registration_id.with_context(advisor_internal_write=True).write({
             'assigned_creator_id': self.creator_id.id,
