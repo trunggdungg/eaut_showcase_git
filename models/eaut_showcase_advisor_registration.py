@@ -222,6 +222,13 @@ class ShowcaseAdvisorRegistration(models.Model):
                 'Giỏ nguyện vọng đã đầy (tối đa %s giảng viên).' % self.term_id.max_preferences)
         if creator_id in cart_lines.mapped('creator_id').ids:
             raise UserError('Giảng viên này đã có trong hàng chờ nguyện vọng của bạn rồi.')
+        capacity = self.env['eaut_showcase.term.capacity'].search([
+            ('term_id', '=', self.term_id.id), ('creator_id', '=', creator_id),
+        ], limit=1)
+        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+            raise UserError(
+                'Giảng viên này đã hết chỗ nhận sinh viên hướng dẫn (hoặc đã rút khỏi '
+                'kỳ) — vui lòng chọn giảng viên khác.')
         self.env['eaut_showcase.advisor.registration.line'].create({
             'registration_id': self.id,
             'creator_id': creator_id,
@@ -528,12 +535,25 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
         luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu — reason (nếu có) được
         truyền tiếp cho _activate_next_line() khi phải dò tiếp, để không mất lý
-        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng."""
+        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng. Trường
+        hợp tự bỏ qua ở đây (không phải do GV chủ động từ chối) vẫn có thể xảy ra
+        dù action_cart_add() đã chặn từ lúc thêm vào giỏ — vì giữa lúc thêm vào
+        giỏ và lúc thật sự tới lượt kích hoạt (nguyện vọng #2 trở đi), GV có thể
+        vừa hết chỗ do SV khác được duyệt trước — nên vẫn cần ghi rõ reject_reason
+        (không được để trống) và chỉ tạo reason mới khi chưa có reason nào truyền
+        vào, tránh mất lý do gốc của lượt xử lý trước đó."""
         self.ensure_one()
         capacity = self._get_capacity()
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
-            self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
-            self.registration_id._activate_next_line(reason=reason)
+            reject_reason = 'Giảng viên đã rút khỏi kỳ này.' if (capacity and capacity.withdrawn) \
+                else 'Giảng viên đã hết chỗ nhận sinh viên hướng dẫn.'
+            self.write({
+                'state': 'rejected', 'decided_date': fields.Datetime.now(),
+                'reject_reason': reject_reason,
+            })
+            auto_reason = Markup(MSG_LINE_REJECTED) % (
+                self.creator_id.name, Markup(MSG_LINE_REJECTED_REASON_SUFFIX) % reject_reason)
+            self.registration_id._activate_next_line(reason=reason or auto_reason)
             return
         now = fields.Datetime.now()
         self.write({
