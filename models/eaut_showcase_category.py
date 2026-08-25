@@ -24,9 +24,7 @@ class ShowcaseCategory(models.Model):
              "mục trên trang web. Trống nếu chưa chọn màu (color = 0).",
     )
 
-    _sql_constraints = [
-        ('name_uniq', 'unique(name)', 'Tên danh mục này đã tồn tại.'),
-    ]
+    _name_uniq = models.Constraint('unique(name)', 'Tên danh mục này đã tồn tại.')
 
     @api.depends('color')
     def _compute_color_hex(self):

@@ -141,10 +141,10 @@ class ShowcaseAdvisorRegistration(models.Model):
              "dùng để group-by và kéo-thả trên Kanban xử lý sinh viên chưa gán.",
     )
 
-    _sql_constraints = [
-        ('term_student_uniq', 'unique(term_id, student_id)',
-         'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.'),
-    ]
+    _term_student_uniq = models.Constraint(
+        'unique(term_id, student_id)',
+        'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.',
+    )
 
     @api.model
     def _group_expand_assigned_creators(self, creators, domain):
@@ -456,12 +456,14 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     decided_date = fields.Datetime(string='Ngày quyết định')
     reject_reason = fields.Text(string='Lý do từ chối')
     reminder_sent = fields.Boolean(string='Đã nhắc trước hạn', default=False)
-    _sql_constraints = [
-        ('registration_creator_uniq', 'unique(registration_id, creator_id)',
-         'Không thể chọn trùng 1 giảng viên trong cùng hồ sơ đăng ký.'),
-        ('registration_sequence_uniq', 'unique(registration_id, sequence)',
-         'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.'),
-    ]
+    _registration_creator_uniq = models.Constraint(
+        'unique(registration_id, creator_id)',
+        'Không thể chọn trùng 1 giảng viên trong cùng hồ sơ đăng ký.',
+    )
+    _registration_sequence_uniq = models.Constraint(
+        'unique(registration_id, sequence)',
+        'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.',
+    )
 
     @api.constrains('state')
     def _check_single_active_line(self):

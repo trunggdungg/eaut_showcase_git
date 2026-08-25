@@ -11,6 +11,4 @@ class ShowcaseStatus(models.Model):
     sequence = fields.Integer(string='Thứ tự', default=10)
     color = fields.Integer(string='Màu')
 
-    _sql_constraints = [
-        ('name_uniq', 'unique(name)', 'Tên trạng thái này đã tồn tại.'),
-    ]
+    _name_uniq = models.Constraint('unique(name)', 'Tên trạng thái này đã tồn tại.')

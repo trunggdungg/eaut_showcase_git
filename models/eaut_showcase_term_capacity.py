@@ -42,10 +42,10 @@ class ShowcaseTermCapacity(models.Model):
     pending_count = fields.Integer(string='Đang chờ duyệt', compute='_compute_counts')
     remaining_slots = fields.Integer(string='Còn trống', compute='_compute_counts')
 
-    _sql_constraints = [
-        ('term_creator_uniq', 'unique(term_id, creator_id)',
-         'Giảng viên này đã có khai báo sức chứa trong kỳ này rồi.'),
-    ]
+    _term_creator_uniq = models.Constraint(
+        'unique(term_id, creator_id)',
+        'Giảng viên này đã có khai báo sức chứa trong kỳ này rồi.',
+    )
 
     # Đếm chéo model advisor.registration.line — không có field liên kết trực
     # tiếp để dùng @api.depends chuẩn, nên chỉ khai depends trên field của

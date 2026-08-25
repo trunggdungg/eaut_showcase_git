@@ -131,6 +131,4 @@ class ShowcaseProject(models.Model):
                 vals['project_code'] = self.env['ir.sequence'].next_by_code('eaut_showcase.project')
         return super().create(vals_list)
 
-    _sql_constraints = [
-        ('project_code_uniq', 'unique(project_code)', 'Project code must be unique.'),
-    ]
+    _project_code_uniq = models.Constraint('unique(project_code)', 'Project code must be unique.')
