@@ -109,6 +109,28 @@ def _email_body(greeting_name, paragraphs, cta_url=None, cta_label=None):
         html += _email_cta(cta_url, cta_label)
     return Markup('<div class="o_eaut_notif_card">%s</div>') % html
 
+
+def _lock_capacity_for_update(env, capacity_id):
+    """Khoá dòng sức chứa TRƯỚC khi đếm số slot đã chiếm (approved+pending),
+    dùng ở mọi nơi cần chặn 2 giao dịch cùng đọc "còn chỗ" và cùng lọt qua.
+
+    CHỈ `SELECT ... FOR UPDATE` KHÔNG ĐỦ trên Odoo 19: cursor mặc định chạy ở
+    mức cô lập REPEATABLE READ (odoo/sql_db.py), nên nếu dòng bị khoá không
+    thực sự bị GHI, giao dịch đợi khoá xong vẫn đọc lại đúng snapshot lúc
+    transaction của nó bắt đầu — không thấy được các dòng nguyện vọng mà giao
+    dịch kia vừa ghi/commit trong lúc mình đang đợi, nên đếm ra số cũ (đã
+    kiểm chứng bằng test 2 luồng thật chạy song song). Phải GHI THẬT lên dòng
+    đang khoá (dù vô hại, chỉ đụng write_date) thì Postgres mới coi đây là 1
+    xung đột ghi thật và raise SerializationFailure cho giao dịch đến sau —
+    lỗi này Odoo tự bắt và chạy lại toàn bộ request/cron từ đầu (xem
+    odoo/service/model.py: retrying(), addons/base/.../ir_cron.py:
+    TransactionRollbackError), lúc chạy lại mới đọc đúng số liệu mới nhất."""
+    env.cr.execute(
+        'UPDATE eaut_showcase_term_capacity SET write_date = clock_timestamp() WHERE id = %s',
+        (capacity_id,),
+    )
+
+
 class ShowcaseAdvisorRegistration(models.Model):
     _name = 'eaut_showcase.advisor.registration'
     _inherit = ['mail.thread', 'mail.activity.mixin']
@@ -389,10 +411,7 @@ class ShowcaseAdvisorRegistration(models.Model):
                 % self.term_id.name
             )
 
-        self.env.cr.execute(
-            'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
-            (capacity.id,),
-        )
+        _lock_capacity_for_update(self.env, capacity.id)
         approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
             ('term_id', '=', self.term_id.id),
             ('creator_id', '=', creator_id),
@@ -552,10 +571,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         # đếm tươi, 2 nguyện vọng cùng nhắm 1 giảng viên được kích hoạt gần
         # như đồng thời có thể cùng đọc "còn chỗ" và cùng lọt qua, vượt quá
         # max_students.
-        self.env.cr.execute(
-            'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
-            (capacity.id,),
-        )
+        _lock_capacity_for_update(self.env, capacity.id)
         taken_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
             ('term_id', '=', self.term_id.id),
             ('creator_id', '=', self.creator_id.id),
@@ -597,10 +613,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             # Khoá row sức chứa để tránh 2 giảng viên/2 request duyệt cùng lúc
             # vượt quá max_students (race condition khi nhiều nguyện vọng dồn
             # vào đúng slot cuối cùng).
-            self.env.cr.execute(
-                'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
-                (capacity.id,),
-            )
+            _lock_capacity_for_update(self.env, capacity.id)
             approved_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
                 ('term_id', '=', self.term_id.id),
                 ('creator_id', '=', self.creator_id.id),
