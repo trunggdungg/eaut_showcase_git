@@ -18,7 +18,7 @@
          'data/eaut_showcase_project_sequence_data.xml',
         'data/eaut_showcase_data.xml',
         'data/eaut_showcase_advisor_config_data.xml',
-        'data/eaut_showcase_advisor_demo_data.xml',
+        # 'data/eaut_showcase_advisor_demo_data.xml',
         'data/eaut_showcase_cron_data.xml',
         'views/eaut_showcase_category_views.xml',
         'views/eaut_showcase_status_views.xml',
@@ -42,6 +42,9 @@
             'eaut_showcase/static/src/css/style.css',
             'eaut_showcase/static/src/js/home.js',
             'eaut_showcase/static/src/js/detail.js',
+        ],
+'web.assets_backend': [
+            'eaut_showcase/static/src/css/backend.css',
         ],
     },
     'icon': 'static/description/icon.png',

@@ -44,9 +44,18 @@ MSG_REMINDER_DEADLINE_SOON = (
 # ============ KHUNG/MÀU EMAIL — dùng chung với layout eaut_showcase.mail_layout_advisor_notification ============
 # Khung ngoài (thanh tên trường + footer) nằm trong template QWeb ở
 # views/eaut_showcase_mail_layout_views.xml, truyền qua email_layout_xmlid mỗi lần
-# message_post() ở dưới. 3 hàm _email_* chỉ dựng phần "thẻ" nội dung bên trong:
-# lời chào, badge trạng thái theo màu, và nút CTA — đổi màu brand thì sửa duy nhất
-# EMAIL_BRAND_COLOR.
+# message_post() ở dưới — CHỈ áp dụng cho email thật gửi ra ngoài (Chatter không
+# bao giờ render qua layout này, nó luôn hiện thẳng message.body). Các hàm
+# _email_* dưới đây đều trả về markupsafe.Markup nên message_post() coi nội
+# dung đã an toàn sẵn, không gọi html_sanitize() lại — KHÔNG được truyền
+# sanitize=False cho message_post() (Odoo 19 không còn chấp nhận tham số này,
+# gọi vào sẽ bị _notify_thread() raise ValueError). Widget hiển thị Chatter tự
+# lọc lại thuộc tính style mỗi lần render (giữ color/font-weight, bỏ
+# background/padding/border-radius), nên mỗi thẻ badge/nút CTA còn gắn thêm
+# class (o_eaut_notif_*, định nghĩa ở static/src/css/backend.css, nạp qua
+# bundle web.assets_backend) — CSS từ file ngoài không nằm trong HTML của
+# message nên không bị lọc theo cách này. Email thật gửi ra ngoài thì đọc đúng
+# style inline như bình thường.
 EMAIL_BRAND_COLOR = '#7b3f61'
 EMAIL_BADGE_COLORS = {
     'success': ('#e6f4ea', '#1e7e34'),
@@ -62,17 +71,18 @@ EMAIL_LAYOUT_XMLID = 'eaut_showcase.mail_layout_advisor_notification'
 def _email_badge(text, kind):
     bg, fg = EMAIL_BADGE_COLORS.get(kind, ('#f0f0f0', '#555555'))
     return Markup(
-        '<span style="background:%s;color:%s;padding:2px 10px;border-radius:4px;'
+        '<span class="o_eaut_notif_badge o_eaut_notif_badge_%s" '
+        'style="background:%s;color:%s;padding:2px 10px;border-radius:4px;'
         'font-weight:600;font-size:13px;white-space:nowrap;">%s</span>'
-    ) % (bg, fg, text)
+    ) % (kind, bg, fg, text)
 
 
 def _email_cta(url, label):
     return Markup(
-        '<div style="margin-top:16px;">'
-        '<a href="%s" style="display:inline-block;background:%s;color:#ffffff;'
-        'padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;'
-        'font-size:14px;">%s</a></div>'
+        '<div class="o_eaut_notif_cta_wrap" style="margin-top:16px;">'
+        '<a href="%s" class="o_eaut_notif_cta" style="display:inline-block;'
+        'background:%s;color:#ffffff;padding:10px 18px;border-radius:6px;'
+        'text-decoration:none;font-weight:600;font-size:14px;">%s</a></div>'
     ) % (url, EMAIL_BRAND_COLOR, label)
 
 
@@ -82,17 +92,19 @@ def _email_body(greeting_name, paragraphs, cta_url=None, cta_label=None):
     (nếu có). paragraphs: list các đoạn Markup, đoạn nào rỗng/None bị bỏ qua —
     tiện cho trường hợp không có "reason" (VD: submit lần đầu)."""
     html = Markup(
-        '<p style="margin:0 0 12px;font-size:14px;color:#333333;">Chào <b>%s</b>,</p>'
+        '<p class="o_eaut_notif_p" style="margin:0 0 12px;font-size:14px;'
+        'color:#333333;">Chào <b>%s</b>,</p>'
     ) % greeting_name
     for p in paragraphs:
         if not p:
             continue
         html += Markup(
-            '<p style="margin:0 0 12px;font-size:14px;color:#333333;line-height:1.6;">%s</p>'
+            '<p class="o_eaut_notif_p" style="margin:0 0 12px;font-size:14px;'
+            'color:#333333;line-height:1.6;">%s</p>'
         ) % p
     if cta_url:
         html += _email_cta(cta_url, cta_label)
-    return html
+    return Markup('<div class="o_eaut_notif_card">%s</div>') % html
 
 class ShowcaseAdvisorRegistration(models.Model):
     _name = 'eaut_showcase.advisor.registration'
@@ -126,10 +138,10 @@ class ShowcaseAdvisorRegistration(models.Model):
              "dùng để group-by và kéo-thả trên Kanban xử lý sinh viên chưa gán.",
     )
 
-    _sql_constraints = [
-        ('term_student_uniq', 'unique(term_id, student_id)',
-         'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.'),
-    ]
+    _term_student_uniq = models.Constraint(
+        'unique(term_id, student_id)',
+        'Sinh viên này đã có hồ sơ đăng ký trong kỳ này rồi.',
+    )
 
     @api.model
     def _group_expand_assigned_creators(self, creators, domain):
@@ -182,7 +194,7 @@ class ShowcaseAdvisorRegistration(models.Model):
     @api.depends('line_ids.state')
     def _compute_approved_creator(self):
         for reg in self:
-            approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')
+            approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')[:1]
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
     def action_cart_add(self, creator_id, note=None, topic=None):
@@ -284,7 +296,8 @@ class ShowcaseAdvisorRegistration(models.Model):
                 self.get_base_url() + EMAIL_STUDENT_PATH, 'Xem trạng thái nguyện vọng',
             )
             self.with_context(mail_notify_force_send=False).message_post(
-                body=body, partner_ids=self.student_id.ids, email_layout_xmlid=EMAIL_LAYOUT_XMLID)
+                body=body, partner_ids=self.student_id.ids,
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID)
             return
         next_line._activate(reason=reason)
         if next_line.state == 'pending':
@@ -298,7 +311,8 @@ class ShowcaseAdvisorRegistration(models.Model):
                 self.get_base_url() + EMAIL_STUDENT_PATH, 'Xem trạng thái nguyện vọng',
             )
             self.with_context(mail_notify_force_send=False).message_post(
-                body=body, partner_ids=self.student_id.ids, email_layout_xmlid=EMAIL_LAYOUT_XMLID)
+                body=body, partner_ids=self.student_id.ids,
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
@@ -422,12 +436,40 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
     decided_date = fields.Datetime(string='Ngày quyết định')
     reject_reason = fields.Text(string='Lý do từ chối')
     reminder_sent = fields.Boolean(string='Đã nhắc trước hạn', default=False)
-    _sql_constraints = [
-        ('registration_creator_uniq', 'unique(registration_id, creator_id)',
-         'Không thể chọn trùng 1 giảng viên trong cùng hồ sơ đăng ký.'),
-        ('registration_sequence_uniq', 'unique(registration_id, sequence)',
-         'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.'),
-    ]
+    _registration_creator_uniq = models.Constraint(
+        'unique(registration_id, creator_id)',
+        'Không thể chọn trùng 1 giảng viên trong cùng hồ sơ đăng ký.',
+    )
+    _registration_sequence_uniq = models.Constraint(
+        'unique(registration_id, sequence)',
+        'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.',
+    )
+
+    @api.constrains('state')
+    def _check_single_active_line(self):
+        """Đảm bảo 1 hồ sơ đăng ký chỉ có tối đa 1 dòng đang 'pending' hoặc
+        'approved' tại 1 thời điểm — bất biến mà toàn bộ luồng nguyện vọng nối
+        tiếp (_activate_next_line/_activate/action_approve/_admin_assign) đều
+        giả định là đúng, nhưng trước đây chỉ được đảm bảo bằng cách viết code
+        cẩn thận ở từng nơi, không có gì chặn ở tầng dữ liệu — 1 lần sửa tay
+        state qua popup dòng nguyện vọng trong backend (bỏ qua hẳn các nút
+        Duyệt/Từ chối) là đủ để phá vỡ, dẫn tới 1 sinh viên có 2 giảng viên
+        cùng "đã duyệt" một lúc."""
+        for line in self:
+            if line.state not in ('pending', 'approved'):
+                continue
+            other_active = line.registration_id.line_ids.filtered(
+                lambda l: l.id != line.id and l.state in ('pending', 'approved'))
+            if other_active:
+                raise ValidationError(
+                    'Hồ sơ đăng ký của sinh viên "%s" đã có 1 nguyện vọng khác đang '
+                    '"%s" với giảng viên "%s" — không thể có 2 nguyện vọng cùng ở '
+                    'trạng thái chờ duyệt/đã duyệt trong 1 hồ sơ.' % (
+                        line.student_id.name,
+                        dict(line._fields['state'].selection).get(other_active[0].state),
+                        other_active[0].creator_id.name,
+                    )
+                )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -467,7 +509,8 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         self.ensure_one()
         if partner:
             self.registration_id.with_context(mail_notify_force_send=False).message_post(
-                body=body, partner_ids=partner.ids, email_layout_xmlid=EMAIL_LAYOUT_XMLID)
+                body=body, partner_ids=partner.ids,
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
     def _activate(self, reason=None):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
@@ -523,10 +566,11 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             ])
             if approved_count >= capacity.max_students:
                 raise ValidationError('Giảng viên đã đủ số lượng sinh viên nhận hướng dẫn.')
-        self.write({'state': 'approved', 'decided_date': fields.Datetime.now()})
+        # self.write({'state': 'approved', 'decided_date': fields.Datetime.now()})
         other_lines = (self.registration_id.line_ids - self).filtered(
             lambda l: l.state in ('waiting', 'pending'))
         other_lines.write({'state': 'cancelled', 'decided_date': fields.Datetime.now()})
+        self.write({'state': 'approved', 'decided_date': fields.Datetime.now()})
         self.registration_id.write({'state': 'approved'})
         self.registration_id.with_context(advisor_internal_write=True).write({
             'assigned_creator_id': self.creator_id.id,
