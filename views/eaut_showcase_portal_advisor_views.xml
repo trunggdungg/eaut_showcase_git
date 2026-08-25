@@ -674,8 +674,8 @@
                         <input type="email" name="email" id="email" class="form-control"
                                t-att-value="creator.email" required="required"/>
                         <div class="form-text">
-                            Đổi email ở đây sẽ cập nhật luôn email liên hệ của tài khoản Odoo — không
-                            ảnh hưởng email/tài khoản dùng để đăng nhập.
+                            Đây cũng là email dùng để đăng nhập — đổi ở đây sẽ đổi luôn tên đăng
+                            nhập của bạn, lần đăng nhập sau hãy dùng email mới này.
                         </div>
                     </div>
                     <div class="mb-3">
