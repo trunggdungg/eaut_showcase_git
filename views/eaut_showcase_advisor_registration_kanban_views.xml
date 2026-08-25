@@ -44,6 +44,15 @@
                                 <span t-elif="record.state.raw_value === 'unassigned'"
                                       class="badge text-bg-danger">Chưa gán</span>
                             </div>
+                              <div class="o_kanban_record_bottom" t-if="record.state.raw_value === 'unassigned'">
+                                <div class="oe_kanban_bottom_right">
+                                    <button type="object" name="action_admin_allow_retry"
+                                            class="btn btn-sm btn-link text-info p-0"
+                                            confirm="Cho sinh viên này chọn lại giảng viên hướng dẫn từ đầu? Toàn bộ nguyện vọng cũ sẽ bị xoá.">
+                                        Cho chọn lại
+                                    </button>
+                                </div>
+                            </div>
                               <div class="o_kanban_record_bottom" t-if="record.state.raw_value !== 'unassigned'">
                                 <div class="oe_kanban_bottom_right">
                                     <button type="object" name="action_unassign"

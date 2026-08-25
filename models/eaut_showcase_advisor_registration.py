@@ -41,6 +41,10 @@ MSG_CREATOR_WITHDRAWN_RESET = (
 MSG_REMINDER_DEADLINE_SOON = (
     'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới 6 giờ).'
 )
+MSG_ADMIN_ALLOW_RETRY = (
+    'Nhà trường đã cho phép bạn chọn lại giảng viên hướng dẫn — vui lòng vào trang '
+    '"Chọn giảng viên hướng dẫn" để nộp nguyện vọng mới.'
+)
 # ============ KHUNG/MÀU EMAIL — dùng chung với layout eaut_showcase.mail_layout_advisor_notification ============
 # Khung ngoài (thanh tên trường + footer) nằm trong template QWeb ở
 # views/eaut_showcase_mail_layout_views.xml, truyền qua email_layout_xmlid mỗi lần
@@ -333,15 +337,24 @@ class ShowcaseAdvisorRegistration(models.Model):
                 body=body, partner_ids=self.student_id.ids,
                 email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
+    def _reset_lines_for_retry(self):
+        """Xoá hết nguyện vọng cũ, đưa hồ sơ về 'draft' để SV chọn lại từ
+        đầu — bước dùng chung cho action_reset_for_withdrawal (GV rút khỏi
+        kỳ) và action_admin_allow_retry (Admin chủ động cho SV thêm 1 lượt
+        thay vì tự gán tay)."""
+        self.ensure_one()
+        self.line_ids.unlink()
+        self.write({'state': 'draft'})
+        self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
-        để sinh viên vote lại từ đầu (ngoại lệ duy nhất cho quy tắc SV không
-          được tự đổi nguyện vọng). creator (nếu có): GV vừa rút, để báo rõ
-        cho SV biết vì sao hồ sơ của họ bị reset."""
+        để sinh viên vote lại từ đầu (1 trong 2 ngoại lệ cho quy tắc SV
+        không được tự đổi nguyện vọng, xem thêm action_admin_allow_retry).
+        creator (nếu có): GV vừa rút, để báo rõ cho SV biết vì sao hồ sơ của
+        họ bị reset."""
         for reg in self:
-            reg.line_ids.unlink()
-            reg.write({'state': 'draft'})
-            reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+            reg._reset_lines_for_retry()
             if creator:
                 outcome = Markup('%s %s') % (
                     _email_badge('Cần chọn lại', 'warning'),
@@ -355,6 +368,33 @@ class ShowcaseAdvisorRegistration(models.Model):
                     body=body, partner_ids=reg.student_id.ids,
                     email_layout_xmlid=EMAIL_LAYOUT_XMLID,
                 )
+
+    def action_admin_allow_retry(self):
+        """Nút Admin dùng khi 1 SV đã "Chưa có GVHD" (hết nguyện vọng mà
+        không được duyệt) và Admin muốn cho họ 1 lượt tự chọn lại trên
+        Portal, thay vì tự gán tay qua Kanban — ngoại lệ thứ 2 cho quy tắc
+        SV không được tự đổi nguyện vọng (xem action_reset_for_withdrawal).
+        Chỉ áp dụng cho state == 'unassigned' — SV đang draft/in_progress/
+        approved thì không có gì để "chọn lại"; muốn gỡ 1 SV đã approved
+        thì dùng action_unassign trước."""
+        for reg in self:
+            if reg.state != 'unassigned':
+                raise UserError(
+                    'Chỉ áp dụng cho sinh viên đang ở trạng thái "Chưa có GVHD" — hồ sơ '
+                    'của "%s" đang ở trạng thái khác.' % reg.student_id.name
+                )
+            reg._reset_lines_for_retry()
+            outcome = Markup('%s %s') % (
+                _email_badge('Được chọn lại', 'info'), MSG_ADMIN_ALLOW_RETRY,
+            )
+            body = _email_body(
+                reg.student_id.name, [outcome],
+                reg.get_base_url() + EMAIL_STUDENT_PATH, 'Chọn giảng viên hướng dẫn',
+            )
+            reg.with_context(mail_notify_force_send=False).message_post(
+                body=body, partner_ids=reg.student_id.ids,
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID,
+            )
 
     def action_unassign(self):
         """Nút "Bỏ gán" trên thẻ Kanban — đưa SV về "Chưa có GVHD" ngay lập
