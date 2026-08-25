@@ -203,15 +203,24 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     def _can_edit_cart(self):
         """Hồ sơ còn sửa được hàng chờ nguyện vọng — draft (chưa nộp) hoặc
-        unassigned nhưng CHƯA từng có dòng nguyện vọng nào (bản ghi được
+        unassigned nhưng CHƯA dòng nào thực sự vượt qua trạng thái 'cart'
+        (tức là chưa từng bấm "Nộp nguyện vọng" thật). Bản ghi được
         _sync_eligible_student_registrations tự tạo sẵn cho SV "đủ điều
-        kiện" ngay khi thêm vào danh sách, để họ hiện sẵn trên Kanban phân
-        bổ — SV này chưa từng tự nộp gì nên vẫn phải cho họ dùng giỏ nguyện
-        vọng bình thường). unassigned nhưng ĐÃ có dòng (nộp rồi fail hết,
-        hoặc admin bỏ gán tay) thì KHÔNG cho sửa lại — đúng quy tắc SV
-        không được tự đổi nguyện vọng sau khi đã nộp."""
+        kiện" ở state 'unassigned' ngay từ đầu (để hiện sẵn trên Kanban
+        phân bổ) — SV này vẫn phải thêm/xoá được nhiều giảng viên vào giỏ
+        như bình thường, KHÔNG được coi là "đã nộp" chỉ vì line_ids không
+        còn rỗng sau khi thêm giảng viên đầu tiên (lỗi cũ: chỉ check "có
+        dòng nào hay không" thay vì "dòng đó đã nộp thật hay chưa", khiến
+        SV bị khoá ngay sau khi thêm ĐÚNG 1 giảng viên vào giỏ). unassigned
+        mà có dòng đã qua khỏi 'cart' (nộp rồi fail hết, hoặc admin bỏ gán
+        tay) thì KHÔNG cho sửa lại — đúng quy tắc SV không được tự đổi
+        nguyện vọng sau khi đã nộp thật."""
         self.ensure_one()
-        return self.state == 'draft' or (self.state == 'unassigned' and not self.line_ids)
+        if self.state == 'draft':
+            return True
+        if self.state != 'unassigned':
+            return False
+        return not self.line_ids.filtered(lambda l: l.state != 'cart')
 
     def action_cart_add(self, creator_id, note=None, topic=None):
         """SV thêm 1 giảng viên vào hàng chờ nguyện vọng — giống thêm vào hàng chờ
