@@ -197,12 +197,24 @@ class ShowcaseAdvisorRegistration(models.Model):
             approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')[:1]
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
+    def _can_edit_cart(self):
+        """Hồ sơ còn sửa được hàng chờ nguyện vọng — draft (chưa nộp) hoặc
+        unassigned nhưng CHƯA từng có dòng nguyện vọng nào (bản ghi được
+        _sync_eligible_student_registrations tự tạo sẵn cho SV "đủ điều
+        kiện" ngay khi thêm vào danh sách, để họ hiện sẵn trên Kanban phân
+        bổ — SV này chưa từng tự nộp gì nên vẫn phải cho họ dùng giỏ nguyện
+        vọng bình thường). unassigned nhưng ĐÃ có dòng (nộp rồi fail hết,
+        hoặc admin bỏ gán tay) thì KHÔNG cho sửa lại — đúng quy tắc SV
+        không được tự đổi nguyện vọng sau khi đã nộp."""
+        self.ensure_one()
+        return self.state == 'draft' or (self.state == 'unassigned' and not self.line_ids)
+
     def action_cart_add(self, creator_id, note=None, topic=None):
         """SV thêm 1 giảng viên vào hàng chờ nguyện vọng — giống thêm vào hàng chờ
         hàng, chưa gửi cho giảng viên nào cả. Có thể thêm/xoá/đổi thứ tự
-        tự do trong hàng chờ, miễn hồ sơ chưa nộp (state == 'draft')."""
+        tự do trong hàng chờ, miễn hồ sơ chưa nộp (xem _can_edit_cart)."""
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể thêm vào hàng chờ nữa.')
         cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
         if len(cart_lines) >= self.term_id.max_preferences:
@@ -221,7 +233,7 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     def action_cart_remove(self, line_id):
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa hàng chờ nữa.')
         line = self.line_ids.filtered(lambda l: l.id == line_id and l.state == 'cart')
         if not line:
@@ -242,7 +254,7 @@ class ShowcaseAdvisorRegistration(models.Model):
         Đi qua sequence tạm -1 để tránh vi phạm unique constraint tạm thời
         khi hoán đổi 2 dòng liền kề."""
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa giỏ nữa.')
         if direction not in ('up', 'down'):
             raise UserError('Hướng di chuyển không hợp lệ.')
@@ -266,7 +278,7 @@ class ShowcaseAdvisorRegistration(models.Model):
         được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
         kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn."""
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
         cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
         if not cart_lines:

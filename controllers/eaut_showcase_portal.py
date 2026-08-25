@@ -16,12 +16,18 @@ class AdvisorPortalController(http.Controller):
         """Chọn đúng kỳ đang mở cho sinh viên hiện tại — nếu 1 kỳ có khai
                 danh sách 'Sinh viên đủ điều kiện' thì chỉ những SV trong danh sách
                 đó mới thấy kỳ này (dùng khi nhiều khoa mở kỳ song song); kỳ không
-                khai danh sách thì mở cho mọi sinh viên."""
+                khai danh sách thì mở cho mọi sinh viên. Ưu tiên kỳ đã khai rõ SV
+                này vào danh sách trước — tránh trường hợp 1 kỳ khác đang mở tự do
+                (không khai danh sách) có date_start mới hơn "cướp" mất kỳ mà SV
+                đã được chỉ định riêng."""
         partner = request.env.user.partner_id
         terms = request.env['eaut_showcase.term'].sudo().search(
             [('state', '=', 'open')], order='date_start desc')
         for term in terms:
-            if not term.eligible_student_ids or partner in term.eligible_student_ids:
+            if term.eligible_student_ids and partner in term.eligible_student_ids:
+                return term
+        for term in terms:
+            if not term.eligible_student_ids:
                 return term
         return request.env['eaut_showcase.term']
 
@@ -54,7 +60,7 @@ class AdvisorPortalController(http.Controller):
         # thêm/xoá/đổi thứ tự trong giỏ, chỉ khoá lại sau khi bấm "Nộp".
         cart_lines = all_lines.filtered(lambda l: l.state == 'cart').sorted('sequence')
         submitted_lines = (all_lines - cart_lines).sorted('sequence')
-        has_submitted = bool(registration) and registration.state != 'draft'
+        has_submitted = bool(registration) and not registration._can_edit_cart()
         tried_creator_ids = cart_lines.mapped('creator_id').ids
         available_capacities = capacities.filtered(
             lambda c: c.creator_id.id not in tried_creator_ids)
