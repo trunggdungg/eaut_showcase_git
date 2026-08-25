@@ -46,6 +46,32 @@ class ShowcaseCreator(models.Model):
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sync_name_from_user_vals(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        self._sync_name_from_user_vals(vals)
+        return super().write(vals)
+
+    @api.model
+    def _sync_name_from_user_vals(self, vals):
+        """Gán/đổi 'Tài khoản Portal' (user_id) cho 1 Creator thì đồng bộ luôn
+        'Tên tác giả' theo đúng tên tài khoản đó (res.users -> partner_id.name)
+        — tránh tình trạng tên hiển thị công khai/portal (creator.name) lệch
+        với tên GV thấy khi tự đăng nhập, vì trước đây 2 field này không liên
+        quan gì nhau, Admin gán tay user_id là dễ bị lệch ngay. Creator không
+        gắn tài khoản (tác giả dự án không có đăng nhập) thì không bị ảnh
+        hưởng — vẫn tự đặt tên tự do như trước."""
+        user_id = vals.get('user_id')
+        if not user_id:
+            return
+        partner_name = self.env['res.users'].browse(user_id).partner_id.name
+        if partner_name:
+            vals['name'] = partner_name
+
     def get_open_capacity_for_partner(self, partner):
         """Tìm đúng sức chứa (chưa rút) của GV này ở đúng kỳ đang mở mà
         `partner` đủ điều kiện — dùng cho trang chi tiết GV công khai để
