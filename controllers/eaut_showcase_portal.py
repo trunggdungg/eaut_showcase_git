@@ -89,7 +89,7 @@ class AdvisorPortalController(http.Controller):
         if not (student_code and student_class and student_major):
             error = urllib.parse.quote('Vui lòng điền đầy đủ MSSV, lớp và ngành học.')
             return request.redirect(f'/my/advisor?error={error}')
-        request.env.user.partner_id.write({
+        request.env.user.partner_id.sudo().write({
             'showcase_student_code': student_code,
             'showcase_student_class': student_class,
             'showcase_student_major': student_major,
