@@ -252,8 +252,11 @@ class AdvisorPortalController(http.Controller):
         creator = self._get_creator_for_current_user()
         if not creator:
             return request.redirect('/my/advisor-requests?error=1&tab=capacity')
-        term = request.env['eaut_showcase.term'].sudo().browse(
-            int(post.get('term_id') or 0)).exists()
+        try:
+            term_id = int(post.get('term_id') or 0)
+        except ValueError:
+            term_id = 0
+        term = request.env['eaut_showcase.term'].sudo().browse(term_id).exists()
         if not term or term.state != 'open':
             error = urllib.parse.quote('Kỳ này hiện không mở đăng ký.')
             return request.redirect(f'/my/advisor-requests?error={error}&tab=capacity')
@@ -357,13 +360,21 @@ class AdvisorPortalController(http.Controller):
         if not creator:
             return request.redirect('/my/advisor-requests?error=1')
 
-        category_ids = [int(v) for v in request.httprequest.form.getlist('category_ids') if v]
+        try:
+            category_ids = [
+                int(v) for v in request.httprequest.form.getlist('category_ids') if v]
+        except ValueError:
+            category_ids = []
+        try:
+            location_id = int(post.get('location_id')) if post.get('location_id') else False
+        except ValueError:
+            location_id = False
         vals = {
             'role': (post.get('role') or '').strip(),
             'bio': (post.get('bio') or '').strip(),
             'suggested_topics': (post.get('suggested_topics') or '').strip(),
             'website_url': (post.get('website_url') or '').strip(),
-            'location_id': int(post.get('location_id')) if post.get('location_id') else False,
+            'location_id': location_id,
             'category_ids': [(6, 0, category_ids)],
         }
         avatar_file = request.httprequest.files.get('avatar')
