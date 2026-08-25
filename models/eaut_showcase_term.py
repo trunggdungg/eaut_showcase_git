@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 DEFAULT_SLA_HOURS = 24
 
@@ -61,6 +62,30 @@ class ShowcaseTerm(models.Model):
     def _compute_eligible_student_count(self):
         for term in self:
             term.eligible_student_count = len(term.eligible_student_ids)
+
+    def unlink(self):
+        """term_id trên advisor.registration/term.capacity dùng
+        ondelete='cascade' ở tầng DB — xoá thẳng 1 Kỳ sẽ để Postgres tự xoá
+        cascade toàn bộ hồ sơ đăng ký/nguyện vọng/sức chứa của kỳ đó, KHÔNG
+        đi qua unlink() Python của 2 model con nên bỏ qua hẳn các chặn xoá
+        đã viết ở đó (SV đã duyệt/đang chờ...). Chặn ở đây — chỉ cho xoá kỳ
+        còn 'draft' và chưa có gì thật (chưa ai đăng ký/khai sức chứa) —
+        kỳ đã mở/chốt/đóng thì dùng "Đưa về Nháp"/"Đóng kỳ" để lưu vết lịch
+        sử, không xoá."""
+        for term in self:
+            if term.state != 'draft':
+                raise UserError(
+                    'Không thể xoá kỳ "%s" — kỳ đã qua trạng thái "Nháp" nên có thể đang '
+                    'chứa dữ liệu đăng ký/phân bổ giảng viên thật của sinh viên. Dùng "Đóng '
+                    'kỳ" nếu không cần dùng nữa, để giữ lại lịch sử.' % term.name
+                )
+            if term.registration_ids or term.capacity_ids:
+                raise UserError(
+                    'Không thể xoá kỳ "%s" — kỳ này đã có sinh viên đăng ký hoặc giảng viên '
+                    'khai sức chứa. Gỡ hết dữ liệu liên quan trước nếu chắc chắn không cần '
+                    'giữ kỳ này nữa.' % term.name
+                )
+        return super().unlink()
 
     @api.model_create_multi
     def create(self, vals_list):
