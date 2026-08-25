@@ -54,7 +54,11 @@ class ShowcaseCreator(models.Model):
 
     def write(self, vals):
         self._sync_name_from_user_vals(vals)
-        return super().write(vals)
+        changed_fields = [f for f in ('name', 'email') if f in vals]
+        result = super().write(vals)
+        if changed_fields:
+            self._sync_account_from_creator(changed_fields)
+        return result
 
     @api.model
     def _sync_name_from_user_vals(self, vals):
@@ -71,6 +75,27 @@ class ShowcaseCreator(models.Model):
         partner_name = self.env['res.users'].browse(user_id).partner_id.name
         if partner_name:
             vals['name'] = partner_name
+
+    def _sync_account_from_creator(self, changed_fields):
+        """Chiều ngược lại của _sync_name_from_user_vals(): GV tự sửa 'Tên
+        hiển thị'/'Email liên hệ' trên Portal (my_advisor_lecturer_profile_save)
+        thì ghi luôn giá trị mới vào res.partner của tài khoản Odoo đang gắn
+        (user_id) — để tên/email 2 nơi luôn khớp nhau, không lệch như trước.
+        Chỉ đổi partner.email (thông tin liên hệ), KHÔNG đụng res.users.login
+        — đổi login có thể tự khiến GV mất quyền đăng nhập nếu gõ sai, trong
+        khi login thật để đăng nhập không nhất thiết phải là email liên hệ
+        hiển thị công khai này."""
+        for creator in self:
+            if not creator.user_id:
+                continue
+            partner = creator.user_id.partner_id
+            partner_vals = {}
+            if 'name' in changed_fields and creator.name and partner.name != creator.name:
+                partner_vals['name'] = creator.name
+            if 'email' in changed_fields and creator.email and partner.email != creator.email:
+                partner_vals['email'] = creator.email
+            if partner_vals:
+                partner.write(partner_vals)
 
     def get_open_capacity_for_partner(self, partner):
         """Tìm đúng sức chứa (chưa rút) của GV này ở đúng kỳ đang mở mà

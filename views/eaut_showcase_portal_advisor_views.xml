@@ -665,15 +665,18 @@
 
                     <div class="mb-3">
                         <label for="name">Tên hiển thị</label>
-                        <input type="text" name="name" id="name" class="form-control bg-light"
-                               t-att-value="creator.name" readonly="readonly"/>
-                        <div class="form-text">Không thể tự sửa — liên hệ Admin nếu cần đổi.</div>
+                        <input type="text" name="name" id="name" class="form-control"
+                               t-att-value="creator.name" required="required"/>
+                        <div class="form-text">Đổi tên ở đây sẽ cập nhật luôn tên tài khoản Odoo của bạn.</div>
                     </div>
                     <div class="mb-3">
                         <label for="email">Email liên hệ</label>
-                        <input type="email" name="email" id="email" class="form-control bg-light"
-                               t-att-value="creator.email" readonly="readonly"/>
-                        <div class="form-text">Không thể tự sửa — liên hệ Admin nếu cần đổi.</div>
+                        <input type="email" name="email" id="email" class="form-control"
+                               t-att-value="creator.email" required="required"/>
+                        <div class="form-text">
+                            Đổi email ở đây sẽ cập nhật luôn email liên hệ của tài khoản Odoo — không
+                            ảnh hưởng email/tài khoản dùng để đăng nhập.
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="role">Vai trò</label>

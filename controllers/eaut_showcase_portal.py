@@ -375,7 +375,17 @@ class AdvisorPortalController(http.Controller):
             location_id = int(post.get('location_id')) if post.get('location_id') else False
         except ValueError:
             location_id = False
+        name = (post.get('name') or '').strip()
+        email = (post.get('email') or '').strip()
+        if not name:
+            error = urllib.parse.quote('Vui lòng nhập tên hiển thị.')
+            return request.redirect(f'/my/advisor-requests/profile?error={error}')
+        if not email or '@' not in email:
+            error = urllib.parse.quote('Vui lòng nhập email liên hệ hợp lệ.')
+            return request.redirect(f'/my/advisor-requests/profile?error={error}')
         vals = {
+            'name': name,
+            'email': email,
             'role': (post.get('role') or '').strip(),
             'bio': (post.get('bio') or '').strip(),
             'suggested_topics': (post.get('suggested_topics') or '').strip(),
