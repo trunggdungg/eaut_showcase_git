@@ -43,9 +43,6 @@
             'eaut_showcase/static/src/js/home.js',
             'eaut_showcase/static/src/js/detail.js',
         ],
-        'web.assets_backend': [
-            'eaut_showcase/static/src/css/backend.css',
-        ],
     },
     'icon': 'static/description/icon.png',
     'license': 'LGPL-3',
