@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError
+
+ELIGIBLE_LOG_NAMES_LIMIT = 5
 
 DEFAULT_SLA_HOURS = 24
 
@@ -42,7 +46,7 @@ class ShowcaseTerm(models.Model):
     )
     eligible_student_ids = fields.Many2many(
         'res.partner', 'eaut_showcase_term_eligible_student_rel',
-        'term_id', 'partner_id', string='Sinh viên đủ điều kiện', tracking=True,
+        'term_id', 'partner_id', string='Sinh viên đủ điều kiện',
         help="Chỉ sinh viên trong danh sách này mới thấy và đăng ký được ở "
              "kỳ này — dùng khi nhiều khoa mở kỳ song song, tránh sinh viên "
              "khoa khác lỡ đăng ký nhầm kỳ. Để trống = không giới hạn, mọi "
@@ -96,7 +100,37 @@ class ShowcaseTerm(models.Model):
         if 'eligible_student_ids' in vals:
             self._sync_eligible_student_registrations()
             self._cleanup_removed_eligible_students(old_eligible_by_term)
+            self._log_eligible_student_changes(old_eligible_by_term)
         return result
+
+    def _log_eligible_student_changes(self, old_eligible_by_term):
+        """Log gọn phần THAY ĐỔI (thêm/bớt) vào chatter — không dùng
+        tracking=True mặc định của Odoo cho field này vì nó dump nguyên
+        danh sách cũ + mới đầy đủ mỗi lần đổi, với kỳ có hàng trăm SV thì
+        1 dòng chatter sẽ dài không đọc nổi. Tên chỉ liệt kê tối đa
+        ELIGIBLE_LOG_NAMES_LIMIT người, còn lại rút gọn thành "và N khác"."""
+        for term in self:
+            old = old_eligible_by_term.get(term.id, self.env['res.partner'])
+            new = term.eligible_student_ids
+            added = new - old
+            removed = old - new
+            lines = []
+            if added:
+                lines.append(Markup('Thêm %s') % self._format_eligible_names(added, 'sinh viên đủ điều kiện'))
+            if removed:
+                lines.append(Markup('Xoá %s') % self._format_eligible_names(
+                    removed, 'sinh viên khỏi danh sách đủ điều kiện'))
+            if lines:
+                term.message_post(body=Markup('<br/>').join(lines))
+
+    @api.model
+    def _format_eligible_names(self, partners, suffix):
+        shown = partners[:ELIGIBLE_LOG_NAMES_LIMIT]
+        names = ', '.join(shown.mapped('name'))
+        extra = len(partners) - len(shown)
+        if extra > 0:
+            names = '%s và %s người khác' % (names, extra)
+        return Markup('%s %s: <b>%s</b>.') % (len(partners), suffix, names)
 
     def _cleanup_removed_eligible_students(self, old_eligible_by_term):
         """Bớt 1 SV khỏi 'Sinh viên đủ điều kiện' (VD: lỡ thêm nhầm) — hồ sơ
