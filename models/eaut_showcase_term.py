@@ -234,11 +234,17 @@ class ShowcaseTerm(models.Model):
     #         'eaut_showcase.action_eaut_showcase_creator_kanban'
     #     )
     def action_view_eligible_students(self):
+        """Nút thống kê "SV đủ điều kiện" trên form Kỳ — dùng riêng 1 list
+        view (view_eaut_showcase_eligible_student_list) có MSSV/Lớp/Ngành
+        thay vì list Contacts mặc định của res.partner, để khớp với những gì
+        đã thấy ở tab "Sinh viên đủ điều kiện" ngay trong form Kỳ."""
         self.ensure_one()
+        list_view = self.env.ref('eaut_showcase.view_eaut_showcase_eligible_student_list')
         return {
             'type': 'ir.actions.act_window',
             'name': 'Sinh viên đủ điều kiện',
             'res_model': 'res.partner',
             'view_mode': 'list,form',
+            'views': [(list_view.id, 'list'), (False, 'form')],
             'domain': [('id', 'in', self.eligible_student_ids.ids)],
         }

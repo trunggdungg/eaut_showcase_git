@@ -1,6 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Dùng riêng cho nút thống kê "SV đủ điều kiện" (action_view_eligible_students)
+         — list Contacts mặc định của res.partner không có MSSV/Lớp/Ngành. -->
+    <record id="view_eaut_showcase_eligible_student_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.eligible.student.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Sinh viên đủ điều kiện" editable="bottom">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone" string="Số điện thoại"/>
+                <field name="showcase_student_code" string="MSSV"/>
+                <field name="showcase_student_class" string="Lớp"/>
+                <field name="showcase_student_major" string="Ngành"/>
+            </list>
+        </field>
+    </record>
+
     <record id="view_eaut_showcase_term_list" model="ir.ui.view">
         <field name="name">eaut_showcase.term.list</field>
         <field name="model">eaut_showcase.term</field>
@@ -114,6 +131,7 @@
                                     <field name="phone" string="Số điện thoại"/>
                                     <field name="showcase_student_code" string="MSSV"/>
                                     <field name="showcase_student_class" string="Lớp"/>
+                                    <field name="showcase_student_major" string="Ngành"/>
                                 </list>
                             </field>
                         </page>
