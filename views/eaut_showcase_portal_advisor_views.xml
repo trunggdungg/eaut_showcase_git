@@ -21,7 +21,20 @@
 
                 <t t-else="">
 
-                    <div t-if="error" class="alert alert-danger" t-esc="error"/>
+                    <div t-if="error" id="uikick-error-overlay"
+                         style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1080;
+                                display:flex;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:8px;max-width:480px;width:90%;
+                                    padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.2);">
+                            <h5 class="mb-3 text-danger">Rất tiếc!</h5>
+                            <div class="alert alert-danger mb-3" t-esc="error"/>
+                            <div class="text-end">
+                                <button type="button" id="uikick-error-overlay-close"
+                                        class="btn btn-primary">Đóng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <div t-if="submitted" id="uikick-outcome-overlay"
                          style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1080;

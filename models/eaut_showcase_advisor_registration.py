@@ -311,7 +311,16 @@ class ShowcaseAdvisorRegistration(models.Model):
         """Nộp cả giỏ nguyện vọng 1 lần theo đúng thứ tự đã sắp — sau đó
         khoá lại, không sửa được nữa. Nguyện vọng số 1 (sequence nhỏ nhất)
         được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
-        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn."""
+        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn.
+
+        Kiểm tra riêng nguyện vọng số 1 NGAY LÚC NỘP: nếu giảng viên đó vừa
+        hết chỗ đúng lúc này (VD: SV khác vừa nộp trước và chiếm nốt suất
+        cuối, giữa lúc SV này đang thêm giỏ và bấm Nộp) thì KHÔNG cho nộp và
+        không tự động rớt xuống nguyện vọng kế tiếp — xoá luôn cả giỏ, bắt
+        SV chọn lại từ đầu, để SV biết ngay và tự quyết định lại toàn bộ thứ
+        tự ưu tiên thay vì bị lặng lẽ xử lý hộ. Việc tự động rớt xuống
+        nguyện vọng kế tiếp (_activate_next_line) vẫn giữ nguyên như cũ cho
+        các trường hợp GV từ chối/hết hạn SAU KHI đã nộp thành công."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
@@ -319,6 +328,18 @@ class ShowcaseAdvisorRegistration(models.Model):
         if not cart_lines:
             raise UserError(
                 'Hàng chờ nguyện vọng đang trống — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
+        first_line = cart_lines[0]
+        capacity = self.env['eaut_showcase.term.capacity'].search([
+            ('term_id', '=', self.term_id.id), ('creator_id', '=', first_line.creator_id.id),
+        ], limit=1)
+        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+            creator_name = first_line.creator_id.name
+            cart_lines.unlink()
+            raise UserError(
+                'Giảng viên "%s" (nguyện vọng số 1) vừa hết chỗ nhận sinh viên hướng dẫn — '
+                'hàng chờ nguyện vọng của bạn đã được xoá, vui lòng chọn lại từ đầu.'
+                % creator_name
+            )
         cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
