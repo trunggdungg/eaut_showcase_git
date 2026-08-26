@@ -138,10 +138,28 @@
         }
     }
 
+    function initOverlay(overlayId, closeBtnId) {
+        var overlay = document.getElementById(overlayId);
+        var closeBtn = document.getElementById(closeBtnId);
+        if (!overlay || !closeBtn) {
+            return;
+        }
+        function close() {
+            overlay.style.display = "none";
+        }
+        closeBtn.addEventListener("click", close);
+        overlay.addEventListener("click", function (ev) {
+            if (ev.target === overlay) {
+                close();
+            }
+        });
+    }
 
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmForms();
         initRichEditors();
+           initOverlay("uikick-outcome-overlay", "uikick-outcome-overlay-close");
+        initOverlay("uikick-error-overlay", "uikick-error-overlay-close");
         restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
             return;

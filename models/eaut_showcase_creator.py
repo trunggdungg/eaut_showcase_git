@@ -46,6 +46,79 @@ class ShowcaseCreator(models.Model):
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
 
+    def write(self, vals):
+        self._sync_name_from_user_vals(vals)
+        changed_fields = [f for f in ('name', 'email') if f in vals]
+        if self.env.context.get('showcase_skip_reverse_sync'):
+            return super().write(vals)
+        if 'email' in changed_fields:
+            self._check_login_conflict(vals['email'])
+        result = super().write(vals)
+        if changed_fields:
+            self._sync_account_from_creator(changed_fields)
+        return result
+
+
+    @api.model
+    def _sync_name_from_user_vals(self, vals):
+        """Gán/đổi 'Tài khoản Portal' (user_id) cho 1 Creator thì đồng bộ luôn
+        'Tên tác giả' theo đúng tên tài khoản đó (res.users -> partner_id.name)
+        — tránh tình trạng tên hiển thị công khai/portal (creator.name) lệch
+        với tên GV thấy khi tự đăng nhập, vì trước đây 2 field này không liên
+        quan gì nhau, Admin gán tay user_id là dễ bị lệch ngay. Creator không
+        gắn tài khoản (tác giả dự án không có đăng nhập) thì không bị ảnh
+        hưởng — vẫn tự đặt tên tự do như trước."""
+        user_id = vals.get('user_id')
+        if not user_id:
+            return
+        partner_name = self.env['res.users'].browse(user_id).partner_id.name
+        if partner_name:
+            vals['name'] = partner_name
+
+    def _check_login_conflict(self, email):
+        """Chặn TRƯỚC khi ghi (gọi ở đầu write(), trước super().write()) nếu
+        email mới trùng login của 1 tài khoản khác — login có ràng buộc
+        unique ở DB, phải kiểm tra trước khi ghi bất kỳ field nào, nếu không
+        phần ghi name/email của creator (chạy trước khi kịp raise) vẫn bị
+        lưu xuống DB dù request kết thúc bằng thông báo lỗi (controller bắt
+        UserError rồi redirect bình thường — Odoo vẫn commit transaction,
+        không tự rollback chỉ vì exception bị bắt lại)."""
+        if not email:
+            return
+        for creator in self:
+            if not creator.user_id or creator.user_id.login == email:
+                continue
+            other_login = self.env['res.users'].sudo().search([
+                ('login', '=', email), ('id', '!=', creator.user_id.id),
+            ], limit=1)
+            if other_login:
+                raise UserError(
+                    'Email "%s" đã được dùng làm tên đăng nhập của 1 tài khoản khác — '
+                    'không thể đổi email liên hệ (đồng thời là tên đăng nhập) thành '
+                    'email này.' % email
+                )
+    def _sync_account_from_creator(self, changed_fields):
+        """Chiều ngược lại của _sync_name_from_user_vals(): GV tự sửa 'Tên
+        hiển thị'/'Email liên hệ' trên Portal (my_advisor_lecturer_profile_save)
+            thì ghi luôn giá trị mới vào res.partner + res.users.login của tài
+        khoản Odoo đang gắn (user_id) — hệ thống dùng email làm tên đăng
+        nhập nên email liên hệ và login luôn phải là 1. Trùng login đã được
+        chặn từ trước ở _check_login_conflict(), gọi trước super().write()."""
+        for creator in self:
+            if not creator.user_id:
+                continue
+            partner = creator.user_id.partner_id
+            partner_vals = {}
+            if 'name' in changed_fields and creator.name and partner.name != creator.name:
+                partner_vals['name'] = creator.name
+            if 'email' in changed_fields and creator.email and partner.email != creator.email:
+                partner_vals['email'] = creator.email
+            if partner_vals:
+                partner.write(partner_vals)
+            if 'email' in changed_fields and creator.email \
+                    and creator.user_id.login != creator.email:
+                creator.user_id.write({'login': creator.email})
+
     def get_open_capacity_for_partner(self, partner):
         """Tìm đúng sức chứa (chưa rút) của GV này ở đúng kỳ đang mở mà
         `partner` đủ điều kiện — dùng cho trang chi tiết GV công khai để
@@ -183,3 +256,34 @@ class ShowcaseCreator(models.Model):
                 'sticky': False,
             },
         }
+
+
+class ResPartnerAdvisorSync(models.Model):
+    """GV đổi tên/email qua trang chuẩn của Odoo (VD: '/my/account' — form
+    địa chỉ Portal, hoặc Admin sửa trực tiếp Liên hệ ở backend) thì ghi
+    thẳng vào res.partner, KHÔNG đi qua ShowcaseCreator.write() nên không tự
+    đồng bộ ngược lại — bổ sung chiều còn thiếu này ở đây, đối xứng với
+    ShowcaseCreator._sync_account_from_creator() (chiều Creator -> partner).
+    Dùng context showcase_skip_reverse_sync để creator.write() không ghi
+    ngược lại partner (vô nghĩa, giá trị đang bằng nhau) và không đụng tới
+    login — đổi login là quyết định lớn hơn, chỉ nên xảy ra khi GV chủ động
+    đổi email liên hệ ngay trên trang Hồ sơ giảng viên, không phải như 1
+    tác dụng phụ của việc sửa Liên hệ ở nơi khác."""
+    _inherit = 'res.partner'
+
+    def write(self, vals):
+        result = super().write(vals)
+        if 'name' in vals or 'email' in vals:
+            creators = self.env['eaut_showcase.creator'].sudo().search([
+                ('user_id.partner_id', 'in', self.ids),
+            ])
+            for creator in creators:
+                partner = creator.user_id.partner_id
+                creator_vals = {}
+                if 'name' in vals and partner.name and creator.name != partner.name:
+                    creator_vals['name'] = partner.name
+                if 'email' in vals and partner.email and creator.email != partner.email:
+                    creator_vals['email'] = partner.email
+                if creator_vals:
+                    creator.with_context(showcase_skip_reverse_sync=True).write(creator_vals)
+        return result

@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
+
+from markupsafe import Markup
+
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -108,7 +111,40 @@ class ShowcaseTermCapacity(models.Model):
                     '(sinh viên sẽ được reset để chọn lại) thay vì xoá trực tiếp, tránh '
                     'mất dấu vết dữ liệu.' % (capacity.creator_id.name, count, capacity.term_id.name)
                 )
-        return super().unlink()
+        removed = [(capacity.term_id, capacity.creator_id.name) for capacity in self]
+        result = super().unlink()
+        for term, creator_name in removed:
+            term.message_post(
+                body=Markup('Giảng viên <b>%s</b> bị xoá khỏi danh sách nhận hướng dẫn của kỳ.')
+                     % creator_name)
+        return result
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        capacities = super().create(vals_list)
+        for capacity in capacities:
+            capacity.term_id.message_post(
+                body=Markup('Giảng viên <b>%s</b> được thêm vào kỳ (số sinh viên tối đa: %s).')
+                     % (capacity.creator_id.name, capacity.max_students))
+        return capacities
+
+    def write(self, vals):
+        tracked = {}
+        if 'max_students' in vals or 'withdrawn' in vals:
+            for capacity in self:
+                tracked[capacity.id] = (capacity.term_id, capacity.creator_id.name,
+                                        capacity.max_students, capacity.withdrawn)
+        result = super().write(vals)
+        for capacity_id, (term, creator_name, old_max, old_withdrawn) in tracked.items():
+            capacity = self.browse(capacity_id)
+            if 'max_students' in vals and old_max != capacity.max_students:
+                term.message_post(
+                    body=Markup('Đổi số sinh viên tối đa của giảng viên <b>%s</b>: %s → %s.')
+                         % (creator_name, old_max, capacity.max_students))
+            if 'withdrawn' in vals and old_withdrawn != capacity.withdrawn:
+                text = 'rút khỏi kỳ' if capacity.withdrawn else 'tham gia lại kỳ'
+                term.message_post(body=Markup('Giảng viên <b>%s</b> %s.') % (creator_name, text))
+        return result
 
     def _get_admin_users(self):
         """Lấy danh sách user thuộc nhóm Admin (base.group_system) — dò field

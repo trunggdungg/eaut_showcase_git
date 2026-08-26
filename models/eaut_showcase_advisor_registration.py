@@ -41,6 +41,10 @@ MSG_CREATOR_WITHDRAWN_RESET = (
 MSG_REMINDER_DEADLINE_SOON = (
     'Yêu cầu hướng dẫn của sinh viên <b>%s</b> sắp hết hạn phản hồi (còn dưới 6 giờ).'
 )
+MSG_ADMIN_ALLOW_RETRY = (
+    'Nhà trường đã cho phép bạn chọn lại giảng viên hướng dẫn — vui lòng vào trang '
+    '"Chọn giảng viên hướng dẫn" để nộp nguyện vọng mới.'
+)
 # ============ KHUNG/MÀU EMAIL — dùng chung với layout eaut_showcase.mail_layout_advisor_notification ============
 # Khung ngoài (thanh tên trường + footer) nằm trong template QWeb ở
 # views/eaut_showcase_mail_layout_views.xml, truyền qua email_layout_xmlid mỗi lần
@@ -131,6 +135,13 @@ class ShowcaseAdvisorRegistration(models.Model):
         compute='_compute_approved_creator', store=True,
     )
 
+    needs_retry_action = fields.Boolean(
+        string='Cần cho chọn lại', compute='_compute_needs_retry_action',
+        help="True khi SV thực sự đang bị khoá (đã nộp và fail hết, hoặc bị "
+             "admin bỏ gán tay) — dùng để hiện nút \"Cho SV chọn lại\" đúng "
+             "lúc, không hiện khi SV chỉ đang xây giỏ nguyện vọng dở dang.",
+    )
+
     assigned_creator_id = fields.Many2one(
         'eaut_showcase.creator', string='Đang thuộc giảng viên',
         group_expand='_group_expand_assigned_creators',
@@ -197,12 +208,42 @@ class ShowcaseAdvisorRegistration(models.Model):
             approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')[:1]
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
 
+    @api.depends('state', 'line_ids.state')
+    def _compute_needs_retry_action(self):
+        """Dùng để hiện/ẩn nút "Cho SV chọn lại" — CHỈ khi SV thực sự đang bị
+        khoá (đã nộp và fail hết, hoặc bị admin bỏ gán tay), KHÔNG hiện khi
+        SV đang unassigned nhưng chỉ mới xây giỏ dở (chưa nộp gì) — bấm nhầm
+        lúc đó sẽ xoá mất giỏ đang xây + gửi nhầm email "được chọn lại"."""
+        for reg in self:
+            reg.needs_retry_action = reg.state == 'unassigned' and not reg._can_edit_cart()
+
+    def _can_edit_cart(self):
+        """Hồ sơ còn sửa được hàng chờ nguyện vọng — draft (chưa nộp) hoặc
+          unassigned nhưng CHƯA dòng nào thực sự vượt qua trạng thái 'cart'
+        (tức là chưa từng bấm "Nộp nguyện vọng" thật). Bản ghi được
+        _sync_eligible_student_registrations tự tạo sẵn cho SV "đủ điều
+         kiện" ở state 'unassigned' ngay từ đầu (để hiện sẵn trên Kanban
+        phân bổ) — SV này vẫn phải thêm/xoá được nhiều giảng viên vào giỏ
+        như bình thường, KHÔNG được coi là "đã nộp" chỉ vì line_ids không
+        còn rỗng sau khi thêm giảng viên đầu tiên (lỗi cũ: chỉ check "có
+        dòng nào hay không" thay vì "dòng đó đã nộp thật hay chưa", khiến
+        SV bị khoá ngay sau khi thêm ĐÚNG 1 giảng viên vào giỏ). unassigned
+        mà có dòng đã qua khỏi 'cart' (nộp rồi fail hết, hoặc admin bỏ gán
+        tay) thì KHÔNG cho sửa lại — đúng quy tắc SV không được tự đổi
+        nguyện vọng sau khi đã nộp thật."""
+        self.ensure_one()
+        if self.state == 'draft':
+            return True
+        if self.state != 'unassigned':
+            return False
+        return not self.line_ids.filtered(lambda l: l.state != 'cart')
+
     def action_cart_add(self, creator_id, note=None, topic=None):
         """SV thêm 1 giảng viên vào hàng chờ nguyện vọng — giống thêm vào hàng chờ
         hàng, chưa gửi cho giảng viên nào cả. Có thể thêm/xoá/đổi thứ tự
-        tự do trong hàng chờ, miễn hồ sơ chưa nộp (state == 'draft')."""
+        tự do trong hàng chờ, miễn hồ sơ chưa nộp (xem _can_edit_cart)."""
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể thêm vào hàng chờ nữa.')
         cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
         if len(cart_lines) >= self.term_id.max_preferences:
@@ -210,6 +251,12 @@ class ShowcaseAdvisorRegistration(models.Model):
                 'Giỏ nguyện vọng đã đầy (tối đa %s giảng viên).' % self.term_id.max_preferences)
         if creator_id in cart_lines.mapped('creator_id').ids:
             raise UserError('Giảng viên này đã có trong hàng chờ nguyện vọng của bạn rồi.')
+        capacity = self.env['eaut_showcase.term.capacity'].search([
+            ('term_id', '=', self.term_id.id), ('creator_id', '=', creator_id),
+        ], limit=1)
+        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+            raise UserError(
+                'Giảng viên này đã hết chỗ nhận sinh viên hướng dẫn, vui lòng chọn giảng viên khác.')
         self.env['eaut_showcase.advisor.registration.line'].create({
             'registration_id': self.id,
             'creator_id': creator_id,
@@ -221,7 +268,7 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     def action_cart_remove(self, line_id):
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa hàng chờ nữa.')
         line = self.line_ids.filtered(lambda l: l.id == line_id and l.state == 'cart')
         if not line:
@@ -232,17 +279,18 @@ class ShowcaseAdvisorRegistration(models.Model):
     def _resequence_cart(self):
         self.ensure_one()
         cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
-        for index, line in enumerate(cart_lines, start=1):
-            if line.sequence != index:
-                line.write({'sequence': index})
+        pairs = [(line, index) for index, line in enumerate(cart_lines, start=1)
+                 if line.sequence != index]
+        self.env['eaut_showcase.advisor.registration.line']._write_sequences_safe(pairs)
 
     def action_cart_move(self, line_id, direction):
         """Đổi thứ tự 1 dòng trong giỏ lên/xuống 1 bậc — dùng nút bấm thay
         vì kéo-thả, đủ dùng cho danh sách ngắn (tối đa vài giảng viên).
-        Đi qua sequence tạm -1 để tránh vi phạm unique constraint tạm thời
-        khi hoán đổi 2 dòng liền kề."""
+         Hoán đổi qua _write_sequences_safe() (dải giá trị âm tạm thời +
+        flush trước khi ghi giá trị thật) để tránh vi phạm unique constraint
+        tạm thời khi hoán đổi 2 dòng liền kề — xem docstring hàm đó."""
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa giỏ nữa.')
         if direction not in ('up', 'down'):
             raise UserError('Hướng di chuyển không hợp lệ.')
@@ -256,22 +304,42 @@ class ShowcaseAdvisorRegistration(models.Model):
             return
         other = cart_lines[target_index]
         line_seq, other_seq = line.sequence, other.sequence
-        line.write({'sequence': -1})
-        other.write({'sequence': line_seq})
-        line.write({'sequence': other_seq})
+        self.env['eaut_showcase.advisor.registration.line']._write_sequences_safe(
+            [(line, other_seq), (other, line_seq)])
 
     def action_submit_cart(self):
         """Nộp cả giỏ nguyện vọng 1 lần theo đúng thứ tự đã sắp — sau đó
         khoá lại, không sửa được nữa. Nguyện vọng số 1 (sequence nhỏ nhất)
         được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
-        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn."""
+        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn.
+
+        Kiểm tra riêng nguyện vọng số 1 NGAY LÚC NỘP: nếu giảng viên đó vừa
+        hết chỗ đúng lúc này (VD: SV khác vừa nộp trước và chiếm nốt suất
+        cuối, giữa lúc SV này đang thêm giỏ và bấm Nộp) thì KHÔNG cho nộp và
+        không tự động rớt xuống nguyện vọng kế tiếp — xoá luôn cả giỏ, bắt
+        SV chọn lại từ đầu, để SV biết ngay và tự quyết định lại toàn bộ thứ
+        tự ưu tiên thay vì bị lặng lẽ xử lý hộ. Việc tự động rớt xuống
+        nguyện vọng kế tiếp (_activate_next_line) vẫn giữ nguyên như cũ cho
+        các trường hợp GV từ chối/hết hạn SAU KHI đã nộp thành công."""
         self.ensure_one()
-        if self.state != 'draft':
+        if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
         cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
         if not cart_lines:
             raise UserError(
                 'Hàng chờ nguyện vọng đang trống — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
+        first_line = cart_lines[0]
+        capacity = self.env['eaut_showcase.term.capacity'].search([
+            ('term_id', '=', self.term_id.id), ('creator_id', '=', first_line.creator_id.id),
+        ], limit=1)
+        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+            creator_name = first_line.creator_id.name
+            cart_lines.unlink()
+            raise UserError(
+                'Giảng viên "%s" (nguyện vọng số 1) vừa hết chỗ nhận sinh viên hướng dẫn — '
+                'hàng chờ nguyện vọng của bạn đã được xoá, vui lòng chọn lại từ đầu.'
+                % creator_name
+            )
         cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
@@ -314,15 +382,24 @@ class ShowcaseAdvisorRegistration(models.Model):
                 body=body, partner_ids=self.student_id.ids,
                 email_layout_xmlid=EMAIL_LAYOUT_XMLID)
 
+    def _reset_lines_for_retry(self):
+        """Xoá hết nguyện vọng cũ, đưa hồ sơ về 'draft' để SV chọn lại từ
+        đầu — bước dùng chung cho action_reset_for_withdrawal (GV rút khỏi
+        kỳ) và action_admin_allow_retry (Admin chủ động cho SV thêm 1 lượt
+        thay vì tự gán tay)."""
+        self.ensure_one()
+        self.line_ids.unlink()
+        self.write({'state': 'draft'})
+        self.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
-        để sinh viên vote lại từ đầu (ngoại lệ duy nhất cho quy tắc SV không
-          được tự đổi nguyện vọng). creator (nếu có): GV vừa rút, để báo rõ
-        cho SV biết vì sao hồ sơ của họ bị reset."""
+          để sinh viên vote lại từ đầu (1 trong 2 ngoại lệ cho quy tắc SV
+        không được tự đổi nguyện vọng, xem thêm action_admin_allow_retry).
+        creator (nếu có): GV vừa rút, để báo rõ cho SV biết vì sao hồ sơ của
+        họ bị reset."""
         for reg in self:
-            reg.line_ids.unlink()
-            reg.write({'state': 'draft'})
-            reg.with_context(advisor_internal_write=True).write({'assigned_creator_id': False})
+            reg._reset_lines_for_retry()
             if creator:
                 outcome = Markup('%s %s') % (
                     _email_badge('Cần chọn lại', 'warning'),
@@ -336,6 +413,38 @@ class ShowcaseAdvisorRegistration(models.Model):
                     body=body, partner_ids=reg.student_id.ids,
                     email_layout_xmlid=EMAIL_LAYOUT_XMLID,
                 )
+
+    def action_admin_allow_retry(self):
+        """Nút Admin dùng khi 1 SV đã "Chưa có GVHD" THỰC SỰ vì hết nguyện
+        vọng mà không được duyệt (hoặc bị admin bỏ gán tay), và Admin muốn
+        cho họ 1 lượt tự chọn lại trên Portal, thay vì tự gán tay qua Kanban
+        — ngoại lệ thứ 2 cho quy tắc SV không được tự đổi nguyện vọng (xem
+        action_reset_for_withdrawal). KHÔNG áp dụng khi SV chỉ đang unassigned
+        vì bản ghi mới được _sync_eligible_student_registrations tự tạo sẵn
+        (chưa nộp gì, giỏ có thể đang xây dở) — bấm nhầm lúc đó sẽ xoá mất
+        giỏ đang xây + gửi nhầm email "được chọn lại" (dùng needs_retry_action
+        để phân biệt đúng 2 trường hợp)."""
+        for reg in self:
+            if not reg.needs_retry_action:
+                raise UserError(
+                    'Chỉ áp dụng cho sinh viên thực sự đang bị khoá (đã nộp và hết nguyện '
+                    'vọng, hoặc bị bỏ gán tay) — hồ sơ của "%s" hiện sinh viên vẫn tự sửa '
+                    'được giỏ nguyện vọng bình thường, không cần thao tác này.'
+                    % reg.student_id.name
+                )
+            reg._reset_lines_for_retry()
+            outcome = Markup('%s %s') % (
+                _email_badge('Được chọn lại', 'info'), MSG_ADMIN_ALLOW_RETRY,
+            )
+            body = _email_body(
+                reg.student_id.name, [outcome],
+                reg.get_base_url() + EMAIL_STUDENT_PATH, 'Chọn giảng viên hướng dẫn',
+            )
+            reg.with_context(mail_notify_force_send=False).message_post(
+                body=body, partner_ids=reg.student_id.ids,
+                email_layout_xmlid=EMAIL_LAYOUT_XMLID,
+            )
+
 
     def action_unassign(self):
         """Nút "Bỏ gán" trên thẻ Kanban — đưa SV về "Chưa có GVHD" ngay lập
@@ -445,6 +554,28 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.',
     )
 
+    @api.model
+    def _write_sequences_safe(self, pairs):
+        """Ghi field 'sequence' cho nhiều dòng cùng lúc (đổi thứ tự/dồn lại
+        sau khi xoá) mà không vi phạm unique(registration_id, sequence) —
+        pairs: list [(line, new_sequence), ...]. Gọi write() nhiều lần liên
+        tiếp lên cùng field không đủ an toàn: Odoo không đẩy SQL xuống DB
+        ngay mỗi lần write(), mà gộp các thay đổi đang chờ (cache) thành 1
+        câu UPDATE nhiều dòng lúc flush — nên 1 giá trị "tạm" ghi giữa chừng
+        (để né trùng) có thể bị ghi đè trong cache trước khi kịp chạm DB,
+        khiến PostgreSQL nhận đúng 1 câu UPDATE đổi chỗ nhiều dòng cùng lúc
+        và tuỳ thứ tự xử lý nội bộ của nó mà dính trùng khoá tạm thời dù
+        kết quả cuối cùng là đúng. Cách chắc chắn: chuyển tất cả dòng liên
+        quan sang 1 dải số ÂM tạm thời (chắc chắn không trùng ai) + flush
+        thật xuống DB, rồi mới ghi giá trị thật ở lượt thứ 2."""
+        if not pairs:
+            return
+        for offset, (line, _new_sequence) in enumerate(pairs, start=1):
+            line.write({'sequence': -offset})
+        self.env.flush_all()
+        for line, new_sequence in pairs:
+            line.write({'sequence': new_sequence})
+
     @api.constrains('state')
     def _check_single_active_line(self):
         """Đảm bảo 1 hồ sơ đăng ký chỉ có tối đa 1 dòng đang 'pending' hoặc
@@ -520,8 +651,15 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         self.ensure_one()
         capacity = self._get_capacity()
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
-            self.write({'state': 'rejected', 'decided_date': fields.Datetime.now()})
-            self.registration_id._activate_next_line(reason=reason)
+            reject_reason = 'Giảng viên đã rút khỏi kỳ này.' if (capacity and capacity.withdrawn) \
+                else 'Giảng viên đã hết chỗ nhận sinh viên hướng dẫn.'
+            self.write({
+                'state': 'rejected', 'decided_date': fields.Datetime.now(),
+                'reject_reason': reject_reason,
+            })
+            auto_reason = Markup(MSG_LINE_REJECTED) % (
+                self.creator_id.name, Markup(MSG_LINE_REJECTED_REASON_SUFFIX) % reject_reason)
+            self.registration_id._activate_next_line(reason=reason or auto_reason)
             return
         now = fields.Datetime.now()
         self.write({
