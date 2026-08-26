@@ -36,6 +36,30 @@
                         </div>
                     </div>
 
+                    <div t-if="slot_taken" id="uikick-slot-taken-overlay"
+                         style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1080;
+                                display:flex;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:8px;max-width:480px;width:90%;
+                                    padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.2);">
+                            <h5 class="mb-3 text-warning">Giảng viên vừa hết chỗ!</h5>
+                            <div class="alert alert-warning mb-3">
+                                Giảng viên sau đã hết chỗ nhận sinh viên hướng dẫn ngay trước khi hệ
+                                thống nộp nguyện vọng của bạn (có sinh viên khác vừa nộp trước và
+                                chiếm suất cuối): <strong t-esc="slot_taken"/>.
+                                <br/>
+                                Giảng viên này đã được <strong>tự xoá khỏi hàng chờ nguyện vọng</strong>
+                                của bạn — nguyện vọng của bạn <strong>chưa được nộp</strong>. Vui lòng
+                                chọn giảng viên khác thay vào chỗ trống (nếu muốn) rồi bấm lại
+                                "Nộp nguyện vọng".
+                            </div>
+                            <div class="text-end">
+                                <button type="button" id="uikick-slot-taken-overlay-close"
+                                        class="btn btn-primary">Đã hiểu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div t-if="submitted" id="uikick-outcome-overlay"
                          style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1080;
                                 display:flex;align-items:center;justify-content:center;">

@@ -165,6 +165,7 @@
         initRichEditors();
         initOverlay("uikick-outcome-overlay", "uikick-outcome-overlay-close");
         initOverlay("uikick-error-overlay", "uikick-error-overlay-close");
+        initOverlay("uikick-slot-taken-overlay", "uikick-slot-taken-overlay-close");
         restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
             return;

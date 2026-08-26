@@ -63,7 +63,7 @@ class AdvisorPortalController(http.Controller):
         has_submitted = bool(registration) and not registration._can_edit_cart()
         tried_creator_ids = cart_lines.mapped('creator_id').ids
         available_capacities = capacities.filtered(
-            lambda c: c.creator_id.id not in tried_creator_ids)
+            lambda c: c.creator_id.id not in tried_creator_ids and c.remaining_slots > 0)
         values = {
             'lecturer_profile': False,
             'term': term,
@@ -77,6 +77,7 @@ class AdvisorPortalController(http.Controller):
             'partner': request.env.user.partner_id,
             'submitted': kw.get('submitted'),
             'error': kw.get('error'),
+            'slot_taken': kw.get('slot_taken'),
         }
         return request.render('eaut_showcase.portal_my_advisor', values)
 
@@ -177,13 +178,19 @@ class AdvisorPortalController(http.Controller):
         if not registration:
             return request.redirect('/my/advisor?error=1')
         try:
-            registration.action_submit_cart()
+            removed_names = registration.action_submit_cart()
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
             _logger.error('Lỗi khi sinh viên nộp hàng chờ nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
+        if removed_names:
+            # 1 hoặc nhiều GV trong giỏ vừa hết chỗ đúng lúc nộp (SV khác nộp
+            # trước, chiếm nốt suất cuối) — đã tự xoá khỏi giỏ, CHƯA nộp thật,
+            # báo cho SV qua popup riêng (không phải popup lỗi) để chọn lại.
+            slot_taken = urllib.parse.quote(', '.join(removed_names))
+            return request.redirect(f'/my/advisor?slot_taken={slot_taken}')
         return request.redirect('/my/advisor?submitted=1')
 
     # ============ GIẢNG VIÊN: DUYỆT YÊU CẦU HƯỚNG DẪN ============

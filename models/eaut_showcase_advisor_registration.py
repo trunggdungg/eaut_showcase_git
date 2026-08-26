@@ -317,10 +317,13 @@ class ShowcaseAdvisorRegistration(models.Model):
         giảng viên nào vừa hết chỗ đúng lúc này (VD: SV khác vừa nộp trước
         và chiếm nốt suất cuối, giữa lúc SV này đang xây giỏ) thì xoá đúng
         dòng đó khỏi giỏ, dồn lại thứ tự — nhưng KHÔNG tự nộp thay, chỉ báo
-        lỗi cho SV biết đã loại ai, để SV tự xem lại giỏ (thứ tự, có muốn
-        thêm GV khác thay chỗ trống không...) rồi tự bấm "Nộp nguyện vọng"
-        lần nữa mới thật sự nộp. Nếu loại hết sạch, không còn nguyện vọng
-        nào hợp lệ, thì báo bắt SV chọn lại từ đầu."""
+        cho SV biết đã loại ai (qua popup riêng ở portal, không phải lỗi),
+        để SV tự xem lại giỏ (thứ tự, có muốn thêm GV khác thay chỗ trống
+        không...) rồi tự bấm "Nộp nguyện vọng" lần nữa mới thật sự nộp.
+
+        Trả về list tên GV vừa bị loại (rỗng nếu nộp thành công luôn) — KHÔNG
+        raise UserError cho trường hợp này nữa, để controller phân biệt được
+        với lỗi thật và hiển thị popup thông báo thay vì popup lỗi."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
@@ -339,17 +342,7 @@ class ShowcaseAdvisorRegistration(models.Model):
                 line.unlink()
         if removed_names:
             self._resequence_cart()
-            remaining_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
-            if not remaining_lines:
-                raise UserError(
-                    'Tất cả giảng viên trong hàng chờ đều vừa hết chỗ nhận sinh viên hướng dẫn: '
-                    '%s — vui lòng chọn lại từ đầu.' % ', '.join(removed_names)
-                )
-            raise UserError(
-                'Giảng viên sau đã hết chỗ nhận sinh viên hướng dẫn nên vừa bị loại khỏi hàng '
-                'chờ của bạn: %s. Vui lòng kiểm tra lại giỏ nguyện vọng rồi bấm "Nộp nguyện '
-                'vọng" lần nữa.' % ', '.join(removed_names)
-            )
+            return removed_names
         cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
