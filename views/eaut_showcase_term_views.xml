@@ -101,6 +101,12 @@
                                 giảng viên. Nếu có nhiều kỳ mở song song (nhiều khoa), mỗi
                                 sinh viên chỉ nên có tên ở đúng 1 kỳ của khoa mình.
                             </p>
+                            <div class="mb-2">
+                                <button name="%(action_eaut_showcase_eligible_import_wizard)d"
+                                        type="action" string="Nhập danh sách từ file CSV"
+                                        class="btn-secondary" icon="fa-upload"
+                                        context="{'default_term_id': id}"/>
+                            </div>
                             <field name="eligible_student_ids">
                                 <list>
                                     <field name="name"/>
@@ -126,6 +132,48 @@
                 Chưa có kỳ đồ án nào. Tạo 1 kỳ mới để bắt đầu nhận đăng ký chọn giảng viên hướng dẫn.
             </p>
         </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Wizard: nhập nhanh "Sinh viên đủ điều kiện" từ file CSV       -->
+    <!-- ============================================================ -->
+    <record id="view_eaut_showcase_eligible_import_wizard_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.eligible.import.wizard.form</field>
+        <field name="model">eaut_showcase.eligible.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Nhập danh sách sinh viên đủ điều kiện">
+                <field name="term_id" invisible="1"/>
+                <group invisible="state != 'upload'">
+                    <p class="text-muted" colspan="2">
+                        Chọn file CSV (UTF-8) với các cột <b>Họ tên, Email, MSSV, Lớp, Ngành</b> —
+                        chỉ "Email" là bắt buộc, dùng để khớp với liên hệ đã có sẵn (cập nhật
+                        MSSV/Lớp/Ngành) hoặc tạo liên hệ mới nếu chưa có. Toàn bộ liên hệ hợp lệ
+                        trong file sẽ được thêm vào "Sinh viên đủ điều kiện" của kỳ này — vẫn cần
+                        tự cấp Portal access cho từng sinh viên như quy trình hiện tại, wizard này
+                        không tự gửi lời mời.
+                    </p>
+                    <field name="filename" invisible="1"/>
+                    <field name="file" filename="filename" required="state == 'upload'"/>
+                </group>
+                <group invisible="state != 'done'">
+                    <field name="result_message" nolabel="1" readonly="1"/>
+                </group>
+                <footer>
+                    <button string="Nhập" name="action_import" type="object"
+                            class="btn-primary" invisible="state != 'upload'"/>
+                    <button string="Nhập file khác" name="action_back_to_upload" type="object"
+                            invisible="state != 'done'"/>
+                    <button string="Đóng" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_eligible_import_wizard" model="ir.actions.act_window">
+        <field name="name">Nhập danh sách sinh viên đủ điều kiện</field>
+        <field name="res_model">eaut_showcase.eligible.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
     </record>
 
     <record id="view_eaut_showcase_term_close_warning_form" model="ir.ui.view">

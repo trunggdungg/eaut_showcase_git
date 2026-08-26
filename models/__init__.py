@@ -13,3 +13,4 @@ from . import eaut_showcase_term_close_warning
 from . import eaut_showcase_term_capacity
 from . import eaut_showcase_advisor_registration
 from . import eaut_showcase_res_student
+from . import eaut_showcase_eligible_import_wizard
