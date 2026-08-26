@@ -138,6 +138,11 @@
         }
     }
 
+
+    /** Popup tóm tắt kết quả nộp nguyện vọng / lỗi — chỉ render khi cần
+     * (?submitted=1 hoặc ?error=...), tự hiện sẵn qua CSS (server chỉ
+     * render div khi cần), JS ở đây chỉ lo đóng lại (nút "Đóng" hoặc bấm ra
+     * ngoài) — dùng chung cho mọi overlay dạng này trên trang. */
     function initOverlay(overlayId, closeBtnId) {
         var overlay = document.getElementById(overlayId);
         var closeBtn = document.getElementById(closeBtnId);
@@ -158,7 +163,7 @@
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmForms();
         initRichEditors();
-           initOverlay("uikick-outcome-overlay", "uikick-outcome-overlay-close");
+        initOverlay("uikick-outcome-overlay", "uikick-outcome-overlay-close");
         initOverlay("uikick-error-overlay", "uikick-error-overlay-close");
         restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {

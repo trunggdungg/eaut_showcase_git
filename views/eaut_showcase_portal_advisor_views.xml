@@ -21,7 +21,7 @@
 
                 <t t-else="">
 
-                 <div t-if="error" id="uikick-error-overlay"
+                    <div t-if="error" id="uikick-error-overlay"
                          style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1080;
                                 display:flex;align-items:center;justify-content:center;">
                         <div style="background:#fff;border-radius:8px;max-width:480px;width:90%;
@@ -35,8 +35,36 @@
                             </div>
                         </div>
                     </div>
-                    <div t-if="submitted" class="alert alert-success">
-                        Đã nộp nguyện vọng thành công. Bạn sẽ được thông báo khi có kết quả.
+
+                    <div t-if="submitted" id="uikick-outcome-overlay"
+                         style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1080;
+                                display:flex;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:8px;max-width:480px;width:90%;
+                                    padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.2);">
+                            <h5 class="mb-3">Kết quả nộp nguyện vọng</h5>
+                            <div t-if="registration and registration.state == 'approved'"
+                                 class="alert alert-success mb-3">
+                                Bạn đã có giảng viên hướng dẫn:
+                                <strong t-esc="registration.approved_creator_id.name"/>.
+                            </div>
+                            <div t-elif="registration and registration.state == 'unassigned'"
+                                 class="alert alert-warning mb-3">
+                                <t t-if="len(submitted_lines) == 1">Nguyện vọng của bạn</t>
+                                <t t-else="">Cả <t t-esc="len(submitted_lines)"/> nguyện vọng đều</t>
+                                không thành công. Nhà trường sẽ liên hệ để phân giảng viên hướng dẫn
+                                cho bạn.
+                            </div>
+                            <div t-else="" class="alert alert-info mb-3">
+                                Đã nộp nguyện vọng thành công — nguyện vọng số 1 đang được xử lý
+                                trước, các nguyện vọng còn lại sẽ tự động được chuyển tới khi
+                                nguyện vọng trước bị từ chối/hết hạn.
+                            </div>
+                            <div class="text-end">
+                                <button type="button" id="uikick-outcome-overlay-close"
+                                        class="btn btn-primary">Đóng
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     <t t-if="not term">
@@ -678,16 +706,16 @@
 
                     <div class="mb-3">
                         <label for="name">Tên hiển thị</label>
-                         <input type="text" name="name" id="name" class="form-control"
+                        <input type="text" name="name" id="name" class="form-control"
                                t-att-value="creator.name" required="required"/>
                         <div class="form-text">Đổi tên ở đây sẽ cập nhật luôn tên tài khoản Odoo của bạn.</div>
                     </div>
                     <div class="mb-3">
                         <label for="email">Email liên hệ</label>
-                            <input type="email" name="email" id="email" class="form-control"
+                        <input type="email" name="email" id="email" class="form-control"
                                t-att-value="creator.email" required="required"/>
                         <div class="form-text">
-                               Đây cũng là email dùng để đăng nhập — đổi ở đây sẽ đổi luôn tên đăng
+                            Đây cũng là email dùng để đăng nhập — đổi ở đây sẽ đổi luôn tên đăng
                             nhập của bạn, lần đăng nhập sau hãy dùng email mới này.
                         </div>
                     </div>

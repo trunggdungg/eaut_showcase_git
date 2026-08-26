@@ -134,7 +134,6 @@ class ShowcaseAdvisorRegistration(models.Model):
         'eaut_showcase.creator', string='Giảng viên hướng dẫn',
         compute='_compute_approved_creator', store=True,
     )
-
     needs_retry_action = fields.Boolean(
         string='Cần cho chọn lại', compute='_compute_needs_retry_action',
         help="True khi SV thực sự đang bị khoá (đã nộp và fail hết, hoặc bị "
@@ -219,10 +218,10 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     def _can_edit_cart(self):
         """Hồ sơ còn sửa được hàng chờ nguyện vọng — draft (chưa nộp) hoặc
-          unassigned nhưng CHƯA dòng nào thực sự vượt qua trạng thái 'cart'
+        unassigned nhưng CHƯA dòng nào thực sự vượt qua trạng thái 'cart'
         (tức là chưa từng bấm "Nộp nguyện vọng" thật). Bản ghi được
         _sync_eligible_student_registrations tự tạo sẵn cho SV "đủ điều
-         kiện" ở state 'unassigned' ngay từ đầu (để hiện sẵn trên Kanban
+        kiện" ở state 'unassigned' ngay từ đầu (để hiện sẵn trên Kanban
         phân bổ) — SV này vẫn phải thêm/xoá được nhiều giảng viên vào giỏ
         như bình thường, KHÔNG được coi là "đã nộp" chỉ vì line_ids không
         còn rỗng sau khi thêm giảng viên đầu tiên (lỗi cũ: chỉ check "có
@@ -256,7 +255,8 @@ class ShowcaseAdvisorRegistration(models.Model):
         ], limit=1)
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
             raise UserError(
-                'Giảng viên này đã hết chỗ nhận sinh viên hướng dẫn, vui lòng chọn giảng viên khác.')
+                'Giảng viên này đã hết chỗ nhận sinh viên hướng dẫn (hoặc đã rút khỏi '
+                'kỳ) — vui lòng chọn giảng viên khác.')
         self.env['eaut_showcase.advisor.registration.line'].create({
             'registration_id': self.id,
             'creator_id': creator_id,
@@ -286,7 +286,7 @@ class ShowcaseAdvisorRegistration(models.Model):
     def action_cart_move(self, line_id, direction):
         """Đổi thứ tự 1 dòng trong giỏ lên/xuống 1 bậc — dùng nút bấm thay
         vì kéo-thả, đủ dùng cho danh sách ngắn (tối đa vài giảng viên).
-         Hoán đổi qua _write_sequences_safe() (dải giá trị âm tạm thời +
+        Hoán đổi qua _write_sequences_safe() (dải giá trị âm tạm thời +
         flush trước khi ghi giá trị thật) để tránh vi phạm unique constraint
         tạm thời khi hoán đổi 2 dòng liền kề — xem docstring hàm đó."""
         self.ensure_one()
@@ -313,14 +313,14 @@ class ShowcaseAdvisorRegistration(models.Model):
         được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
         kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn.
 
-        Kiểm tra riêng nguyện vọng số 1 NGAY LÚC NỘP: nếu giảng viên đó vừa
-        hết chỗ đúng lúc này (VD: SV khác vừa nộp trước và chiếm nốt suất
-        cuối, giữa lúc SV này đang thêm giỏ và bấm Nộp) thì KHÔNG cho nộp và
-        không tự động rớt xuống nguyện vọng kế tiếp — xoá luôn cả giỏ, bắt
-        SV chọn lại từ đầu, để SV biết ngay và tự quyết định lại toàn bộ thứ
-        tự ưu tiên thay vì bị lặng lẽ xử lý hộ. Việc tự động rớt xuống
-        nguyện vọng kế tiếp (_activate_next_line) vẫn giữ nguyên như cũ cho
-        các trường hợp GV từ chối/hết hạn SAU KHI đã nộp thành công."""
+        Kiểm tra LẠI TOÀN BỘ giỏ NGAY LÚC NỘP (không chỉ nguyện vọng số 1):
+        giảng viên nào vừa hết chỗ đúng lúc này (VD: SV khác vừa nộp trước
+        và chiếm nốt suất cuối, giữa lúc SV này đang xây giỏ) thì xoá đúng
+        dòng đó khỏi giỏ, dồn lại thứ tự — nhưng KHÔNG tự nộp thay, chỉ báo
+        lỗi cho SV biết đã loại ai, để SV tự xem lại giỏ (thứ tự, có muốn
+        thêm GV khác thay chỗ trống không...) rồi tự bấm "Nộp nguyện vọng"
+        lần nữa mới thật sự nộp. Nếu loại hết sạch, không còn nguyện vọng
+        nào hợp lệ, thì báo bắt SV chọn lại từ đầu."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
@@ -328,21 +328,32 @@ class ShowcaseAdvisorRegistration(models.Model):
         if not cart_lines:
             raise UserError(
                 'Hàng chờ nguyện vọng đang trống — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
-        first_line = cart_lines[0]
-        capacity = self.env['eaut_showcase.term.capacity'].search([
-            ('term_id', '=', self.term_id.id), ('creator_id', '=', first_line.creator_id.id),
-        ], limit=1)
-        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
-            creator_name = first_line.creator_id.name
-            cart_lines.unlink()
+        Capacity = self.env['eaut_showcase.term.capacity']
+        removed_names = []
+        for line in cart_lines:
+            capacity = Capacity.search([
+                ('term_id', '=', self.term_id.id), ('creator_id', '=', line.creator_id.id),
+            ], limit=1)
+            if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+                removed_names.append(line.creator_id.name)
+                line.unlink()
+        if removed_names:
+            self._resequence_cart()
+            remaining_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
+            if not remaining_lines:
+                raise UserError(
+                    'Tất cả giảng viên trong hàng chờ đều vừa hết chỗ nhận sinh viên hướng dẫn: '
+                    '%s — vui lòng chọn lại từ đầu.' % ', '.join(removed_names)
+                )
             raise UserError(
-                'Giảng viên "%s" (nguyện vọng số 1) vừa hết chỗ nhận sinh viên hướng dẫn — '
-                'hàng chờ nguyện vọng của bạn đã được xoá, vui lòng chọn lại từ đầu.'
-                % creator_name
+                'Giảng viên sau đã hết chỗ nhận sinh viên hướng dẫn nên vừa bị loại khỏi hàng '
+                'chờ của bạn: %s. Vui lòng kiểm tra lại giỏ nguyện vọng rồi bấm "Nộp nguyện '
+                'vọng" lần nữa.' % ', '.join(removed_names)
             )
         cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
+        return removed_names
 
     def _activate_next_line(self, reason=None):
         """reason (nếu có): lý do dẫn tới lượt kích hoạt này (bị từ chối/hết hạn),
@@ -394,7 +405,7 @@ class ShowcaseAdvisorRegistration(models.Model):
 
     def action_reset_for_withdrawal(self, creator=None):
         """Giảng viên rút khỏi kỳ giữa lúc đang mở vote — reset toàn bộ hồ sơ
-          để sinh viên vote lại từ đầu (1 trong 2 ngoại lệ cho quy tắc SV
+        để sinh viên vote lại từ đầu (1 trong 2 ngoại lệ cho quy tắc SV
         không được tự đổi nguyện vọng, xem thêm action_admin_allow_retry).
         creator (nếu có): GV vừa rút, để báo rõ cho SV biết vì sao hồ sơ của
         họ bị reset."""
@@ -444,7 +455,6 @@ class ShowcaseAdvisorRegistration(models.Model):
                 body=body, partner_ids=reg.student_id.ids,
                 email_layout_xmlid=EMAIL_LAYOUT_XMLID,
             )
-
 
     def action_unassign(self):
         """Nút "Bỏ gán" trên thẻ Kanban — đưa SV về "Chưa có GVHD" ngay lập
@@ -647,7 +657,13 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
         luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu — reason (nếu có) được
         truyền tiếp cho _activate_next_line() khi phải dò tiếp, để không mất lý
-        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng."""
+        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng. Trường
+        hợp tự bỏ qua ở đây (không phải do GV chủ động từ chối) vẫn có thể xảy ra
+        dù action_cart_add() đã chặn từ lúc thêm vào giỏ — vì giữa lúc thêm vào
+        giỏ và lúc thật sự tới lượt kích hoạt (nguyện vọng #2 trở đi), GV có thể
+        vừa hết chỗ do SV khác được duyệt trước — nên vẫn cần ghi rõ reject_reason
+        (không được để trống) và chỉ tạo reason mới khi chưa có reason nào truyền
+        vào, tránh mất lý do gốc của lượt xử lý trước đó."""
         self.ensure_one()
         capacity = self._get_capacity()
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:

@@ -27,6 +27,7 @@
                 <field name="student_id"/>
                 <field name="state"/>
                 <field name="assigned_creator_id"/>
+                <field name="needs_retry_action"/>
                 <templates>
                     <t t-name="card">
                         <div t-attf-class="oe_kanban_global_click o_kanban_card oe_kanban_card
@@ -34,31 +35,26 @@
                                               record.state.raw_value === 'unassigned' ? 'border-danger' :
                                               'border-warning'}">
                             <div class="o_kanban_record_top">
-                                <strong>
-                                    <field name="student_id"/>
-                                </strong>
+                                <strong><field name="student_id"/></strong>
                             </div>
                             <div class="o_kanban_record_body">
                                 <span t-if="record.state.raw_value === 'approved'"
-                                      class="badge text-bg-success">Đã duyệt
-                                </span>
+                                      class="badge text-bg-success">Đã duyệt</span>
                                 <span t-elif="record.state.raw_value === 'in_progress'"
-                                      class="badge text-bg-warning">Đang chờ duyệt
-                                </span>
+                                      class="badge text-bg-warning">Đang chờ duyệt</span>
                                 <span t-elif="record.state.raw_value === 'unassigned'"
-                                      class="badge text-bg-danger">Chưa gán
-                                </span>
+                                      class="badge text-bg-danger">Chưa gán</span>
                             </div>
-<!--                            <div class="o_kanban_record_bottom" t-if="record.state.raw_value === 'unassigned'">-->
-<!--                                <div class="oe_kanban_bottom_right">-->
-<!--                                    <button type="object" name="action_admin_allow_retry"-->
-<!--                                            class="btn btn-sm btn-link text-info p-0"-->
-<!--                                            confirm="Cho sinh viên này chọn lại giảng viên hướng dẫn từ đầu? Toàn bộ nguyện vọng cũ sẽ bị xoá.">-->
-<!--                                        Cho chọn lại-->
-<!--                                    </button>-->
-<!--                                </div>-->
-<!--                            </div>-->
-                            <div class="o_kanban_record_bottom" t-if="record.state.raw_value !== 'unassigned'">
+                              <div class="o_kanban_record_bottom" t-if="record.needs_retry_action.raw_value">
+                                <div class="oe_kanban_bottom_right">
+                                    <button type="object" name="action_admin_allow_retry"
+                                            class="btn btn-sm btn-link text-info p-0"
+                                            confirm="Cho sinh viên này chọn lại giảng viên hướng dẫn từ đầu? Toàn bộ nguyện vọng cũ sẽ bị xoá.">
+                                        Cho chọn lại
+                                    </button>
+                                </div>
+                            </div>
+                              <div class="o_kanban_record_bottom" t-if="record.state.raw_value !== 'unassigned'">
                                 <div class="oe_kanban_bottom_right">
                                     <button type="object" name="action_unassign"
                                             class="btn btn-sm btn-link text-danger p-0">

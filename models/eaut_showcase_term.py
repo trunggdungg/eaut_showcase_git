@@ -73,7 +73,7 @@ class ShowcaseTerm(models.Model):
         cascade toàn bộ hồ sơ đăng ký/nguyện vọng/sức chứa của kỳ đó, KHÔNG
         đi qua unlink() Python của 2 model con nên bỏ qua hẳn các chặn xoá
         đã viết ở đó (SV đã duyệt/đang chờ...). Chặn ở đây — chỉ cho xoá kỳ
-         nào hoàn toàn chưa có dữ liệu (chưa giảng viên nào khai sức chứa,
+        nào hoàn toàn chưa có dữ liệu (chưa giảng viên nào khai sức chứa,
         chưa sinh viên nào có hồ sơ đăng ký, kể cả hồ sơ rỗng tự tạo qua
         "Sinh viên đủ điều kiện") — không quan tâm trạng thái kỳ đang là gì,
         vì kỳ trống thì dù 'closed' hay 'draft' cũng chẳng có gì để mất."""

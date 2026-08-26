@@ -46,9 +46,20 @@ class ShowcaseCreator(models.Model):
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._sync_name_from_user_vals(vals)
+        return super().create(vals_list)
+
     def write(self, vals):
         self._sync_name_from_user_vals(vals)
         changed_fields = [f for f in ('name', 'email') if f in vals]
+        # showcase_skip_reverse_sync: đang được gọi NGƯỢC LẠI từ
+        # ResPartnerAdvisorSync (res.partner vừa đổi tên/email, đang đổ giá
+        # trị xuống đây) — bỏ qua ghi ngược lại partner (vô nghĩa, giá trị
+        # đang bằng nhau) và bỏ qua luôn việc đồng bộ login, vì đây không
+        # phải lúc GV chủ động đổi email liên hệ qua trang Hồ sơ giảng viên.
         if self.env.context.get('showcase_skip_reverse_sync'):
             return super().write(vals)
         if 'email' in changed_fields:
@@ -57,7 +68,6 @@ class ShowcaseCreator(models.Model):
         if changed_fields:
             self._sync_account_from_creator(changed_fields)
         return result
-
 
     @api.model
     def _sync_name_from_user_vals(self, vals):
@@ -97,10 +107,11 @@ class ShowcaseCreator(models.Model):
                     'không thể đổi email liên hệ (đồng thời là tên đăng nhập) thành '
                     'email này.' % email
                 )
+
     def _sync_account_from_creator(self, changed_fields):
         """Chiều ngược lại của _sync_name_from_user_vals(): GV tự sửa 'Tên
         hiển thị'/'Email liên hệ' trên Portal (my_advisor_lecturer_profile_save)
-            thì ghi luôn giá trị mới vào res.partner + res.users.login của tài
+        thì ghi luôn giá trị mới vào res.partner + res.users.login của tài
         khoản Odoo đang gắn (user_id) — hệ thống dùng email làm tên đăng
         nhập nên email liên hệ và login luôn phải là 1. Trùng login đã được
         chặn từ trước ở _check_login_conflict(), gọi trước super().write()."""
