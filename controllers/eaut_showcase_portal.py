@@ -76,7 +76,6 @@ class AdvisorPortalController(http.Controller):
             'has_submitted': has_submitted,
             'partner': request.env.user.partner_id,
             'submitted': kw.get('submitted'),
-            'removed': kw.get('removed'),
             'error': kw.get('error'),
         }
         return request.render('eaut_showcase.portal_my_advisor', values)
@@ -178,16 +177,13 @@ class AdvisorPortalController(http.Controller):
         if not registration:
             return request.redirect('/my/advisor?error=1')
         try:
-            removed_names = registration.action_submit_cart()
+            registration.action_submit_cart()
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
             _logger.error('Lỗi khi sinh viên nộp hàng chờ nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
-        if removed_names:
-            removed = urllib.parse.quote(', '.join(removed_names))
-            return request.redirect(f'/my/advisor?submitted=1&removed={removed}')
         return request.redirect('/my/advisor?submitted=1')
 
     # ============ GIẢNG VIÊN: DUYỆT YÊU CẦU HƯỚNG DẪN ============

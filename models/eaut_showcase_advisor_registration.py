@@ -316,10 +316,11 @@ class ShowcaseAdvisorRegistration(models.Model):
         Kiểm tra LẠI TOÀN BỘ giỏ NGAY LÚC NỘP (không chỉ nguyện vọng số 1):
         giảng viên nào vừa hết chỗ đúng lúc này (VD: SV khác vừa nộp trước
         và chiếm nốt suất cuối, giữa lúc SV này đang xây giỏ) thì xoá đúng
-        dòng đó khỏi giỏ, dồn lại thứ tự, rồi vẫn nộp bình thường với các
-        nguyện vọng còn lại — trả về danh sách tên GV đã bị loại để nơi gọi
-        (controller) báo cho SV biết. Chỉ khi loại hết sạch, không còn
-        nguyện vọng nào hợp lệ, mới chặn hẳn và bắt SV chọn lại từ đầu."""
+        dòng đó khỏi giỏ, dồn lại thứ tự — nhưng KHÔNG tự nộp thay, chỉ báo
+        lỗi cho SV biết đã loại ai, để SV tự xem lại giỏ (thứ tự, có muốn
+        thêm GV khác thay chỗ trống không...) rồi tự bấm "Nộp nguyện vọng"
+        lần nữa mới thật sự nộp. Nếu loại hết sạch, không còn nguyện vọng
+        nào hợp lệ, thì báo bắt SV chọn lại từ đầu."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
@@ -338,13 +339,18 @@ class ShowcaseAdvisorRegistration(models.Model):
                 line.unlink()
         if removed_names:
             self._resequence_cart()
-        remaining_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
-        if not remaining_lines:
+            remaining_lines = self.line_ids.filtered(lambda l: l.state == 'cart')
+            if not remaining_lines:
+                raise UserError(
+                    'Tất cả giảng viên trong hàng chờ đều vừa hết chỗ nhận sinh viên hướng dẫn: '
+                    '%s — vui lòng chọn lại từ đầu.' % ', '.join(removed_names)
+                )
             raise UserError(
-                'Tất cả giảng viên trong hàng chờ đều vừa hết chỗ nhận sinh viên hướng dẫn: '
-                '%s — vui lòng chọn lại từ đầu.' % ', '.join(removed_names)
+                'Giảng viên sau đã hết chỗ nhận sinh viên hướng dẫn nên vừa bị loại khỏi hàng '
+                'chờ của bạn: %s. Vui lòng kiểm tra lại giỏ nguyện vọng rồi bấm "Nộp nguyện '
+                'vọng" lần nữa.' % ', '.join(removed_names)
             )
-        remaining_lines.write({'state': 'waiting'})
+        cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
         return removed_names
