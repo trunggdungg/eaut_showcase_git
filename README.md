@@ -1,1 +1,0 @@
-﻿# EAUT Showcase

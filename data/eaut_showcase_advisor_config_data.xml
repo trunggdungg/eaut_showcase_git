@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<odoo noupdate="1">
-    <record id="mail_activity_type_advisor_request" model="mail.activity.type">
-        <field name="name">Yêu cầu giảng viên cần duyệt</field>
-        <field name="icon">fa-exclamation-triangle</field>
-        <field name="category">default</field>
-    </record>
-</odoo>
