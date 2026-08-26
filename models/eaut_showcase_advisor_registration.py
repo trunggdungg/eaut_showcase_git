@@ -279,15 +279,16 @@ class ShowcaseAdvisorRegistration(models.Model):
     def _resequence_cart(self):
         self.ensure_one()
         cart_lines = self.line_ids.filtered(lambda l: l.state == 'cart').sorted('sequence')
-        for index, line in enumerate(cart_lines, start=1):
-            if line.sequence != index:
-                line.write({'sequence': index})
+        pairs = [(line, index) for index, line in enumerate(cart_lines, start=1)
+                 if line.sequence != index]
+        self.env['eaut_showcase.advisor.registration.line']._write_sequences_safe(pairs)
 
     def action_cart_move(self, line_id, direction):
         """Đổi thứ tự 1 dòng trong giỏ lên/xuống 1 bậc — dùng nút bấm thay
         vì kéo-thả, đủ dùng cho danh sách ngắn (tối đa vài giảng viên).
-        Đi qua sequence tạm -1 để tránh vi phạm unique constraint tạm thời
-        khi hoán đổi 2 dòng liền kề."""
+        Hoán đổi qua _write_sequences_safe() (dải giá trị âm tạm thời +
+        flush trước khi ghi giá trị thật) để tránh vi phạm unique constraint
+        tạm thời khi hoán đổi 2 dòng liền kề — xem docstring hàm đó."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể sửa giỏ nữa.')
@@ -303,9 +304,8 @@ class ShowcaseAdvisorRegistration(models.Model):
             return
         other = cart_lines[target_index]
         line_seq, other_seq = line.sequence, other.sequence
-        line.write({'sequence': -1})
-        other.write({'sequence': line_seq})
-        line.write({'sequence': other_seq})
+        self.env['eaut_showcase.advisor.registration.line']._write_sequences_safe(
+            [(line, other_seq), (other, line_seq)])
 
     def action_submit_cart(self):
         """Nộp cả giỏ nguyện vọng 1 lần theo đúng thứ tự đã sắp — sau đó
@@ -531,6 +531,28 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         'unique(registration_id, sequence)',
         'Không thể trùng thứ tự nguyện vọng trong cùng hồ sơ đăng ký.',
     )
+
+    @api.model
+    def _write_sequences_safe(self, pairs):
+        """Ghi field 'sequence' cho nhiều dòng cùng lúc (đổi thứ tự/dồn lại
+        sau khi xoá) mà không vi phạm unique(registration_id, sequence) —
+        pairs: list [(line, new_sequence), ...]. Gọi write() nhiều lần liên
+        tiếp lên cùng field không đủ an toàn: Odoo không đẩy SQL xuống DB
+        ngay mỗi lần write(), mà gộp các thay đổi đang chờ (cache) thành 1
+        câu UPDATE nhiều dòng lúc flush — nên 1 giá trị "tạm" ghi giữa chừng
+        (để né trùng) có thể bị ghi đè trong cache trước khi kịp chạm DB,
+        khiến PostgreSQL nhận đúng 1 câu UPDATE đổi chỗ nhiều dòng cùng lúc
+        và tuỳ thứ tự xử lý nội bộ của nó mà dính trùng khoá tạm thời dù
+        kết quả cuối cùng là đúng. Cách chắc chắn: chuyển tất cả dòng liên
+        quan sang 1 dải số ÂM tạm thời (chắc chắn không trùng ai) + flush
+        thật xuống DB, rồi mới ghi giá trị thật ở lượt thứ 2."""
+        if not pairs:
+            return
+        for offset, (line, _new_sequence) in enumerate(pairs, start=1):
+            line.write({'sequence': -offset})
+        self.env.flush_all()
+        for line, new_sequence in pairs:
+            line.write({'sequence': new_sequence})
 
     @api.constrains('state')
     def _check_single_active_line(self):
