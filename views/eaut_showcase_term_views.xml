@@ -108,7 +108,7 @@
                                         context="{'default_term_id': id}"/>
                             </div>
                             <field name="eligible_student_ids">
-                                <list>
+                                <list editable="bottom">
                                     <field name="name"/>
                                     <field name="email"/>
                                     <field name="showcase_student_code" string="MSSV"/>
