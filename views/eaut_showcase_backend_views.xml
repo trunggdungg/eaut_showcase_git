@@ -161,6 +161,9 @@
     <!--    Cấu hình đồ án-->
     <menuitem id="menu_uikick_thesis_config" name="Cấu hình đồ án" parent="menu_uikick_root" sequence="40"/>
 
+    <menuitem id="menu_uikick_department" name="Khoa" parent="menu_uikick_thesis_config"
+              action="action_eaut_showcase_department" sequence="5"/>
+
     <menuitem id="menu_uikick_term" name="Kỳ đồ án" parent="menu_uikick_thesis_config"
               action="action_eaut_showcase_term" sequence="10"/>
 

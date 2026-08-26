@@ -149,6 +149,21 @@
                                     Hiện không có kỳ nào đang mở.
                                 </p>
                             </div>
+
+                            <hr/>
+                            <div class="uikick-filter-group">
+                                <h3>Khoa</h3>
+                                <t t-foreach="departments" t-as="dept">
+                                    <label class="uikick-check-row uikick-check-row-single">
+                                        <input type="checkbox" name="department" t-att-value="dept.id"
+                                               t-att-checked="'checked' if dept.id in filters['department'] else None"/>
+                                        <t t-esc="dept.name"/>
+                                    </label>
+                                </t>
+                                <p t-if="not departments" class="text-muted small mb-0">
+                                    Chưa có khoa nào được khai báo.
+                                </p>
+                            </div>
                         </t>
 
                         <hr/>

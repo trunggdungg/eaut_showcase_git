@@ -170,6 +170,10 @@ class ShowcaseController(http.Controller):
         selected_term_ids = [t for t in selected_term_ids if t in open_terms.ids]
         wanted_term_ids = selected_term_ids or open_terms.ids
 
+        all_departments = request.env['eaut_showcase.department'].sudo().search([], order='sequence, id')
+        selected_department_ids = [
+            int(d) for d in request.httprequest.args.getlist('department') if d.isdigit()]
+
         capacities = request.env['eaut_showcase.term.capacity'].sudo().search([
             ('term_id', 'in', wanted_term_ids), ('withdrawn', '=', False),
         ])
@@ -178,6 +182,10 @@ class ShowcaseController(http.Controller):
             wanted = set(selected_categories)
             capacities = capacities.filtered(
                 lambda c: set(c.creator_id.category_ids.mapped('name')) & wanted)
+
+        if selected_department_ids:
+            capacities = capacities.filtered(
+                lambda c: c.creator_id.department_id.id in selected_department_ids)
 
         if slot_filters:
             want_open = 'open' in slot_filters
@@ -199,6 +207,8 @@ class ShowcaseController(http.Controller):
 
         if selected_term_ids:
             url_args['term'] = selected_term_ids
+        if selected_department_ids:
+            url_args['department'] = selected_department_ids
 
         page = int(kw.get('page') or 1)
         total = len(capacities)
@@ -218,6 +228,7 @@ class ShowcaseController(http.Controller):
             'section': 'advisors',
             'open_terms': open_terms,
             'categories': all_categories,
+            'departments': all_departments,
 
             'header_label': header_label,
             'capacities': capacities_page,
@@ -232,6 +243,7 @@ class ShowcaseController(http.Controller):
 
                 'sort': sort,
                 'term': selected_term_ids,
+                'department': selected_department_ids,
             },
         }
         return request.render('eaut_showcase.home_page', values)

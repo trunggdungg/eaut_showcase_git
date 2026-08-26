@@ -34,6 +34,12 @@ class ShowcaseCreator(models.Model):
         help="Dùng để lọc giảng viên theo lĩnh vực ở trang chọn giảng viên "
              "hướng dẫn đồ án — dùng chung danh mục với dự án Showcase.",
     )
+    department_id = fields.Many2one(
+        'eaut_showcase.department', string='Khoa',
+        help="Khoa quản lý giảng viên này — chỉ dùng để lọc trên trang công "
+             "khai, không giới hạn sinh viên khoa khác chọn giảng viên này. "
+             "Do Admin gán ở đây, giảng viên không tự sửa được qua Portal.",
+    )
     project_ids = fields.Many2many(
         'eaut_showcase.project', 'eaut_showcase_project_creator_rel',
         'creator_id', 'project_id', string='Dự án đã đăng',

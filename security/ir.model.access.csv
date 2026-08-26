@@ -4,6 +4,8 @@ access_eaut_showcase_project_manager,eaut_showcase.project.manager,model_eaut_sh
 
 access_eaut_showcase_category_user,eaut_showcase.category.user,model_eaut_showcase_category,base.group_user,1,0,0,0
 access_eaut_showcase_category_manager,eaut_showcase.category.manager,model_eaut_showcase_category,base.group_system,1,1,1,1
+access_eaut_showcase_department_user,eaut_showcase.department.user,model_eaut_showcase_department,base.group_user,1,0,0,0
+access_eaut_showcase_department_manager,eaut_showcase.department.manager,model_eaut_showcase_department,base.group_system,1,1,1,1
 access_eaut_showcase_status_user,eaut_showcase.status.user,model_eaut_showcase_status,base.group_user,1,0,0,0
 access_eaut_showcase_status_manager,eaut_showcase.status.manager,model_eaut_showcase_status,base.group_system,1,1,1,1
 access_eaut_showcase_interest_user,eaut_showcase.interest.user,model_eaut_showcase_interest,base.group_user,1,1,1,0
