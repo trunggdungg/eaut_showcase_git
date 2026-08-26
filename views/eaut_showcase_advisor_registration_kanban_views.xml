@@ -27,6 +27,7 @@
                 <field name="student_id"/>
                 <field name="state"/>
                 <field name="assigned_creator_id"/>
+                <field name="needs_retry_action"/>
                 <templates>
                     <t t-name="card">
                         <div t-attf-class="oe_kanban_global_click o_kanban_card oe_kanban_card
@@ -44,7 +45,7 @@
                                 <span t-elif="record.state.raw_value === 'unassigned'"
                                       class="badge text-bg-danger">Chưa gán</span>
                             </div>
-                              <div class="o_kanban_record_bottom" t-if="record.state.raw_value === 'unassigned'">
+                              <div class="o_kanban_record_bottom" t-if="record.needs_retry_action.raw_value">
                                 <div class="oe_kanban_bottom_right">
                                     <button type="object" name="action_admin_allow_retry"
                                             class="btn btn-sm btn-link text-info p-0"

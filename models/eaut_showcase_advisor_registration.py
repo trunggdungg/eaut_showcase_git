@@ -134,6 +134,12 @@ class ShowcaseAdvisorRegistration(models.Model):
         'eaut_showcase.creator', string='Giảng viên hướng dẫn',
         compute='_compute_approved_creator', store=True,
     )
+    needs_retry_action = fields.Boolean(
+        string='Cần cho chọn lại', compute='_compute_needs_retry_action',
+        help="True khi SV thực sự đang bị khoá (đã nộp và fail hết, hoặc bị "
+             "admin bỏ gán tay) — dùng để hiện nút \"Cho SV chọn lại\" đúng "
+             "lúc, không hiện khi SV chỉ đang xây giỏ nguyện vọng dở dang.",
+    )
 
     assigned_creator_id = fields.Many2one(
         'eaut_showcase.creator', string='Đang thuộc giảng viên',
@@ -200,6 +206,15 @@ class ShowcaseAdvisorRegistration(models.Model):
         for reg in self:
             approved_line = reg.line_ids.filtered(lambda l: l.state == 'approved')[:1]
             reg.approved_creator_id = approved_line.creator_id if approved_line else False
+
+    @api.depends('state', 'line_ids.state')
+    def _compute_needs_retry_action(self):
+        """Dùng để hiện/ẩn nút "Cho SV chọn lại" — CHỈ khi SV thực sự đang bị
+        khoá (đã nộp và fail hết, hoặc bị admin bỏ gán tay), KHÔNG hiện khi
+        SV đang unassigned nhưng chỉ mới xây giỏ dở (chưa nộp gì) — bấm nhầm
+        lúc đó sẽ xoá mất giỏ đang xây + gửi nhầm email "được chọn lại"."""
+        for reg in self:
+            reg.needs_retry_action = reg.state == 'unassigned' and not reg._can_edit_cart()
 
     def _can_edit_cart(self):
         """Hồ sơ còn sửa được hàng chờ nguyện vọng — draft (chưa nộp) hoặc
@@ -379,18 +394,22 @@ class ShowcaseAdvisorRegistration(models.Model):
                 )
 
     def action_admin_allow_retry(self):
-        """Nút Admin dùng khi 1 SV đã "Chưa có GVHD" (hết nguyện vọng mà
-        không được duyệt) và Admin muốn cho họ 1 lượt tự chọn lại trên
-        Portal, thay vì tự gán tay qua Kanban — ngoại lệ thứ 2 cho quy tắc
-        SV không được tự đổi nguyện vọng (xem action_reset_for_withdrawal).
-        Chỉ áp dụng cho state == 'unassigned' — SV đang draft/in_progress/
-        approved thì không có gì để "chọn lại"; muốn gỡ 1 SV đã approved
-        thì dùng action_unassign trước."""
+        """Nút Admin dùng khi 1 SV đã "Chưa có GVHD" THỰC SỰ vì hết nguyện
+        vọng mà không được duyệt (hoặc bị admin bỏ gán tay), và Admin muốn
+        cho họ 1 lượt tự chọn lại trên Portal, thay vì tự gán tay qua Kanban
+        — ngoại lệ thứ 2 cho quy tắc SV không được tự đổi nguyện vọng (xem
+        action_reset_for_withdrawal). KHÔNG áp dụng khi SV chỉ đang unassigned
+        vì bản ghi mới được _sync_eligible_student_registrations tự tạo sẵn
+        (chưa nộp gì, giỏ có thể đang xây dở) — bấm nhầm lúc đó sẽ xoá mất
+        giỏ đang xây + gửi nhầm email "được chọn lại" (dùng needs_retry_action
+        để phân biệt đúng 2 trường hợp)."""
         for reg in self:
-            if reg.state != 'unassigned':
+            if not reg.needs_retry_action:
                 raise UserError(
-                    'Chỉ áp dụng cho sinh viên đang ở trạng thái "Chưa có GVHD" — hồ sơ '
-                    'của "%s" đang ở trạng thái khác.' % reg.student_id.name
+                    'Chỉ áp dụng cho sinh viên thực sự đang bị khoá (đã nộp và hết nguyện '
+                    'vọng, hoặc bị bỏ gán tay) — hồ sơ của "%s" hiện sinh viên vẫn tự sửa '
+                    'được giỏ nguyện vọng bình thường, không cần thao tác này.'
+                    % reg.student_id.name
                 )
             reg._reset_lines_for_retry()
             outcome = Markup('%s %s') % (

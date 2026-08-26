@@ -24,7 +24,7 @@
             <form string="Đăng ký chọn giảng viên hướng dẫn">
                 <header>
                     <button name="action_admin_allow_retry" type="object" string="Cho SV chọn lại"
-                            class="btn-primary" invisible="state != 'unassigned'"
+                            class="btn-primary" invisible="not needs_retry_action"
                             confirm="Cho sinh viên này chọn lại giảng viên hướng dẫn từ đầu? Toàn bộ nguyện vọng cũ sẽ bị xoá."/>
                 </header>
                 <sheet>
