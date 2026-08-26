@@ -69,16 +69,11 @@ class ShowcaseTerm(models.Model):
         cascade toàn bộ hồ sơ đăng ký/nguyện vọng/sức chứa của kỳ đó, KHÔNG
         đi qua unlink() Python của 2 model con nên bỏ qua hẳn các chặn xoá
         đã viết ở đó (SV đã duyệt/đang chờ...). Chặn ở đây — chỉ cho xoá kỳ
-        còn 'draft' và chưa có gì thật (chưa ai đăng ký/khai sức chứa) —
-        kỳ đã mở/chốt/đóng thì dùng "Đưa về Nháp"/"Đóng kỳ" để lưu vết lịch
-        sử, không xoá."""
+        nào hoàn toàn chưa có dữ liệu (chưa giảng viên nào khai sức chứa,
+        chưa sinh viên nào có hồ sơ đăng ký, kể cả hồ sơ rỗng tự tạo qua
+        "Sinh viên đủ điều kiện") — không quan tâm trạng thái kỳ đang là gì,
+        vì kỳ trống thì dù 'closed' hay 'draft' cũng chẳng có gì để mất."""
         for term in self:
-            if term.state != 'draft':
-                raise UserError(
-                    'Không thể xoá kỳ "%s" — kỳ đã qua trạng thái "Nháp" nên có thể đang '
-                    'chứa dữ liệu đăng ký/phân bổ giảng viên thật của sinh viên. Dùng "Đóng '
-                    'kỳ" nếu không cần dùng nữa, để giữ lại lịch sử.' % term.name
-                )
             if term.registration_ids or term.capacity_ids:
                 raise UserError(
                     'Không thể xoá kỳ "%s" — kỳ này đã có sinh viên đăng ký hoặc giảng viên '
