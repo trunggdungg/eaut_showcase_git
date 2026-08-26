@@ -42,6 +42,10 @@
                         <div style="background:#fff;border-radius:8px;max-width:480px;width:90%;
                                     padding:24px;box-shadow:0 8px 24px rgba(0,0,0,.2);">
                             <h5 class="mb-3">Kết quả nộp nguyện vọng</h5>
+                            <div t-if="removed" class="alert alert-warning mb-3">
+                                Giảng viên sau đã hết chỗ nhận sinh viên hướng dẫn nên bị loại
+                                khỏi hàng chờ trước khi nộp: <strong t-esc="removed"/>.
+                            </div>
                             <div t-if="registration and registration.state == 'approved'"
                                  class="alert alert-success mb-3">
                                 Bạn đã có giảng viên hướng dẫn:
