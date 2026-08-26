@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_eaut_showcase_term_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.list</field>
+        <field name="model">eaut_showcase.term</field>
+        <field name="arch" type="xml">
+            <list string="Kỳ đồ án">
+                <field name="name"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-success="state == 'open'"
+                       decoration-warning="state == 'locked'"
+                       decoration-muted="state == 'closed'"/>
+                <field name="unassigned_count" string="Chưa có GVHD"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_eaut_showcase_term_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.form</field>
+        <field name="model">eaut_showcase.term</field>
+        <field name="arch" type="xml">
+            <form string="Kỳ đồ án">
+                <header>
+                    <button name="action_open" type="object" string="Mở đăng ký"
+                            class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_lock" type="object" string="Chốt danh sách"
+                            class="btn-primary" invisible="state != 'open'"/>
+                    <button name="action_close" type="object" string="Đóng kỳ"
+                            invisible="state != 'locked'"/>
+                    <button name="action_set_draft" type="object" string="Chuyển về nháp"
+                            invisible="state != 'closed'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,open,locked,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object" name="action_view_registrations"
+                                class="oe_stat_button" icon="fa-user-times">
+                            <field name="unassigned_count" widget="statinfo" string="Chưa có GVHD"/>
+                        </button>
+                        <button type="object" name="action_view_eligible_students"
+                                class="oe_stat_button" icon="fa-user-plus">
+                            <field name="eligible_student_count" widget="statinfo" string="SV đủ điều kiện"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="VD: Đồ án tốt nghiệp — HK2 2025-2026"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                        <group>
+                            <field name="sla_hours"/>
+                            <field name="max_preferences"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Giảng viên nhận hướng dẫn" name="capacity">
+<!--                            <div class="mb-2">-->
+<!--                                <button name="action_assign_creators_kanban" type="object"-->
+<!--                                        string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>-->
+<!--                            </div>-->
+                            <field name="capacity_ids">
+                                <list editable="bottom">
+                                    <field name="creator_id"/>
+                                    <field name="max_students"/>
+                                    <field name="approved_count"/>
+                                    <field name="pending_count"/>
+                                    <field name="remaining_slots"/>
+                                    <field name="withdrawn"/>
+                                     <field name="pending_action" widget="badge"
+                                           decoration-info="pending_action in ('join', 'update')"
+                                           decoration-warning="pending_action == 'withdraw'"/>
+                                    <field name="pending_max_students"
+                                           invisible="pending_action != 'update'"/>
+                                    <button name="action_admin_approve_request" type="object"
+                                            string="Duyệt yêu cầu" icon="fa-check"
+                                            invisible="pending_action == 'none'"/>
+                                    <button name="action_admin_reject_request" type="object"
+                                            string="Từ chối yêu cầu" icon="fa-times"
+                                            invisible="pending_action == 'none'"/>
+                                    <button name="action_withdraw" type="object"
+                                            string="Rút khỏi kỳ" icon="fa-sign-out"
+                                            invisible="withdrawn"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Sinh viên đủ điều kiện" name="eligible_students">
+                            <p class="text-muted">
+                                Để trống = không giới hạn, mọi sinh viên Portal đều thấy và
+                                đăng ký được ở kỳ này. Nếu có nhiều kỳ mở song song (nhiều
+                                khoa), khai danh sách ở đây để sinh viên chỉ thấy đúng kỳ
+                                của khoa mình.
+                            </p>
+                            <field name="eligible_student_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="showcase_student_code" string="MSSV"/>
+                                    <field name="showcase_student_class" string="Lớp"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                    <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_term" model="ir.actions.act_window">
+        <field name="name">Kỳ đồ án</field>
+        <field name="res_model">eaut_showcase.term</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có kỳ đồ án nào. Tạo 1 kỳ mới để bắt đầu nhận đăng ký chọn giảng viên hướng dẫn.
+            </p>
+        </field>
+    </record>
+
+    <record id="view_eaut_showcase_term_close_warning_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.close.warning.form</field>
+        <field name="model">eaut_showcase.term.close.warning</field>
+        <field name="arch" type="xml">
+            <form string="Đóng kỳ">
+                     <field name="term_id" invisible="1"/>
+                <field name="message" readonly="1" nolabel="1"/>
+                <footer>
+                    <button string="Đóng kỳ" name="action_confirm" type="object" class="btn-primary"/>
+                    <button string="Huỷ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

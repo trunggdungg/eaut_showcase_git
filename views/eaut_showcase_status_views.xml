@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_eaut_showcase_status_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.status.list</field>
+        <field name="model">eaut_showcase.status</field>
+        <field name="arch" type="xml">
+            <list string="Trạng thái" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="color" widget="color_picker"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_status" model="ir.actions.act_window">
+        <field name="name">Trạng thái</field>
+        <field name="res_model">eaut_showcase.status</field>
+        <field name="view_mode">list</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tạo trạng thái (VD: Sắp ra mắt, Đang giới thiệu...) để gắn cho bài đăng
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_eaut_showcase_advisor_registration_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.advisor.registration.list</field>
+        <field name="model">eaut_showcase.advisor.registration</field>
+        <field name="arch" type="xml">
+            <list string="Đăng ký chọn giảng viên hướng dẫn">
+                <field name="student_id"/>
+                <field name="term_id"/>
+                <field name="approved_creator_id"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'approved'"
+                       decoration-danger="state == 'unassigned'"
+                       decoration-info="state == 'in_progress'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_eaut_showcase_advisor_registration_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.advisor.registration.form</field>
+        <field name="model">eaut_showcase.advisor.registration</field>
+        <field name="arch" type="xml">
+            <form string="Đăng ký chọn giảng viên hướng dẫn">
+                 <header>
+                    <button name="action_admin_allow_retry" type="object" string="Cho SV chọn lại"
+                              class="btn-primary" invisible="not needs_retry_action"
+                            confirm="Cho sinh viên này chọn lại giảng viên hướng dẫn từ đầu? Toàn bộ nguyện vọng cũ sẽ bị xoá."/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="student_id"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="term_id"/>
+                            <field name="state" widget="badge"/>
+                        </group>
+                        <group>
+                            <field name="approved_creator_id"/>
+                        </group>
+                    </group>
+                    <field name="line_ids">
+                        <list create="false" delete="false" decoration-muted="state in ('rejected', 'expired', 'cancelled')">
+                            <field name="sequence" string="NV"/>
+                            <field name="creator_id"/>
+                            <field name="state" widget="badge"
+                                   decoration-success="state == 'approved'"
+                                   decoration-warning="state == 'pending'"/>
+                            <field name="deadline"/>
+                            <button name="action_approve" type="object" string="Duyệt"
+                                    icon="fa-check" invisible="state != 'pending'"/>
+                            <button name="action_reject" type="object" string="Từ chối"
+                                    icon="fa-times" invisible="state != 'pending'"/>
+                        </list>
+                    </field>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_advisor_registration" model="ir.actions.act_window">
+        <field name="name">Đăng ký chọn GVHD</field>
+        <field name="res_model">eaut_showcase.advisor.registration</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có sinh viên nào đăng ký chọn giảng viên hướng dẫn.
+            </p>
+        </field>
+    </record>
+
+</odoo>

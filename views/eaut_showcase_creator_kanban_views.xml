@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_eaut_showcase_creator_kanban" model="ir.ui.view">
+        <field name="name">eaut_showcase.creator.kanban.assign_term</field>
+        <field name="model">eaut_showcase.creator</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="kanban_term_id" records_draggable="true"
+                    group_create="false" group_delete="false" quick_create="false">
+                <field name="name"/>
+                <field name="role"/>
+                <field name="kanban_term_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_global_click o_kanban_card oe_kanban_card">
+                            <div class="o_kanban_record_top">
+                                <strong><field name="name"/></strong>
+                            </div>
+                            <div class="o_kanban_record_body" t-if="record.role.value">
+                                <field name="role"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_creator_kanban" model="ir.actions.act_window">
+        <field name="name">Phân bổ giảng viên theo kỳ</field>
+        <field name="res_model">eaut_showcase.creator</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Chưa có tác giả/giảng viên nào.
+            </p>
+        </field>
+    </record>
+
+</odoo>

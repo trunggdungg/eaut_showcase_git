@@ -1,0 +1,46 @@
+/* Khớp với các class do _email_badge()/_email_cta()/_email_body() trong
+   models/eaut_showcase_advisor_registration.py sinh ra. Chatter (message_post)
+   strip thuộc tính style trực tiếp trên thẻ khi sanitize HTML, nên các badge
+   "Yêu cầu mới"/"Đã duyệt"/nút CTA... sẽ mất màu/khung nếu chỉ dựa vào style
+   inline — các rule dưới đây đảm bảo chúng vẫn hiển thị đúng trong backend.
+   (Với email thật gửi ra ngoài, khung/màu do views/eaut_showcase_mail_layout_
+   views.xml + style inline đảm nhiệm, vì client email không tải được CSS này.) */
+.o_eaut_notif_card {
+    display: block !important;
+    background: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding: 16px 20px !important;
+}
+.o_eaut_notif_p {
+    margin: 0 0 12px !important;
+    font-size: 14px !important;
+    color: #333333 !important;
+    line-height: 1.6 !important;
+}
+.o_eaut_notif_badge {
+    display: inline-block !important;
+    padding: 2px 10px !important;
+    border-radius: 4px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    white-space: nowrap !important;
+}
+.o_eaut_notif_badge_success { background: #e6f4ea !important; color: #1e7e34 !important; }
+.o_eaut_notif_badge_danger { background: #fdecea !important; color: #b02a37 !important; }
+.o_eaut_notif_badge_info { background: #e8f0fe !important; color: #1a56db !important; }
+.o_eaut_notif_badge_warning { background: #fff4e5 !important; color: #b25e00 !important; }
+
+.o_eaut_notif_cta_wrap {
+    margin-top: 16px !important;
+}
+.o_eaut_notif_cta {
+    display: inline-block !important;
+    background: #7b3f61 !important;
+    color: #ffffff !important;
+    padding: 10px 18px !important;
+    border-radius: 6px !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
