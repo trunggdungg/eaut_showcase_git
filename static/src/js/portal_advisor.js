@@ -139,9 +139,30 @@
     }
 
 
+    /** Popup tóm tắt kết quả nộp nguyện vọng — chỉ render khi vừa nộp xong
+     * (?submitted=1), tự hiện sẵn qua CSS (server chỉ render div này khi
+     * cần), JS ở đây chỉ lo đóng lại (nút "Đóng" hoặc bấm ra ngoài). */
+    function initOutcomeOverlay() {
+        var overlay = document.getElementById("uikick-outcome-overlay");
+        var closeBtn = document.getElementById("uikick-outcome-overlay-close");
+        if (!overlay || !closeBtn) {
+            return;
+        }
+        function close() {
+            overlay.style.display = "none";
+        }
+        closeBtn.addEventListener("click", close);
+        overlay.addEventListener("click", function (ev) {
+            if (ev.target === overlay) {
+                close();
+            }
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmForms();
         initRichEditors();
+        initOutcomeOverlay();
         restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
             return;
