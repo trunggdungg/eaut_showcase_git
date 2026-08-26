@@ -42,7 +42,7 @@ class ShowcaseTerm(models.Model):
     )
     eligible_student_ids = fields.Many2many(
         'res.partner', 'eaut_showcase_term_eligible_student_rel',
-        'term_id', 'partner_id', string='Sinh viên đủ điều kiện',
+        'term_id', 'partner_id', string='Sinh viên đủ điều kiện', tracking=True,
         help="Chỉ sinh viên trong danh sách này mới thấy và đăng ký được ở "
              "kỳ này — dùng khi nhiều khoa mở kỳ song song, tránh sinh viên "
              "khoa khác lỡ đăng ký nhầm kỳ. Để trống = không giới hạn, mọi "
