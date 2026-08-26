@@ -60,6 +60,11 @@
                                 <input type="text" name="student_major" id="student_major" class="form-control"
                                        required="required"/>
                             </div>
+                            <div class="mb-3">
+                                <label for="student_phone">Số điện thoại</label>
+                                <input type="tel" name="student_phone" id="student_phone" class="form-control"
+                                       t-att-value="partner.phone" required="required"/>
+                            </div>
                             <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
                         </form>
                     </t>

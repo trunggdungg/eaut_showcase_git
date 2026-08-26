@@ -111,6 +111,7 @@
                                 <list editable="bottom">
                                     <field name="name"/>
                                     <field name="email"/>
+                                    <field name="phone" string="Số điện thoại"/>
                                     <field name="showcase_student_code" string="MSSV"/>
                                     <field name="showcase_student_class" string="Lớp"/>
                                 </list>

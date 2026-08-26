@@ -94,13 +94,15 @@ class AdvisorPortalController(http.Controller):
         student_code = (post.get('student_code') or '').strip()
         student_class = (post.get('student_class') or '').strip()
         student_major = (post.get('student_major') or '').strip()
-        if not (student_code and student_class and student_major):
-            error = urllib.parse.quote('Vui lòng điền đầy đủ MSSV, lớp và ngành học.')
+        student_phone = (post.get('student_phone') or '').strip()
+        if not (student_code and student_class and student_major and student_phone):
+            error = urllib.parse.quote('Vui lòng điền đầy đủ MSSV, lớp, ngành học và số điện thoại.')
             return request.redirect(f'/my/advisor?error={error}')
         request.env.user.partner_id.write({
             'showcase_student_code': student_code,
             'showcase_student_class': student_class,
             'showcase_student_major': student_major,
+            'phone': student_phone,
         })
         return request.redirect('/my/advisor')
 
