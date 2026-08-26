@@ -656,9 +656,24 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
         luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu — reason (nếu có) được
         truyền tiếp cho _activate_next_line() khi phải dò tiếp, để không mất lý
-        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng."""
+        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng.
+
+        Khoá row sức chứa (FOR UPDATE) TRƯỚC khi đọc remaining_slots — đây là
+        nơi DUY NHẤT thật sự chuyển 1 dòng sang 'pending' (điểm chốt cuối
+        cùng của luồng nộp/chuyển tiếp nguyện vọng), nên phải cùng mức khoá
+        với action_approve()/_admin_assign() để chặn đúng race condition: 2
+        sinh viên bấm "Nộp nguyện vọng" cho cùng 1 giảng viên chỉ còn 1 chỗ
+        TẠI CÙNG 1 THỜI ĐIỂM (2 transaction chạm DB gần như đồng thời) — lúc
+        đó việc action_submit_cart() đã tự kiểm tra trước (_is_capacity_full)
+        không đủ, vì cả 2 có thể đọc remaining_slots cũ trước khi bên kia
+        commit."""
         self.ensure_one()
         capacity = self._get_capacity()
+        if capacity:
+            self.env.cr.execute(
+                'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
+                (capacity.id,),
+            )
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
             reject_reason = 'Giảng viên đã rút khỏi kỳ này.' if (capacity and capacity.withdrawn) \
                 else 'Giảng viên đã hết chỗ nhận sinh viên hướng dẫn.'
