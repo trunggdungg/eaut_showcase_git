@@ -124,14 +124,17 @@ class ShowcaseCreator(models.Model):
         `partner` đủ điều kiện — dùng cho trang chi tiết GV công khai để
         quyết định có hiện nút "Chọn làm giảng viên hướng dẫn" hay không.
         Khi có nhiều kỳ mở song song (nhiều khoa), không được chỉ lấy đại 1
-        kỳ mở mới nhất chung cho mọi người — mỗi kỳ có thể giới hạn danh
-        sách 'Sinh viên đủ điều kiện' riêng, và GV có thể chỉ tham gia 1
-        trong số các kỳ đó."""
+        kỳ mở mới nhất chung cho mọi người — mỗi kỳ BẮT BUỘC phải khai danh
+        sách 'Sinh viên đủ điều kiện' riêng (để trống = chưa ai đăng ký
+        được, xem eaut_showcase_term.py), và GV có thể chỉ tham gia 1 trong
+        số các kỳ đó. Phải khớp đúng luật với _get_open_term() ở
+        controllers/eaut_showcase_portal.py — nếu không, SV có thể thấy nút
+        "Chọn làm GVHD" ở đây nhưng bấm vào lại bị portal chặn."""
         self.ensure_one()
         terms = self.env['eaut_showcase.term'].sudo().search(
             [('state', '=', 'open')], order='date_start desc')
         for term in terms:
-            if term.eligible_student_ids and partner not in term.eligible_student_ids:
+            if partner not in term.eligible_student_ids:
                 continue
             capacity = self.env['eaut_showcase.term.capacity'].sudo().search([
                 ('term_id', '=', term.id), ('creator_id', '=', self.id),

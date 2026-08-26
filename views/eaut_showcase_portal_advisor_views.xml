@@ -26,7 +26,13 @@
                         Đã nộp nguyện vọng thành công. Bạn sẽ được thông báo khi có kết quả.
                     </div>
 
-                    <t t-if="not term">
+                    <t t-if="not term and not_eligible">
+                        <div class="alert alert-warning">
+                            Hiện có kỳ đồ án đang mở nhưng bạn chưa có trong danh sách "Sinh viên
+                            đủ điều kiện" của kỳ nào — vui lòng liên hệ Khoa/Admin để được bổ sung.
+                        </div>
+                    </t>
+                    <t t-elif="not term">
                         <div class="alert alert-info">
                             Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn.
                         </div>

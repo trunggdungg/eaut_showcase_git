@@ -94,10 +94,12 @@
                         </page>
                         <page string="Sinh viên đủ điều kiện" name="eligible_students">
                             <p class="text-muted">
-                                Để trống = không giới hạn, mọi sinh viên Portal đều thấy và
-                                đăng ký được ở kỳ này. Nếu có nhiều kỳ mở song song (nhiều
-                                khoa), khai danh sách ở đây để sinh viên chỉ thấy đúng kỳ
-                                của khoa mình.
+                                BẮT BUỘC — chỉ sinh viên có tên trong danh sách này mới thấy
+                                và đăng ký được giảng viên ở kỳ này. Để trống nghĩa là kỳ này
+                                TẠM CHƯA sinh viên nào đăng ký được, không phải "mở cho tất
+                                cả" — phải thêm sinh viên vào đây trước khi họ chọn được
+                                giảng viên. Nếu có nhiều kỳ mở song song (nhiều khoa), mỗi
+                                sinh viên chỉ nên có tên ở đúng 1 kỳ của khoa mình.
                             </p>
                             <field name="eligible_student_ids">
                                 <list>

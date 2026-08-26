@@ -13,21 +13,18 @@ _logger = logging.getLogger(__name__)
 class AdvisorPortalController(http.Controller):
 
     def _get_open_term(self):
-        """Chọn đúng kỳ đang mở cho sinh viên hiện tại — nếu 1 kỳ có khai
-                danh sách 'Sinh viên đủ điều kiện' thì chỉ những SV trong danh sách
-                đó mới thấy kỳ này (dùng khi nhiều khoa mở kỳ song song); kỳ không
-                khai danh sách thì mở cho mọi sinh viên. Ưu tiên kỳ đã khai rõ SV
-                này vào danh sách trước — tránh trường hợp 1 kỳ khác đang mở tự do
-                (không khai danh sách) có date_start mới hơn "cướp" mất kỳ mà SV
-                đã được chỉ định riêng."""
+        """Chọn đúng kỳ đang mở cho sinh viên hiện tại — BẮT BUỘC sinh viên
+        phải có tên trong 'Sinh viên đủ điều kiện' của kỳ đó, không có ngoại
+        lệ. Để trống danh sách KHÔNG còn nghĩa là "mở cho mọi sinh viên" nữa
+        — kỳ đó chỉ đơn giản là chưa ai đăng ký được cho tới khi Admin khai
+        danh sách. Lấy kỳ mới nhất (date_start desc) trong số các kỳ sinh
+        viên này có tên, phòng trường hợp SV được khai ở nhiều kỳ mở song
+        song (nhiều khoa)."""
         partner = request.env.user.partner_id
         terms = request.env['eaut_showcase.term'].sudo().search(
             [('state', '=', 'open')], order='date_start desc')
         for term in terms:
-            if term.eligible_student_ids and partner in term.eligible_student_ids:
-                return term
-        for term in terms:
-            if not term.eligible_student_ids:
+            if partner in term.eligible_student_ids:
                 return term
         return request.env['eaut_showcase.term']
 
@@ -47,6 +44,10 @@ class AdvisorPortalController(http.Controller):
             })
 
         term = self._get_open_term()
+        # Phân biệt 2 trường hợp trả về rỗng — không thì SV không đủ điều
+        # kiện dễ tưởng nhầm là "chưa tới đợt đăng ký" (xem template).
+        not_eligible = not term and bool(
+            request.env['eaut_showcase.term'].sudo().search_count([('state', '=', 'open')]))
         registration = self._get_registration(term) if term else None
         capacities = request.env['eaut_showcase.term.capacity']
         if term:
@@ -67,6 +68,7 @@ class AdvisorPortalController(http.Controller):
         values = {
             'lecturer_profile': False,
             'term': term,
+            'not_eligible': not_eligible,
             'registration': registration,
             'capacities': available_capacities,
             'max_preferences': max_preferences,
