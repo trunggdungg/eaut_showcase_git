@@ -311,7 +311,17 @@ class ShowcaseAdvisorRegistration(models.Model):
         """Nộp cả giỏ nguyện vọng 1 lần theo đúng thứ tự đã sắp — sau đó
         khoá lại, không sửa được nữa. Nguyện vọng số 1 (sequence nhỏ nhất)
         được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
-        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn."""
+        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn.
+
+        Trước khi khoá giỏ, kiểm tra lại sức chứa THỰC TẾ của từng giảng
+        viên đang có trong giỏ — có thể vừa hết chỗ ngay trước khi SV này
+        bấm nộp (VD: 2 SV cùng để 1 giảng viên chỉ còn 1 chỗ vào hàng chờ,
+        SV nộp sau bấm trúng lúc SV kia vừa nộp xong). Nếu có, KHÔNG nộp gì
+        cả — chỉ tự xoá (các) giảng viên đã hết chỗ khỏi giỏ và trả về 1
+        chuỗi thông báo (hoặc False nếu nộp bình thường) cho nơi gọi
+        (controller) hiện thành popup, để SV biết ngay và tự chọn giảng
+        viên khác thay thế rồi tự bấm nộp lại — tránh bị từ chối thẳng luôn
+        (phải chờ Admin cho chọn lại) chỉ vì chậm chân vài giây."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
@@ -319,9 +329,21 @@ class ShowcaseAdvisorRegistration(models.Model):
         if not cart_lines:
             raise UserError(
                 'Hàng chờ nguyện vọng đang trống — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
+        full_lines = cart_lines.filtered(lambda l: l._is_capacity_full())
+        if full_lines:
+            removed_names = ', '.join(full_lines.mapped('creator_id.name'))
+            full_lines.unlink()
+            self._resequence_cart()
+            return (
+                'Giảng viên %s vừa hết chỗ nhận sinh viên hướng dẫn ngay trước khi bạn nộp '
+                '(có thể một sinh viên khác đã nộp trúng suất cuối trước bạn) nên đã được tự '
+                'động xoá khỏi hàng chờ nguyện vọng của bạn. Vui lòng chọn giảng viên khác '
+                'thay thế rồi nộp lại nguyện vọng.'
+            ) % removed_names
         cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
+        return False
 
     def _activate_next_line(self, reason=None):
         """reason (nếu có): lý do dẫn tới lượt kích hoạt này (bị từ chối/hết hạn),
@@ -614,6 +636,14 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             ('term_id', '=', self.term_id.id),
             ('creator_id', '=', self.creator_id.id),
         ], limit=1)
+
+    def _is_capacity_full(self):
+        """Dùng lúc SV nộp giỏ (action_submit_cart) để phát hiện giảng viên
+        đã hết chỗ NGAY TRƯỚC lúc nộp — cùng điều kiện với action_cart_add()
+        (giảng viên không tồn tại/đã rút/hết remaining_slots)."""
+        self.ensure_one()
+        capacity = self._get_capacity()
+        return not capacity or capacity.withdrawn or capacity.remaining_slots <= 0
 
     def _notify(self, partner, body):
         self.ensure_one()

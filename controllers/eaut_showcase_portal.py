@@ -177,13 +177,18 @@ class AdvisorPortalController(http.Controller):
         if not registration:
             return request.redirect('/my/advisor?error=1')
         try:
-            registration.action_submit_cart()
+            notice = registration.action_submit_cart()
         except (UserError, ValidationError) as e:
             return request.redirect(f'/my/advisor?error={urllib.parse.quote(str(e))}')
         except Exception as e:
             _logger.error('Lỗi khi sinh viên nộp hàng chờ nguyện vọng: %s', e, exc_info=True)
             error = urllib.parse.quote('Có lỗi xảy ra, vui lòng thử lại.')
             return request.redirect(f'/my/advisor?error={error}')
+        if notice:
+            # Chưa nộp thật (giỏ vẫn ở trạng thái sửa được, chỉ bị dọn bớt
+            # giảng viên đã hết chỗ) — KHÔNG kèm submitted=1, tránh hiện nhầm
+            # banner "Đã nộp thành công".
+            return request.redirect(f'/my/advisor?notice={urllib.parse.quote(notice)}')
         return request.redirect('/my/advisor?submitted=1')
 
     # ============ GIẢNG VIÊN: DUYỆT YÊU CẦU HƯỚNG DẪN ============

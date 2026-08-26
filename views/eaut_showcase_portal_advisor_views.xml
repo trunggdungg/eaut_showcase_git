@@ -231,6 +231,19 @@
                     </div>
                 </div>
             </div>
+            <!-- Popup báo khi bấm "Nộp nguyện vọng" nhưng có giảng viên trong
+                 giỏ vừa hết chỗ đúng lúc đó — giảng viên đó đã bị tự xoá khỏi
+                 giỏ, CHƯA nộp gì cả, SV cần chọn người khác rồi tự nộp lại.
+                 Nội dung lấy từ query string ?notice=... do controller
+                 redirect tới, xem initSubmitNotice() trong portal_advisor.js. -->
+            <div id="uikick-notice-overlay" class="uikick-confirm-overlay">
+                <div class="uikick-confirm-box">
+                    <p id="uikick-notice-message"></p>
+                    <div class="uikick-confirm-actions">
+                        <button type="button" id="uikick-notice-ok" class="btn btn-primary btn-sm">Đã hiểu</button>
+                    </div>
+                </div>
+            </div>
             <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
         </t>
     </template>

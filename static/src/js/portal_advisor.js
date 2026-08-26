@@ -120,6 +120,43 @@
         });
     }
 
+    /** Popup báo khi bấm "Nộp nguyện vọng" nhưng có giảng viên trong giỏ vừa
+     * hết chỗ đúng lúc đó (VD: SV khác nộp trúng suất cuối trước vài giây) —
+     * giảng viên đó đã bị tự động xoá khỏi giỏ, CHƯA nộp gì cả, SV cần chọn
+     * người khác thay thế rồi tự nộp lại. Nội dung do controller truyền qua
+     * query string ?notice=... sau khi redirect, xem action_submit_cart()
+     * trong eaut_showcase_advisor_registration.py. Dùng chung style với
+     * modal xác nhận (uikick-confirm-overlay/box/actions), chỉ khác 1 nút
+     * "Đã hiểu". */
+    function initSubmitNotice() {
+        var overlay = document.getElementById("uikick-notice-overlay");
+        if (!overlay) {
+            return;
+        }
+        var params = new URLSearchParams(window.location.search);
+        var message = params.get("notice");
+        if (!message) {
+            return;
+        }
+        document.getElementById("uikick-notice-message").textContent = message;
+        overlay.style.display = "flex";
+
+        function close() {
+            overlay.style.display = "none";
+            // Xoá ?notice= khỏi URL để reload/F5 trang không hiện lại popup.
+            params.delete("notice");
+            var query = params.toString();
+            window.history.replaceState({}, "", window.location.pathname + (query ? "?" + query : ""));
+        }
+
+        document.getElementById("uikick-notice-ok").addEventListener("click", close);
+        overlay.addEventListener("click", function (ev) {
+            if (ev.target === overlay) {
+                close();
+            }
+        });
+    }
+
     /** Bootstrap tab tự reset về tab "active" hardcode trong HTML mỗi khi
      * trang load lại (F5/redirect sau khi submit form) — không nhớ tab
      * người dùng đang đứng. Đọc query string ?tab=<id> (id không có tiền tố
@@ -141,6 +178,7 @@
 
     document.addEventListener("DOMContentLoaded", function () {
         initConfirmForms();
+        initSubmitNotice();
         initRichEditors();
         restoreActiveTab();
         if (!document.querySelector(".uikick-countdown[data-deadline]")) {
