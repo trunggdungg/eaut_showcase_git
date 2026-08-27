@@ -412,3 +412,18 @@ img.uikick-creator-avatar { object-fit: cover; }
     .uikick-creator-about { flex-direction: column; gap: 4px; }
     .uikick-creator-about-label { width: auto; }
 }
+
+/* ==== Icon 2 thẻ Portal "Chọn/Quản lý GVHD" (portal_my_home_advisor) ====
+   CSS của portal.portal_docs_entry (module portal gốc) tự áp 1 kích thước
+   cố định cho <img> icon, ĐÈ LÊN width/height khai trong chính file SVG —
+   nên chỉnh width/height trong file .svg không có tác dụng, phải ghi đè
+   bằng CSS ở đây (nạp sau CSS gốc + !important) mới ăn. Nhắm theo tiền tố
+   đường dẫn thay vì tên class nội bộ của Odoo, để không phụ thuộc cấu
+   trúc HTML cụ thể của portal.portal_docs_entry. */
+img[src^="/eaut_showcase/static/src/img/portal-advisor-"] {
+    width: 48px !important;
+    height: 48px !important;
+    max-width: 48px !important;
+    max-height: 48px !important;
+    object-fit: contain;
+}
