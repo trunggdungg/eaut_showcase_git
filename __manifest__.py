@@ -1,14 +1,26 @@
 {
     'name': 'EAUT Showcase Website',
     'version': '1.0',
-    'summary': 'Website giới thiệu dự án, sản phẩm và năng lực công nghệ của EAUT',
+    'summary': 'Website giới thiệu dự án sinh viên và cổng đăng ký chọn giảng viên hướng dẫn đồ án',
     'description': """
-    EAUT Showcase là module website dùng để giới thiệu các dự án,
-    sản phẩm, giải pháp công nghệ và thành tựu nổi bật của EAUT.
+    EAUT Showcase là module website vừa dùng để giới thiệu các dự án,
+    sản phẩm, giải pháp công nghệ và thành tựu nổi bật của sinh viên EAUT,
+    vừa là hệ thống quản lý việc chọn giảng viên hướng dẫn đồ án.
 
-    Module cung cấp các trang danh sách dự án, chi tiết dự án,
-    thông tin tác giả, hình ảnh, video và các nội dung giới thiệu
-    được xây dựng bằng Odoo QWeb.
+    Trang công khai (kiểu Kickstarter):
+    - Danh sách + chi tiết dự án, tác giả, hình ảnh, video, bình luận.
+    - Danh sách + chi tiết giảng viên hướng dẫn, lọc theo kỳ, danh mục, khoa.
+
+    Cổng thông tin (Portal):
+    - Sinh viên: xây hàng chờ nguyện vọng, nộp, theo dõi kết quả xét duyệt.
+    - Giảng viên: quản lý sức chứa nhận hướng dẫn theo từng kỳ, duyệt/từ
+      chối yêu cầu, quản lý hồ sơ công khai.
+
+    Quản trị (Backend):
+    - Cấu hình Kỳ đồ án, Khoa, danh sách sinh viên đủ điều kiện (nhập từ
+      file CSV), phân bổ giảng viên hướng dẫn cho sinh viên.
+
+    Toàn bộ giao diện được xây dựng bằng Odoo QWeb.
 """,
     'category': 'Website',
     'author': 'Trugn Dugn',
