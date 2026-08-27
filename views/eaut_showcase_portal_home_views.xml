@@ -8,7 +8,7 @@
                t-value="request.env['eaut_showcase.creator'].sudo().search([('user_id', '=', request.env.uid)], limit=1)"/>
             <t t-if="eaut_showcase_lecturer">
                 <t t-call="portal.portal_docs_entry">
-                    <t t-set="icon" t-value="'/portal/static/src/img/portal-connection.svg'"/>
+                    <t t-set="icon" t-value="'/eaut_showcase/static/src/img/portal-advisor-manage.svg'"/>
 
                     <t t-set="title">Quản lý sinh viên hướng dẫn</t>
                     <t t-set="text">Duyệt các yêu cầu hướng dẫn đồ án từ sinh viên</t>
@@ -18,7 +18,7 @@
             </t>
             <t t-else="">
                 <t t-call="portal.portal_docs_entry">
-                    <t t-set="icon" t-value="'/portal/static/src/img/portal-addresses.svg'"/>
+                    <t t-set="icon" t-value="'/eaut_showcase/static/src/img/portal-advisor-select.svg'"/>
                     <t t-set="title">Chọn giảng viên hướng dẫn đồ án</t>
                     <t t-set="text">Đăng ký nguyện vọng chọn giảng viên hướng dẫn</t>
                     <t t-set="url" t-value="'/my/advisor'"/>
