@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <!-- Tự thêm menu "Dự án" vào thanh menu chính của trang web khi cài
+         module — trước đây Admin phải tự vào Website > Chỉnh sửa Menu để
+         thêm tay. noupdate="1" để Admin đổi tên/vị trí/xoá menu này sau đó
+         mà không bị ghi đè lại mỗi lần nâng cấp module. -->
+    <record id="website_menu_showcase" model="website.menu">
+        <field name="name">Dự án</field>
+        <field name="url">/showcase</field>
+        <field name="parent_id" ref="website.main_menu"/>
+        <field name="sequence">50</field>
+    </record>
+</odoo>

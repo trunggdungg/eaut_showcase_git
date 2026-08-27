@@ -32,6 +32,7 @@
         'data/eaut_showcase_advisor_config_data.xml',
         # 'data/eaut_showcase_advisor_demo_data.xml',
         'data/eaut_showcase_cron_data.xml',
+        'data/eaut_showcase_website_menu_data.xml',
         'views/eaut_showcase_category_views.xml',
         'views/eaut_showcase_department_views.xml',
         'views/eaut_showcase_status_views.xml',
