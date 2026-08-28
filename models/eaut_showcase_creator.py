@@ -65,11 +65,14 @@ class ShowcaseCreator(models.Model):
             if not email:
                 continue
             prev_name = name_by_email.get(email)
-            if prev_name is not None and prev_name != name:
+            if prev_name is not None:
+                # Không cần so tên nữa — kể cả 2 dòng trùng cả email lẫn
+                # tên (copy nhầm 1 dòng) cũng phải chặn, vì mỗi Tác giả cần
+                # 1 email liên hệ riêng.
                 raise UserError(
-                    'File import có nhiều dòng cùng Email liên hệ "%s" nhưng khác Tên tác giả '
-                    '("%s" và "%s") — vui lòng kiểm tra lại trước khi import.'
-                    % (email, prev_name, name)
+                    'File import có nhiều dòng cùng Email liên hệ "%s" (dòng tên "%s" và dòng '
+                    'tên "%s") — mỗi Tác giả cần 1 email liên hệ riêng, vui lòng kiểm tra lại '
+                    'trước khi import.' % (email, prev_name, name)
                 )
             name_by_email.setdefault(email, name)
         return super().create(vals_list)
@@ -111,15 +114,19 @@ class ShowcaseCreator(models.Model):
     @api.model
     def _check_email_conflict(self, email, name, ignore_creator_id=None, ignore_user_id=None):
         """Chặn TRƯỚC khi ghi (gọi ở create()/write(), trước super()) nếu
-        Email liên hệ trùng với 1 tài khoản/Liên hệ/Tác giả KHÁC đã có sẵn
-        trong hệ thống mà tên lại khác nhau. Trước đây chỉ action_create_
-        portal_user() kiểm tra việc này — và chỉ khi Admin bấm nút "Tạo tài
-        khoản người dùng"; nếu Admin chỉ gõ trùng email rồi Lưu (không bấm
-        nút) thì không có gì chặn cả, dễ tạo ra 2 bản ghi khác tên cùng 1
-        email, hoặc sau này bấm nút cấp Portal sẽ âm thầm "chiếm" nhầm Liên
-        hệ của người khác (xem action_create_portal_user). Phải kiểm tra
-        TRƯỚC khi ghi, không dùng @api.constrains, vì Odoo không tự rollback
-        khi controller bắt UserError rồi redirect bình thường."""
+        Email liên hệ trùng với 1 tài khoản/Tác giả KHÁC đã có sẵn trong hệ
+        thống — trùng với 1 Tác giả khác thì luôn chặn (kể cả trùng tên,
+        vì mỗi Tác giả phải có 1 email liêng hệ riêng); trùng với 1 Liên hệ
+        (res.partner) thường không phải lỗi — action_create_portal_user() cố
+        ý tái sử dụng đúng Liên hệ đó khi tên khớp — nên chỉ chặn khi tên
+        lại khác nhau (dấu hiệu gõ nhầm email hoặc nhầm người). Trước đây
+        chỉ action_create_portal_user() kiểm tra việc này — và chỉ khi Admin
+        bấm nút "Tạo tài khoản người dùng"; nếu Admin chỉ gõ trùng email rồi
+        Lưu (không bấm nút) thì không có gì chặn cả, dễ tạo ra 2 bản ghi
+        khác tên cùng 1 email, hoặc sau này bấm nút cấp Portal sẽ âm thầm
+        "chiếm" nhầm Liên hệ của người khác. Phải kiểm tra TRƯỚC khi ghi,
+        không dùng @api.constrains, vì Odoo không tự rollback khi controller
+        bắt UserError rồi redirect bình thường."""
         if not email:
             return
         email = email.strip()
@@ -151,10 +158,13 @@ class ShowcaseCreator(models.Model):
         if ignore_creator_id:
             domain.append(('id', '!=', ignore_creator_id))
         dup_creator = self.sudo().search(domain, limit=1)
-        if dup_creator and name and dup_creator.name.strip() != name:
+        if dup_creator:
+            # Không cần so tên nữa — mỗi Tác giả phải có 1 email liên hệ
+            # riêng, kể cả khi trùng tên (2 người trùng tên) hay trùng cả
+            # tên (nhập lặp/sao chép nhầm 1 Tác giả) đều là dữ liệu sai.
             raise UserError(
-                'Email "%s" đã được dùng cho Tác giả khác ("%s") trong hệ thống — vui lòng '
-                'kiểm tra lại.' % (email, dup_creator.name)
+                'Email "%s" đã được dùng cho Tác giả khác ("%s") trong hệ thống — mỗi Tác giả '
+                'cần 1 email liên hệ riêng, vui lòng kiểm tra lại.' % (email, dup_creator.name)
             )
 
     def _sync_account_from_creator(self, changed_fields):
