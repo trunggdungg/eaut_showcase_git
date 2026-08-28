@@ -5,9 +5,9 @@
     <!-- ============================================================ -->
     <!-- DETAIL PAGE (chi tiết chiến dịch)                             -->
     <!-- ============================================================ -->
-    <template id="detail_page" name="UIKick - Campaign Detail">
+    <template id="detail_page" name="EAUT Showcase - Campaign Detail">
         <t t-call="web.frontend_layout">
-            <t t-set="title" t-value="(project.title or '') + ' — Kickstarter'"/>
+            <t t-set="title" t-value="(project.title or '')"/>
             <div id="wrap" class="uikick uikick-detail">
 
                 <!-- Breadcrumb -->

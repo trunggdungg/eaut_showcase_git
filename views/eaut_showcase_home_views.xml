@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="project_card" name="UIKick - Project Card">
+    <template id="project_card" name="EAUT Showcase - Project Card">
         <a t-att-href="'/showcase/project/' + project.project_code" class="uikick-card">
             <div class="uikick-card-media">
                 <!--                                        <img t-att-src="project.image" t-att-alt="project.title"-->
@@ -96,9 +96,9 @@
     <!-- ============================================================ -->
     <!-- HOME PAGE (danh sách project + sidebar filter)                -->
     <!-- ============================================================ -->
-    <template id="home_page" name="UIKick - Discover">
+    <template id="home_page" name="EAUT Showcase - Discover">
         <t t-call="web.frontend_layout">
-            <t t-set="title" t-value="(header_label or '') + ' — Kickstarter'"/>
+            <t t-set="title" t-value="(header_label or '')"/>
             <div id="wrap" class="uikick">
 
                 <div class="uikick-body">
@@ -147,6 +147,20 @@
                                 </t>
                                 <p t-if="not open_terms" class="text-muted small mb-0">
                                     Hiện không có kỳ nào đang mở.
+                                </p>
+                            </div>
+                                 <hr/>
+                            <div class="uikick-filter-group">
+                                <h3>Khoa</h3>
+                                <t t-foreach="departments" t-as="dept">
+                                    <label class="uikick-check-row uikick-check-row-single">
+                                        <input type="checkbox" name="department" t-att-value="dept.id"
+                                               t-att-checked="'checked' if dept.id in filters['department'] else None"/>
+                                        <t t-esc="dept.name"/>
+                                    </label>
+                                </t>
+                                <p t-if="not departments" class="text-muted small mb-0">
+                                    Chưa có khoa nào được khai báo.
                                 </p>
                             </div>
                         </t>
