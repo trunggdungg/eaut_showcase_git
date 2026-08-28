@@ -47,10 +47,12 @@ class ShowcaseTerm(models.Model):
     eligible_student_ids = fields.Many2many(
         'res.partner', 'eaut_showcase_term_eligible_student_rel',
         'term_id', 'partner_id', string='Sinh viên đủ điều kiện',
-        help="Chỉ sinh viên trong danh sách này mới thấy và đăng ký được ở "
-             "kỳ này — dùng khi nhiều khoa mở kỳ song song, tránh sinh viên "
-             "khoa khác lỡ đăng ký nhầm kỳ. Để trống = không giới hạn, mọi "
-             "sinh viên Portal đều thấy được kỳ này.",
+        help="BẮT BUỘC — chỉ sinh viên có tên trong danh sách này mới thấy "
+             "và đăng ký được giảng viên ở kỳ này, không có ngoại lệ. Để "
+             "trống nghĩa là kỳ này TẠM CHƯA sinh viên nào đăng ký được "
+             "(KHÔNG phải \"mở cho tất cả\") — phải thêm sinh viên vào đây "
+             "trước. Dùng khi nhiều khoa mở kỳ song song: mỗi sinh viên chỉ "
+             "nên có tên ở đúng 1 kỳ của khoa mình, tránh đăng ký nhầm kỳ.",
     )
     eligible_student_count = fields.Integer(
         string='Số sinh viên đủ điều kiện', compute='_compute_eligible_student_count',
@@ -232,11 +234,17 @@ class ShowcaseTerm(models.Model):
     #         'eaut_showcase.action_eaut_showcase_creator_kanban'
     #     )
     def action_view_eligible_students(self):
+        """Nút thống kê "SV đủ điều kiện" trên form Kỳ — dùng riêng 1 list
+              view (view_eaut_showcase_eligible_student_list) có MSSV/Lớp/Ngành
+              thay vì list Contacts mặc định của res.partner, để khớp với những gì
+              đã thấy ở tab "Sinh viên đủ điều kiện" ngay trong form Kỳ."""
         self.ensure_one()
+        list_view = self.env.ref('eaut_showcase.view_eaut_showcase_eligible_student_list')
         return {
             'type': 'ir.actions.act_window',
             'name': 'Sinh viên đủ điều kiện',
             'res_model': 'res.partner',
             'view_mode': 'list,form',
+            'views': [(list_view.id, 'list'), (False, 'form')],
             'domain': [('id', 'in', self.eligible_student_ids.ids)],
         }

@@ -311,7 +311,17 @@ class ShowcaseAdvisorRegistration(models.Model):
         """Nộp cả giỏ nguyện vọng 1 lần theo đúng thứ tự đã sắp — sau đó
         khoá lại, không sửa được nữa. Nguyện vọng số 1 (sequence nhỏ nhất)
         được kích hoạt gửi giảng viên trước; các nguyện vọng sau chỉ được
-        kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn."""
+         kích hoạt tự động khi nguyện vọng trước bị từ chối/hết hạn.
+
+        Trước khi khoá giỏ, kiểm tra lại sức chứa THỰC TẾ của từng giảng
+        viên đang có trong giỏ — có thể vừa hết chỗ ngay trước khi SV này
+        bấm nộp (VD: 2 SV cùng để 1 giảng viên chỉ còn 1 chỗ vào hàng chờ,
+        SV nộp sau bấm trúng lúc SV kia vừa nộp xong). Nếu có, KHÔNG nộp gì
+        cả — chỉ tự xoá (các) giảng viên đã hết chỗ khỏi giỏ và trả về 1
+        chuỗi thông báo (hoặc False nếu nộp bình thường) cho nơi gọi
+        (controller) hiện thành popup, để SV biết ngay và tự chọn giảng
+        viên khác thay thế rồi tự bấm nộp lại — tránh bị từ chối thẳng luôn
+        (phải chờ Admin cho chọn lại) chỉ vì chậm chân vài giây."""
         self.ensure_one()
         if not self._can_edit_cart():
             raise UserError('Bạn đã nộp nguyện vọng rồi, không thể nộp lại.')
@@ -319,9 +329,21 @@ class ShowcaseAdvisorRegistration(models.Model):
         if not cart_lines:
             raise UserError(
                 'Hàng chờ nguyện vọng đang trống — hãy thêm ít nhất 1 giảng viên trước khi nộp.')
+        full_lines = cart_lines.filtered(lambda l: l._is_capacity_full())
+        if full_lines:
+            removed_names = ', '.join(full_lines.mapped('creator_id.name'))
+            full_lines.unlink()
+            self._resequence_cart()
+            return (
+                'Giảng viên %s vừa hết chỗ nhận sinh viên hướng dẫn ngay trước khi bạn nộp '
+                '(có thể một sinh viên khác đã nộp trúng suất cuối trước bạn) nên đã được tự '
+                'động xoá khỏi hàng chờ nguyện vọng của bạn. Vui lòng chọn giảng viên khác '
+                'thay thế rồi nộp lại nguyện vọng.'
+            ) % removed_names
         cart_lines.write({'state': 'waiting'})
         self.state = 'in_progress'
         self._activate_next_line()
+        return False
 
     def _activate_next_line(self, reason=None):
         """reason (nếu có): lý do dẫn tới lượt kích hoạt này (bị từ chối/hết hạn),
@@ -615,6 +637,14 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
             ('creator_id', '=', self.creator_id.id),
         ], limit=1)
 
+    def _is_capacity_full(self):
+        """Dùng lúc SV nộp giỏ (action_submit_cart) để phát hiện giảng viên
+        đã hết chỗ NGAY TRƯỚC lúc nộp — cùng điều kiện với action_cart_add()
+        (giảng viên không tồn tại/đã rút/hết remaining_slots)."""
+        self.ensure_one()
+        capacity = self._get_capacity()
+        return not capacity or capacity.withdrawn or capacity.remaining_slots <= 0
+
     def _notify(self, partner, body):
         self.ensure_one()
         if partner:
@@ -626,9 +656,24 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         """Kích hoạt 1 dòng đang chờ: gửi cho giảng viên, hoặc tự động bỏ qua
         luôn nếu giảng viên đã rút/đã đầy chỗ ngay từ đầu — reason (nếu có) được
         truyền tiếp cho _activate_next_line() khi phải dò tiếp, để không mất lý
-        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng."""
+        do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng.
+
+        Khoá row sức chứa (FOR UPDATE) TRƯỚC khi đọc remaining_slots — đây là
+        nơi DUY NHẤT thật sự chuyển 1 dòng sang 'pending' (điểm chốt cuối
+        cùng của luồng nộp/chuyển tiếp nguyện vọng), nên phải cùng mức khoá
+        với action_approve()/_admin_assign() để chặn đúng race condition: 2
+        sinh viên bấm "Nộp nguyện vọng" cho cùng 1 giảng viên chỉ còn 1 chỗ
+        TẠI CÙNG 1 THỜI ĐIỂM (2 transaction chạm DB gần như đồng thời) — lúc
+        đó việc action_submit_cart() đã tự kiểm tra trước (_is_capacity_full)
+        không đủ, vì cả 2 có thể đọc remaining_slots cũ trước khi bên kia
+        commit."""
         self.ensure_one()
         capacity = self._get_capacity()
+        if capacity:
+            self.env.cr.execute(
+                'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
+                (capacity.id,),
+            )
         if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
             reject_reason = 'Giảng viên đã rút khỏi kỳ này.' if (capacity and capacity.withdrawn) \
                 else 'Giảng viên đã hết chỗ nhận sinh viên hướng dẫn.'

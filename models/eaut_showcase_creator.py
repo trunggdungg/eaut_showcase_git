@@ -34,6 +34,12 @@ class ShowcaseCreator(models.Model):
         help="Dùng để lọc giảng viên theo lĩnh vực ở trang chọn giảng viên "
              "hướng dẫn đồ án — dùng chung danh mục với dự án Showcase.",
     )
+    department_id = fields.Many2one(
+        'eaut_showcase.department', string='Khoa',
+        help="Khoa quản lý giảng viên này — chỉ dùng để lọc trên trang công "
+             "khai, không giới hạn sinh viên khoa khác chọn giảng viên này. "
+             "Do Admin gán ở đây, giảng viên không tự sửa được qua Portal.",
+    )
     project_ids = fields.Many2many(
         'eaut_showcase.project', 'eaut_showcase_project_creator_rel',
         'creator_id', 'project_id', string='Dự án đã đăng',
@@ -46,13 +52,43 @@ class ShowcaseCreator(models.Model):
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        name_by_email = {}
+        for vals in vals_list:
+            self._check_email_conflict(
+                vals.get('email'), vals.get('name'),
+                ignore_user_id=vals.get('user_id'),
+            )
+            email = (vals.get('email') or '').strip()
+            name = (vals.get('name') or '').strip()
+            if not email:
+                continue
+            prev_name = name_by_email.get(email)
+            if prev_name is not None:
+                # Không cần so tên nữa — kể cả 2 dòng trùng cả email lẫn
+                # tên (copy nhầm 1 dòng) cũng phải chặn, vì mỗi Tác giả cần
+                # 1 email liên hệ riêng.
+                raise UserError(
+                    'File import có nhiều dòng cùng Email liên hệ "%s" (dòng tên "%s" và dòng '
+                    'tên "%s") — mỗi Tác giả cần 1 email liên hệ riêng, vui lòng kiểm tra lại '
+                    'trước khi import.' % (email, prev_name, name)
+                )
+            name_by_email.setdefault(email, name)
+        return super().create(vals_list)
+
     def write(self, vals):
         self._sync_name_from_user_vals(vals)
         changed_fields = [f for f in ('name', 'email') if f in vals]
         if self.env.context.get('showcase_skip_reverse_sync'):
             return super().write(vals)
         if 'email' in changed_fields:
-            self._check_login_conflict(vals['email'])
+            for creator in self:
+                self._check_email_conflict(
+                    vals.get('email'), vals.get('name', creator.name),
+                    ignore_creator_id=creator.id,
+                    ignore_user_id=creator.user_id.id,
+                )
         result = super().write(vals)
         if changed_fields:
             self._sync_account_from_creator(changed_fields)
@@ -75,35 +111,68 @@ class ShowcaseCreator(models.Model):
         if partner_name:
             vals['name'] = partner_name
 
-    def _check_login_conflict(self, email):
-        """Chặn TRƯỚC khi ghi (gọi ở đầu write(), trước super().write()) nếu
-        email mới trùng login của 1 tài khoản khác — login có ràng buộc
-        unique ở DB, phải kiểm tra trước khi ghi bất kỳ field nào, nếu không
-        phần ghi name/email của creator (chạy trước khi kịp raise) vẫn bị
-        lưu xuống DB dù request kết thúc bằng thông báo lỗi (controller bắt
-        UserError rồi redirect bình thường — Odoo vẫn commit transaction,
-        không tự rollback chỉ vì exception bị bắt lại)."""
+    @api.model
+    def _check_email_conflict(self, email, name, ignore_creator_id=None, ignore_user_id=None):
+        """Chặn TRƯỚC khi ghi (gọi ở create()/write(), trước super()) nếu
+          Email liên hệ trùng với 1 tài khoản/Tác giả KHÁC đã có sẵn trong hệ
+        thống — trùng với 1 Tác giả khác thì luôn chặn (kể cả trùng tên,
+        vì mỗi Tác giả phải có 1 email liêng hệ riêng); trùng với 1 Liên hệ
+        (res.partner) thường không phải lỗi — action_create_portal_user() cố
+        ý tái sử dụng đúng Liên hệ đó khi tên khớp — nên chỉ chặn khi tên
+        lại khác nhau (dấu hiệu gõ nhầm email hoặc nhầm người). Trước đây
+        chỉ action_create_portal_user() kiểm tra việc này — và chỉ khi Admin
+        bấm nút "Tạo tài khoản người dùng"; nếu Admin chỉ gõ trùng email rồi
+        Lưu (không bấm nút) thì không có gì chặn cả, dễ tạo ra 2 bản ghi
+        khác tên cùng 1 email, hoặc sau này bấm nút cấp Portal sẽ âm thầm
+        "chiếm" nhầm Liên hệ của người khác. Phải kiểm tra TRƯỚC khi ghi,
+        không dùng @api.constrains, vì Odoo không tự rollback khi controller
+        bắt UserError rồi redirect bình thường."""
         if not email:
             return
-        for creator in self:
-            if not creator.user_id or creator.user_id.login == email:
-                continue
-            other_login = self.env['res.users'].sudo().search([
-                ('login', '=', email), ('id', '!=', creator.user_id.id),
-            ], limit=1)
-            if other_login:
-                raise UserError(
-                    'Email "%s" đã được dùng làm tên đăng nhập của 1 tài khoản khác — '
-                    'không thể đổi email liên hệ (đồng thời là tên đăng nhập) thành '
-                    'email này.' % email
-                )
+        email = email.strip()
+        if not email:
+            return
+        name = (name or '').strip()
+
+        other_user = self.env['res.users'].sudo().search([('login', '=', email)], limit=1)
+        if other_user and other_user.id != ignore_user_id:
+            raise UserError(
+                'Email "%s" đã là tên đăng nhập của tài khoản "%s" trong hệ thống — không '
+                'thể dùng email này, trừ khi vào field "Tài khoản Portal" để chọn đúng tài '
+                'khoản đó thay vì nhập trùng.' % (email, other_user.name)
+            )
+
+        ignore_partner_id = False
+        if ignore_user_id:
+            ignore_partner_id = self.env['res.users'].sudo().browse(ignore_user_id).partner_id.id
+        partner = self.env['res.partner'].sudo().search([('email', '=', email)], limit=1)
+        if partner and partner.id != ignore_partner_id \
+                and name and partner.name and partner.name.strip() != name:
+            raise UserError(
+                'Email "%s" đã được dùng bởi Liên hệ "%s" trong hệ thống (khác với tên "%s" '
+                'vừa nhập) — vui lòng kiểm tra lại, có thể email bị gõ nhầm hoặc đây là cùng '
+                '1 người nhưng tên chưa thống nhất.' % (email, partner.name, name)
+            )
+
+        domain = [('email', '=', email)]
+        if ignore_creator_id:
+            domain.append(('id', '!=', ignore_creator_id))
+        dup_creator = self.sudo().search(domain, limit=1)
+        if dup_creator:
+            # Không cần so tên nữa — mỗi Tác giả phải có 1 email liên hệ
+            # riêng, kể cả khi trùng tên (2 người trùng tên) hay trùng cả
+            # tên (nhập lặp/sao chép nhầm 1 Tác giả) đều là dữ liệu sai.
+            raise UserError(
+                'Email "%s" đã được dùng cho Tác giả khác ("%s") trong hệ thống — mỗi Tác giả '
+                'cần 1 email liên hệ riêng, vui lòng kiểm tra lại.' % (email, dup_creator.name)
+            )
     def _sync_account_from_creator(self, changed_fields):
         """Chiều ngược lại của _sync_name_from_user_vals(): GV tự sửa 'Tên
         hiển thị'/'Email liên hệ' trên Portal (my_advisor_lecturer_profile_save)
             thì ghi luôn giá trị mới vào res.partner + res.users.login của tài
         khoản Odoo đang gắn (user_id) — hệ thống dùng email làm tên đăng
         nhập nên email liên hệ và login luôn phải là 1. Trùng login đã được
-        chặn từ trước ở _check_login_conflict(), gọi trước super().write()."""
+       chặn từ trước ở _check_email_conflict(), gọi trước super().write()."""
         for creator in self:
             if not creator.user_id:
                 continue
@@ -124,14 +193,17 @@ class ShowcaseCreator(models.Model):
         `partner` đủ điều kiện — dùng cho trang chi tiết GV công khai để
         quyết định có hiện nút "Chọn làm giảng viên hướng dẫn" hay không.
         Khi có nhiều kỳ mở song song (nhiều khoa), không được chỉ lấy đại 1
-        kỳ mở mới nhất chung cho mọi người — mỗi kỳ có thể giới hạn danh
-        sách 'Sinh viên đủ điều kiện' riêng, và GV có thể chỉ tham gia 1
-        trong số các kỳ đó."""
+        kỳ mở mới nhất chung cho mọi người — mỗi kỳ BẮT BUỘC phải khai danh
+        sách 'Sinh viên đủ điều kiện' riêng (để trống = chưa ai đăng ký
+        được, xem eaut_showcase_term.py), và GV có thể chỉ tham gia 1 trong
+        số các kỳ đó. Phải khớp đúng luật với _get_open_term() ở
+        controllers/eaut_showcase_portal.py — nếu không, SV có thể thấy nút
+        "Chọn làm GVHD" ở đây nhưng bấm vào lại bị portal chặn."""
         self.ensure_one()
         terms = self.env['eaut_showcase.term'].sudo().search(
             [('state', '=', 'open')], order='date_start desc')
         for term in terms:
-            if term.eligible_student_ids and partner not in term.eligible_student_ids:
+            if partner not in term.eligible_student_ids:
                 continue
             capacity = self.env['eaut_showcase.term.capacity'].sudo().search([
                 ('term_id', '=', term.id), ('creator_id', '=', self.id),

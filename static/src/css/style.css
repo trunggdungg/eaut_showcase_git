@@ -412,3 +412,12 @@ img.uikick-creator-avatar { object-fit: cover; }
     .uikick-creator-about { flex-direction: column; gap: 4px; }
     .uikick-creator-about-label { width: auto; }
 }
+
+
+img[src^="/eaut_showcase/static/src/img/portal-advisor-"] {
+    width: 64px !important;
+    height: 64px !important;
+    max-width: 64px !important;
+    max-height: 64px !important;
+    object-fit: contain;
+}

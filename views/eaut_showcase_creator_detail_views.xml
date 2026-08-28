@@ -4,9 +4,9 @@
     <!-- ============================================================ -->
     <!-- CREATOR PROFILE PAGE (trang công khai của 1 tác giả)          -->
     <!-- ============================================================ -->
-    <template id="creator_detail_page" name="UIKick - Creator Profile">
+    <template id="creator_detail_page" name="EAUT Showcase - Creator Profile">
         <t t-call="web.frontend_layout">
-            <t t-set="title" t-value="(creator.name or '') + ' — Kickstarter'"/>
+            <t t-set="title" t-value="(creator.name or '')"/>
             <div id="wrap" class="uikick uikick-creator-page">
                 <!-- Breadcrumb -->
                 <nav class="uikick-breadcrumb">

@@ -161,13 +161,17 @@
     <!--    Cấu hình đồ án-->
     <menuitem id="menu_uikick_thesis_config" name="Cấu hình đồ án" parent="menu_uikick_root" sequence="40"/>
 
+    <menuitem id="menu_uikick_department" name="Khoa" parent="menu_uikick_thesis_config"
+              action="action_eaut_showcase_department" sequence="5"/>
+
     <menuitem id="menu_uikick_term" name="Kỳ đồ án" parent="menu_uikick_thesis_config"
               action="action_eaut_showcase_term" sequence="10"/>
 
     <menuitem id="menu_uikick_advisor_registration" name="Đăng ký chọn GVHD" parent="menu_uikick_thesis_config"
               action="action_eaut_showcase_advisor_registration" sequence="20"/>
 
-    <menuitem id="menu_uikick_advisor_registration_kanban" name="Phân bổ sinh viên cho giảng viên" parent="menu_uikick_thesis_config"
+    <menuitem id="menu_uikick_advisor_registration_kanban" name="Phân bổ sinh viên cho giảng viên"
+              parent="menu_uikick_thesis_config"
               action="action_eaut_showcase_advisor_registration_kanban" sequence="30"/>
 
     <menuitem id="menu_uikick_creator_kanban" name="Phân bổ giảng viên theo kỳ" parent="menu_uikick_thesis_config"

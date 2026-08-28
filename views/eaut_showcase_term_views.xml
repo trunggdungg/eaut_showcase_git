@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-
+    <!-- Dùng riêng cho nút thống kê "SV đủ điều kiện" (action_view_eligible_students)
+         — list Contacts mặc định của res.partner không có MSSV/Lớp/Ngành. -->
+    <record id="view_eaut_showcase_eligible_student_list" model="ir.ui.view">
+        <field name="name">eaut_showcase.eligible.student.list</field>
+        <field name="model">res.partner</field>
+        <field name="arch" type="xml">
+            <list string="Sinh viên đủ điều kiện" editable="bottom">
+                <field name="name"/>
+                <field name="email"/>
+                <field name="phone" string="Số điện thoại"/>
+                <field name="showcase_student_code" string="MSSV"/>
+                <field name="showcase_student_class" string="Lớp"/>
+                <field name="showcase_student_major" string="Ngành"/>
+            </list>
+        </field>
+    </record>
     <record id="view_eaut_showcase_term_list" model="ir.ui.view">
         <field name="name">eaut_showcase.term.list</field>
         <field name="model">eaut_showcase.term</field>
@@ -63,10 +78,10 @@
                     </group>
                     <notebook>
                         <page string="Giảng viên nhận hướng dẫn" name="capacity">
-<!--                            <div class="mb-2">-->
-<!--                                <button name="action_assign_creators_kanban" type="object"-->
-<!--                                        string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>-->
-<!--                            </div>-->
+                            <!--                            <div class="mb-2">-->
+                            <!--                                <button name="action_assign_creators_kanban" type="object"-->
+                            <!--                                        string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>-->
+                            <!--                            </div>-->
                             <field name="capacity_ids">
                                 <list editable="bottom">
                                     <field name="creator_id"/>
@@ -75,7 +90,7 @@
                                     <field name="pending_count"/>
                                     <field name="remaining_slots"/>
                                     <field name="withdrawn"/>
-                                     <field name="pending_action" widget="badge"
+                                    <field name="pending_action" widget="badge"
                                            decoration-info="pending_action in ('join', 'update')"
                                            decoration-warning="pending_action == 'withdraw'"/>
                                     <field name="pending_max_students"
@@ -94,23 +109,27 @@
                         </page>
                         <page string="Sinh viên đủ điều kiện" name="eligible_students">
                             <p class="text-muted">
-                                Để trống = không giới hạn, mọi sinh viên Portal đều thấy và
-                                đăng ký được ở kỳ này. Nếu có nhiều kỳ mở song song (nhiều
-                                khoa), khai danh sách ở đây để sinh viên chỉ thấy đúng kỳ
-                                của khoa mình.
+                                BẮT BUỘC — chỉ sinh viên có tên trong danh sách này mới thấy
+                                và đăng ký được giảng viên ở kỳ này. Để trống nghĩa là kỳ này
+                                TẠM CHƯA sinh viên nào đăng ký được, không phải "mở cho tất
+                                cả" — phải thêm sinh viên vào đây trước khi họ chọn được
+                                giảng viên. Nếu có nhiều kỳ mở song song (nhiều khoa), mỗi
+                                sinh viên chỉ nên có tên ở đúng 1 kỳ của khoa mình.
                             </p>
                             <field name="eligible_student_ids">
-                                <list>
+                                <list editable="bottom">
                                     <field name="name"/>
                                     <field name="email"/>
-                                    <field name="showcase_student_code" string="MSSV"/>
+                                    <field name="phone" string="Số điện thoại"/>
+                                    <field name="showcase_student_code" string="MSV"/>
                                     <field name="showcase_student_class" string="Lớp"/>
+                                       <field name="showcase_student_major" string="Ngành"/>
                                 </list>
                             </field>
                         </page>
                     </notebook>
                 </sheet>
-                    <chatter/>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -131,7 +150,7 @@
         <field name="model">eaut_showcase.term.close.warning</field>
         <field name="arch" type="xml">
             <form string="Đóng kỳ">
-                     <field name="term_id" invisible="1"/>
+                <field name="term_id" invisible="1"/>
                 <field name="message" readonly="1" nolabel="1"/>
                 <footer>
                     <button string="Đóng kỳ" name="action_confirm" type="object" class="btn-primary"/>

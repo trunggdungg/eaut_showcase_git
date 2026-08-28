@@ -1,4 +1,5 @@
 from . import eaut_showcase_category
+from . import eaut_showcase_department
 
 from . import eaut_showcase_status
 from . import eaut_showcase_creator

@@ -1,11 +1,12 @@
 {
     'name': 'EAUT Showcase Website',
     'version': '1.0',
-    'summary': 'Website giới thiệu dự án, sản phẩm và năng lực công nghệ của EAUT',
+    'summary': 'Website giới thiệu dự án sinh viên và cổng đăng ký chọn giảng viên hướng dẫn đồ án',
     'description': """
-    EAUT Showcase là module website dùng để giới thiệu các dự án,
-    sản phẩm, giải pháp công nghệ và thành tựu nổi bật của EAUT.
-
+    EAUT Showcase là module website vừa dùng để giới thiệu các dự án,
+    sản phẩm, giải pháp công nghệ và thành tựu nổi bật của sinh viên EAUT,
+    vừa là hệ thống quản lý việc chọn giảng viên hướng dẫn đồ án.
+    
     Module cung cấp các trang danh sách dự án, chi tiết dự án,
     thông tin tác giả, hình ảnh, video và các nội dung giới thiệu
     được xây dựng bằng Odoo QWeb.
@@ -15,12 +16,14 @@
     'depends': ['website', 'mail', 'portal'],
     'data': [
         'security/ir.model.access.csv',
-         'data/eaut_showcase_project_sequence_data.xml',
-        'data/eaut_showcase_data.xml',
+        'data/eaut_showcase_project_sequence_data.xml',
+        # 'data/eaut_showcase_data.xml',
         'data/eaut_showcase_advisor_config_data.xml',
         # 'data/eaut_showcase_advisor_demo_data.xml',
         'data/eaut_showcase_cron_data.xml',
+        'data/eaut_showcase_website_menu_data.xml',
         'views/eaut_showcase_category_views.xml',
+        'views/eaut_showcase_department_views.xml',
         'views/eaut_showcase_status_views.xml',
         'views/eaut_showcase_creator_views.xml',
         'views/eaut_showcase_interest_views.xml',
@@ -43,7 +46,7 @@
             'eaut_showcase/static/src/js/home.js',
             'eaut_showcase/static/src/js/detail.js',
         ],
-'web.assets_backend': [
+        'web.assets_backend': [
             'eaut_showcase/static/src/css/backend.css',
         ],
     },
