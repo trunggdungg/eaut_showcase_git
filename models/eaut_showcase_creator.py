@@ -48,11 +48,30 @@ class ShowcaseCreator(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # _check_email_conflict() tra DB nên chỉ bắt được trùng với bản ghi
+        # ĐÃ LƯU từ trước — khi Import (Tác giả > Import), Odoo gộp nhiều
+        # dòng của cùng 1 file vào chung 1 lô rồi mới gọi create() 1 lần cho
+        # cả lô, nên 2 dòng trùng email nhưng khác tên ngay TRONG file đang
+        # import (chưa dòng nào kịp lưu xuống DB) sẽ lọt qua check ở trên —
+        # phải rà thêm trong chính vals_list của lô này.
+        name_by_email = {}
         for vals in vals_list:
             self._check_email_conflict(
                 vals.get('email'), vals.get('name'),
                 ignore_user_id=vals.get('user_id'),
             )
+            email = (vals.get('email') or '').strip()
+            name = (vals.get('name') or '').strip()
+            if not email:
+                continue
+            prev_name = name_by_email.get(email)
+            if prev_name is not None and prev_name != name:
+                raise UserError(
+                    'File import có nhiều dòng cùng Email liên hệ "%s" nhưng khác Tên tác giả '
+                    '("%s" và "%s") — vui lòng kiểm tra lại trước khi import.'
+                    % (email, prev_name, name)
+                )
+            name_by_email.setdefault(email, name)
         return super().create(vals_list)
 
     def write(self, vals):
