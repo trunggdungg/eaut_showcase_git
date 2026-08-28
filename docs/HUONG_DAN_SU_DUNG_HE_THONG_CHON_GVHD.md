@@ -59,6 +59,7 @@ Eaut Showcase
 ├── Danh mục                   → Danh mục/lĩnh vực dùng chung
 ├── Cấu hình dự án             → (Dự án, Người quan tâm, Bình luận, Trạng thái — thuộc website showcase, không thuộc phần chọn GVHD)
 └── Cấu hình đồ án
+    ├── Khoa                             → Danh sách Khoa (dùng để gán/lọc giảng viên theo Khoa)
     ├── Kỳ đồ án                        → Quản lý các đợt đăng ký chọn GVHD
     ├── Đăng ký chọn GVHD               → Xem toàn bộ hồ sơ đăng ký của sinh viên
     ├── Phân bổ sinh viên cho giảng viên → Bảng Kanban gán/chuyển sinh viên
@@ -69,11 +70,12 @@ Eaut Showcase
 
 Trước khi giảng viên có thể tham gia hệ thống, họ cần một tài khoản Cổng thông tin (Portal).
 
-1. Vào **Eaut Showcase → Tác giả**, tạo mới hoặc mở hồ sơ giảng viên (nhập Tên, Email liên hệ, Vai trò, Lĩnh vực...).
-2. Nếu trường **"Tài khoản Portal"** đang trống, form sẽ hiện nút **"Tạo tài khoản người dùng"**. Bấm nút này để hệ thống tự tạo/gán tài khoản Portal theo email đã nhập và gửi email mời đăng nhập cho giảng viên.
-3. Sau khi tạo, trường "Tài khoản Portal" sẽ hiển thị tài khoản Odoo liên kết với hồ sơ giảng viên này.
+1. (Tuỳ chọn, làm 1 lần) Vào **Cấu hình đồ án → Khoa**, tạo trước danh sách các Khoa (VD: Công nghệ thông tin, Điện - Điện tử...) nếu muốn phân loại/lọc giảng viên theo Khoa trên trang công khai.
+2. Vào **Eaut Showcase → Tác giả**, tạo mới hoặc mở hồ sơ giảng viên (nhập Tên, Email liên hệ, Vai trò, Khoa, Lĩnh vực...). Trường **"Khoa"** chỉ dùng để lọc/hiển thị trên trang công khai — **không** giới hạn việc sinh viên khoa khác chọn giảng viên này, và giảng viên **không tự sửa được** trường này qua Portal (chỉ Admin gán ở backend).
+3. Nếu trường **"Tài khoản Portal"** đang trống, form sẽ hiện nút **"Tạo tài khoản người dùng"**. Bấm nút này để hệ thống tự tạo/gán tài khoản Portal theo email đã nhập và gửi email mời đăng nhập cho giảng viên.
+4. Sau khi tạo, trường "Tài khoản Portal" sẽ hiển thị tài khoản Odoo liên kết với hồ sơ giảng viên này.
 
-> Lưu ý: Nếu sau này giảng viên tự đổi **Tên** hoặc **Email** trong hồ sơ Portal của họ, hệ thống sẽ tự đồng bộ hai chiều với tài khoản Odoo (kể cả tên đăng nhập). Nếu email trùng với một tài khoản đăng nhập khác đang tồn tại, hệ thống sẽ báo lỗi và không cho lưu.
+> Lưu ý: Nếu sau này giảng viên tự đổi **Tên** hoặc **Email** trong hồ sơ Portal của họ, hệ thống sẽ tự đồng bộ hai chiều với tài khoản Odoo (kể cả tên đăng nhập). **Email liên hệ của mỗi Tác giả phải là duy nhất** trong toàn hệ thống — nếu trùng với tên đăng nhập của tài khoản khác, hoặc trùng với 1 Tác giả khác, hệ thống sẽ báo lỗi và không cho lưu; nếu trùng với 1 Liên hệ (Contact) có sẵn nhưng **cùng tên** (đúng là cùng 1 người), hệ thống sẽ cho phép và tự tái sử dụng đúng Liên hệ đó khi bấm "Tạo tài khoản người dùng".
 
 ## 1.3. Bước 2 — Tạo "Kỳ đồ án" và mở đăng ký
 
@@ -83,10 +85,12 @@ Trước khi giảng viên có thể tham gia hệ thống, họ cần một tà
    - **Ngày mở đăng ký / Ngày đóng đăng ký** (chỉ mang tính thông tin tham khảo — việc mở/đóng thực tế do Admin bấm nút trạng thái, không tự động theo ngày).
    - **Hạn phản hồi của giảng viên (giờ)**: số giờ tối đa để một giảng viên phản hồi (duyệt/từ chối) một yêu cầu trước khi hệ thống tự động chuyển sang nguyện vọng kế tiếp. Mặc định 24 giờ.
    - **Số nguyện vọng tối đa/sinh viên**: số giảng viên tối đa mà mỗi sinh viên được phép đưa vào danh sách ưu tiên. Mặc định 5.
-3. (Tuỳ chọn) Tab **"Sinh viên đủ điều kiện"**: nếu chỉ muốn một danh sách sinh viên cụ thể được tham gia kỳ này (ví dụ mỗi khoa chạy một kỳ riêng), thêm danh sách sinh viên vào đây. Để trống nghĩa là **mọi** sinh viên Portal đều thấy và đăng ký được kỳ này.
+3. **Bắt buộc** — Tab **"Sinh viên đủ điều kiện"**: thêm danh sách sinh viên được phép tham gia kỳ này. Có thể thêm trực tiếp ngay trong bảng (danh sách cho sửa/thêm dòng tại chỗ — không cần mở form riêng). **Để trống danh sách này nghĩa là chưa sinh viên nào đăng ký được ở kỳ này**, kể cả khi kỳ đã ở trạng thái "Đang mở" — đây **không còn** phải là "mở cho tất cả" như trước nữa, nên bước này không được bỏ qua dù chỉ mở đúng 1 kỳ duy nhất cho toàn trường. Nếu có nhiều Khoa mở kỳ song song, mỗi sinh viên chỉ nên có tên ở đúng 1 kỳ của khoa mình.
 4. Bấm nút **"Mở đăng ký"** trên thanh trạng thái (draft → open) để sinh viên bắt đầu thấy và thao tác được.
 
 Thanh trạng thái của Kỳ đồ án: **Nháp → Đang mở → Chốt danh sách → Đã đóng**.
+
+> **Lưu ý quan trọng:** Nếu quên khai "Sinh viên đủ điều kiện" (hoặc quên thêm 1 sinh viên cụ thể vào danh sách), sinh viên đó sẽ vào trang `/my/advisor` và thấy cảnh báo *"Hiện có kỳ đồ án đang mở nhưng bạn chưa có trong danh sách 'Sinh viên đủ điều kiện' của kỳ nào — vui lòng liên hệ Khoa/Admin để được bổ sung."* — khác với thông báo "chưa có kỳ nào mở" khi thực sự không có kỳ nào đang mở. Nút thống kê **"SV đủ điều kiện"** trên form Kỳ mở ra đúng danh sách này kèm MSSV/Lớp/Ngành/SĐT để Admin đối chiếu nhanh.
 
 ## 1.4. Bước 3 — Thêm giảng viên vào kỳ (thiết lập sức chứa)
 
@@ -231,15 +235,17 @@ Sinh viên sử dụng hệ thống qua **Cổng thông tin (Portal)** và trang
 
 1. Đăng nhập Portal bằng tài khoản sinh viên được cấp.
 2. Vào **"Tài khoản của tôi"** → bấm thẻ **"Chọn giảng viên hướng dẫn đồ án"** để vào trang `/my/advisor`.
-3. Nếu là lần đầu sử dụng, hệ thống sẽ yêu cầu hoàn thiện hồ sơ trước khi cho chọn giảng viên: nhập **MSSV**, **Lớp**, **Ngành học**, sau đó bấm **"Lưu hồ sơ"**.
+3. Nếu là lần đầu sử dụng, hệ thống sẽ yêu cầu hoàn thiện hồ sơ trước khi cho chọn giảng viên: nhập **MSSV**, **Lớp**, **Ngành học**, **Số điện thoại** (đều bắt buộc), sau đó bấm **"Lưu hồ sơ"**.
 
-> Nếu trang báo *"Hiện không có kỳ đồ án nào đang mở đăng ký"*, nghĩa là Nhà trường/Khoa chưa mở đợt đăng ký chọn GVHD, hoặc bạn không thuộc danh sách sinh viên đủ điều kiện của kỳ hiện có — hãy liên hệ Admin/khoa để được xác nhận.
+Tuỳ tình huống, trang sẽ báo 1 trong 2 thông báo khác nhau — phân biệt rõ để biết cần liên hệ ai:
+- *"Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn."* — chưa có kỳ nào được Nhà trường/Khoa mở, chưa cần làm gì, chờ thông báo mở đợt.
+- *"Hiện có kỳ đồ án đang mở nhưng bạn chưa có trong danh sách 'Sinh viên đủ điều kiện' của kỳ nào."* — đã có kỳ mở nhưng bạn **chưa được thêm vào danh sách được phép đăng ký** — cần liên hệ Admin/Khoa để được bổ sung tên vào danh sách, không phải lỗi hệ thống.
 
 ## 3.2. Tìm hiểu và chọn giảng viên
 
 Trước khi chọn, bạn nên tham khảo trang giới thiệu giảng viên trên trang web công khai (mục **Khám phá → Giảng viên hướng dẫn đồ án**, hoặc `/showcase?section=advisors`):
 
-- Có thể lọc theo **Kỳ đồ án**, **Danh mục/Lĩnh vực**, và **Trạng thái nhận SV** (*Còn nhận* / *Đã đầy*).
+- Có thể lọc theo **Kỳ đồ án**, **Danh mục/Lĩnh vực**, **Khoa**, và **Trạng thái nhận SV** (*Còn nhận* / *Đã đầy*).
 - Sắp xếp theo *Liên quan*, *Còn nhiều chỗ nhất*, hoặc *Mới thêm gần đây*.
 - Bấm vào một giảng viên để xem trang chi tiết: giới thiệu bản thân, **đề tài gợi ý**, các **đề tài đã từng hướng dẫn** trước đây, số chỗ còn trống, email/website liên hệ.
 - Nếu giảng viên còn chỗ trống và bạn thuộc kỳ đang mở, sẽ thấy nút **"Chọn làm giảng viên hướng dẫn"** — bấm vào sẽ đưa bạn tới trang `/my/advisor` để thêm giảng viên đó vào hàng chờ nguyện vọng.
@@ -259,7 +265,9 @@ Khi đã sắp xếp xong thứ tự ưu tiên, bấm **"Nộp nguyện vọng"*
 
 > **Rất quan trọng:** Sau khi nộp, bạn **không thể sửa hoặc nộp lại** hàng chờ nữa. Hãy kiểm tra kỹ thứ tự ưu tiên trước khi bấm nộp.
 
-Sau khi nộp, hệ thống sẽ:
+> **Trường hợp hiếm gặp:** nếu đúng lúc bạn bấm "Nộp nguyện vọng" mà 1 giảng viên trong hàng chờ của bạn **vừa hết chỗ** (ví dụ 1 sinh viên khác vừa nộp trúng suất cuối cùng trước bạn vài giây), hệ thống sẽ hiện popup báo rõ tên giảng viên đó đã bị **tự động xoá khỏi hàng chờ** — lúc này **giỏ của bạn vẫn CHƯA được nộp**, hãy chọn 1 giảng viên khác thay thế rồi bấm "Nộp nguyện vọng" lại.
+
+Sau khi nộp thành công, hệ thống sẽ:
 1. Tự động gửi **nguyện vọng số 1** cho giảng viên tương ứng để họ xét duyệt.
 2. Các nguyện vọng còn lại (2, 3, ...) sẽ **tự động lần lượt được kích hoạt** — chỉ khi nguyện vọng phía trước bị từ chối hoặc hết hạn phản hồi — cho đến khi có một giảng viên duyệt, hoặc hết danh sách.
 
@@ -301,3 +309,9 @@ Yêu cầu đó đã quá hạn phản hồi và tự động chuyển sang nguy
 
 **Đóng một kỳ đồ án còn sinh viên chưa có GVHD thì sao?**
 Hệ thống sẽ cảnh báo trước khi cho đóng. Admin nên xử lý (gán tay hoặc cho chọn lại) trước khi đóng kỳ hẳn.
+
+**Mở kỳ rồi mà không sinh viên nào thấy/đăng ký được là do đâu?**
+Rất có thể Admin quên khai (hoặc quên thêm 1 vài sinh viên vào) tab "Sinh viên đủ điều kiện" của kỳ đó — từ nay danh sách này là **bắt buộc**, để trống đồng nghĩa với "chưa ai đăng ký được", không còn là "mở cho tất cả" như phiên bản trước.
+
+**Tạo 1 Tác giả mới với Email liên hệ trùng email đã có trong hệ thống thì sao?**
+Bị chặn lưu, trừ khi email đó thuộc đúng 1 Liên hệ **cùng tên** (hệ thống hiểu là cùng 1 người và cho tái sử dụng). Email liên hệ của mỗi Tác giả phải là duy nhất trong toàn hệ thống (xem thêm mục 1.2).
