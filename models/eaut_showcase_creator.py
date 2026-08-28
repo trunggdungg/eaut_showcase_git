@@ -85,7 +85,7 @@ class ShowcaseCreator(models.Model):
         if 'email' in changed_fields:
             for creator in self:
                 self._check_email_conflict(
-                    vals['email'], vals.get('name', creator.name),
+                    vals.get('email'), vals.get('name', creator.name),
                     ignore_creator_id=creator.id,
                     ignore_user_id=creator.user_id.id,
                 )
