@@ -46,13 +46,27 @@ class ShowcaseCreator(models.Model):
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._check_email_conflict(
+                vals.get('email'), vals.get('name'),
+                ignore_user_id=vals.get('user_id'),
+            )
+        return super().create(vals_list)
+
     def write(self, vals):
         self._sync_name_from_user_vals(vals)
         changed_fields = [f for f in ('name', 'email') if f in vals]
         if self.env.context.get('showcase_skip_reverse_sync'):
             return super().write(vals)
         if 'email' in changed_fields:
-            self._check_login_conflict(vals['email'])
+            for creator in self:
+                self._check_email_conflict(
+                    vals['email'], vals.get('name', creator.name),
+                    ignore_creator_id=creator.id,
+                    ignore_user_id=creator.user_id.id,
+                )
         result = super().write(vals)
         if changed_fields:
             self._sync_account_from_creator(changed_fields)
@@ -75,35 +89,62 @@ class ShowcaseCreator(models.Model):
         if partner_name:
             vals['name'] = partner_name
 
-    def _check_login_conflict(self, email):
-        """Chặn TRƯỚC khi ghi (gọi ở đầu write(), trước super().write()) nếu
-        email mới trùng login của 1 tài khoản khác — login có ràng buộc
-        unique ở DB, phải kiểm tra trước khi ghi bất kỳ field nào, nếu không
-        phần ghi name/email của creator (chạy trước khi kịp raise) vẫn bị
-        lưu xuống DB dù request kết thúc bằng thông báo lỗi (controller bắt
-        UserError rồi redirect bình thường — Odoo vẫn commit transaction,
-        không tự rollback chỉ vì exception bị bắt lại)."""
+    @api.model
+    def _check_email_conflict(self, email, name, ignore_creator_id=None, ignore_user_id=None):
+        """Chặn TRƯỚC khi ghi (gọi ở create()/write(), trước super()) nếu
+        Email liên hệ trùng với 1 tài khoản/Liên hệ/Tác giả KHÁC đã có sẵn
+        trong hệ thống mà tên lại khác nhau. Trước đây chỉ action_create_
+        portal_user() kiểm tra việc này — và chỉ khi Admin bấm nút "Tạo tài
+        khoản người dùng"; nếu Admin chỉ gõ trùng email rồi Lưu (không bấm
+        nút) thì không có gì chặn cả, dễ tạo ra 2 bản ghi khác tên cùng 1
+        email, hoặc sau này bấm nút cấp Portal sẽ âm thầm "chiếm" nhầm Liên
+        hệ của người khác (xem action_create_portal_user). Phải kiểm tra
+        TRƯỚC khi ghi, không dùng @api.constrains, vì Odoo không tự rollback
+        khi controller bắt UserError rồi redirect bình thường."""
         if not email:
             return
-        for creator in self:
-            if not creator.user_id or creator.user_id.login == email:
-                continue
-            other_login = self.env['res.users'].sudo().search([
-                ('login', '=', email), ('id', '!=', creator.user_id.id),
-            ], limit=1)
-            if other_login:
-                raise UserError(
-                    'Email "%s" đã được dùng làm tên đăng nhập của 1 tài khoản khác — '
-                    'không thể đổi email liên hệ (đồng thời là tên đăng nhập) thành '
-                    'email này.' % email
-                )
+        email = email.strip()
+        if not email:
+            return
+        name = (name or '').strip()
+
+        other_user = self.env['res.users'].sudo().search([('login', '=', email)], limit=1)
+        if other_user and other_user.id != ignore_user_id:
+            raise UserError(
+                'Email "%s" đã là tên đăng nhập của tài khoản "%s" trong hệ thống — không '
+                'thể dùng email này, trừ khi vào field "Tài khoản Portal" để chọn đúng tài '
+                'khoản đó thay vì nhập trùng.' % (email, other_user.name)
+            )
+
+        ignore_partner_id = False
+        if ignore_user_id:
+            ignore_partner_id = self.env['res.users'].sudo().browse(ignore_user_id).partner_id.id
+        partner = self.env['res.partner'].sudo().search([('email', '=', email)], limit=1)
+        if partner and partner.id != ignore_partner_id \
+                and name and partner.name and partner.name.strip() != name:
+            raise UserError(
+                'Email "%s" đã được dùng bởi Liên hệ "%s" trong hệ thống (khác với tên "%s" '
+                'vừa nhập) — vui lòng kiểm tra lại, có thể email bị gõ nhầm hoặc đây là cùng '
+                '1 người nhưng tên chưa thống nhất.' % (email, partner.name, name)
+            )
+
+        domain = [('email', '=', email)]
+        if ignore_creator_id:
+            domain.append(('id', '!=', ignore_creator_id))
+        dup_creator = self.sudo().search(domain, limit=1)
+        if dup_creator and name and dup_creator.name.strip() != name:
+            raise UserError(
+                'Email "%s" đã được dùng cho Tác giả khác ("%s") trong hệ thống — vui lòng '
+                'kiểm tra lại.' % (email, dup_creator.name)
+            )
+
     def _sync_account_from_creator(self, changed_fields):
         """Chiều ngược lại của _sync_name_from_user_vals(): GV tự sửa 'Tên
         hiển thị'/'Email liên hệ' trên Portal (my_advisor_lecturer_profile_save)
             thì ghi luôn giá trị mới vào res.partner + res.users.login của tài
         khoản Odoo đang gắn (user_id) — hệ thống dùng email làm tên đăng
         nhập nên email liên hệ và login luôn phải là 1. Trùng login đã được
-        chặn từ trước ở _check_login_conflict(), gọi trước super().write()."""
+        chặn từ trước ở _check_email_conflict(), gọi trước super().write()."""
         for creator in self:
             if not creator.user_id:
                 continue
