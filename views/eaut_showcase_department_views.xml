@@ -1,6 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <record id="view_eaut_showcase_department_add_creator_wizard_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.department.add_creator.wizard.form</field>
+        <field name="model">eaut_showcase.department.add_creator.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Thêm giảng viên có sẵn vào khoa">
+                <field name="department_id" invisible="1"/>
+                <p class="text-muted">
+                    Chọn giảng viên (Tác giả) đã có sẵn trong hệ thống để gán vào khoa
+                    này — chọn 1 giảng viên đang thuộc khoa khác sẽ CHUYỂN họ sang
+                    khoa này. Muốn tạo mới 1 giảng viên, vào menu "Tác giả".
+                </p>
+                <field name="creator_ids">
+                    <list>
+                        <field name="name"/>
+                        <field name="department_id"/>
+                        <field name="email"/>
+                    </list>
+                </field>
+                <footer>
+                    <button string="Thêm" name="action_add" type="object" class="btn-primary"/>
+                    <button string="Huỷ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_department_add_creator_wizard" model="ir.actions.act_window">
+        <field name="name">Thêm giảng viên có sẵn vào khoa</field>
+        <field name="res_model">eaut_showcase.department.add_creator.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_department_id': active_id}</field>
+    </record>
+
     <record id="view_eaut_showcase_department_list" model="ir.ui.view">
         <field name="name">eaut_showcase.department.list</field>
         <field name="model">eaut_showcase.department</field>
@@ -29,15 +63,23 @@
                     </group>
                     <notebook>
                         <page string="Giảng viên" name="creators">
+                            <div class="mb-2">
+                                <button name="%(action_eaut_showcase_department_add_creator_wizard)d"
+                                        type="action" string="Thêm giảng viên có sẵn"
+                                        class="btn-secondary"/>
+                            </div>
                             <p class="text-muted">
                                 Sức chứa mặc định dùng làm giá trị khởi tạo khi thêm giảng
                                 viên vào 1 kỳ đồ án mới bằng nút "Thêm giảng viên từ khoa" —
-                                sửa ở đây KHÔNG ảnh hưởng tới các kỳ đã tạo trước đó.
+                                sửa ở đây KHÔNG ảnh hưởng tới các kỳ đã tạo trước đó. Muốn
+                                gỡ 1 giảng viên khỏi khoa này, vào form giảng viên đó và đổi
+                                field "Khoa" (không xoá dòng ở đây — xoá sẽ xoá luôn cả Tác
+                                giả khỏi hệ thống).
                             </p>
                             <field name="creator_ids">
-                                <list editable="bottom">
-                                    <field name="name"/>
-                                    <field name="email"/>
+                                <list editable="bottom" create="false" delete="false">
+                                    <field name="name" readonly="1"/>
+                                    <field name="email" readonly="1"/>
                                     <field name="default_max_students" string="Sức chứa mặc định"/>
                                 </list>
                             </field>
