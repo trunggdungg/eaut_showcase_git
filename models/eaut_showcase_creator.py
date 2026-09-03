@@ -51,6 +51,14 @@ class ShowcaseCreator(models.Model):
     capacity_ids = fields.One2many(
         'eaut_showcase.term.capacity', 'creator_id', string='Sức chứa theo kỳ',
     )
+    default_max_students = fields.Integer(
+        string='Sức chứa mặc định', default=1,
+        help="Số sinh viên tối đa dùng làm giá trị khởi tạo khi Admin dùng "
+             "nút 'Thêm giảng viên từ khoa' ở kỳ đồ án mới — không tự áp "
+             "dụng ngược lại cho các kỳ đã tạo trước đó, và sau khi thêm "
+             "vẫn sửa tay bình thường như 1 dòng sức chứa (term.capacity) "
+             "thông thường.",
+    )
 
     @api.model_create_multi
     def create(self, vals_list):

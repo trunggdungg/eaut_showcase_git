@@ -12,10 +12,46 @@
         </field>
     </record>
 
+    <record id="view_eaut_showcase_department_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.department.form</field>
+        <field name="model">eaut_showcase.department</field>
+        <field name="arch" type="xml">
+            <form string="Khoa">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="VD: Công nghệ thông tin"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <field name="sequence"/>
+                    </group>
+                    <notebook>
+                        <page string="Giảng viên" name="creators">
+                            <p class="text-muted">
+                                Sức chứa mặc định dùng làm giá trị khởi tạo khi thêm giảng
+                                viên vào 1 kỳ đồ án mới bằng nút "Thêm giảng viên từ khoa" —
+                                sửa ở đây KHÔNG ảnh hưởng tới các kỳ đã tạo trước đó.
+                            </p>
+                            <field name="creator_ids">
+                                <list editable="bottom">
+                                    <field name="name"/>
+                                    <field name="email"/>
+                                    <field name="default_max_students" string="Sức chứa mặc định"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="action_eaut_showcase_department" model="ir.actions.act_window">
         <field name="name">Khoa</field>
         <field name="res_model">eaut_showcase.department</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 Tạo khoa (VD: Công nghệ thông tin, Điện - Điện tử...) để gán và lọc giảng viên theo khoa.

@@ -21,6 +21,7 @@ access_eaut_showcase_comment_manager,eaut_showcase.comment.manager,model_eaut_sh
 access_eaut_showcase_term_user,eaut_showcase.term.user,model_eaut_showcase_term,base.group_user,1,0,0,0
 access_eaut_showcase_term_manager,eaut_showcase.term.manager,model_eaut_showcase_term,base.group_system,1,1,1,1
 access_eaut_showcase_term_close_warning_manager,eaut_showcase.term.close.warning.manager,model_eaut_showcase_term_close_warning,base.group_system,1,1,1,1
+access_eaut_showcase_term_add_department_wizard_manager,eaut_showcase.term.add_department.wizard.manager,model_eaut_showcase_term_add_department_wizard,base.group_system,1,1,1,1
 access_eaut_showcase_term_capacity_user,eaut_showcase.term.capacity.user,model_eaut_showcase_term_capacity,base.group_user,1,1,0,0
 access_eaut_showcase_term_capacity_manager,eaut_showcase.term.capacity.manager,model_eaut_showcase_term_capacity,base.group_system,1,1,1,1
 access_eaut_showcase_advisor_registration_user,eaut_showcase.advisor.registration.user,model_eaut_showcase_advisor_registration,base.group_user,1,1,0,0
