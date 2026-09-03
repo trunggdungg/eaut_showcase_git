@@ -46,7 +46,7 @@
                         <form action="/my/advisor/profile" method="post">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                             <div class="mb-3">
-                                <label for="student_code">Mã số sinh viên (MSSV)</label>
+                                <label for="student_code">Mã số sinh viên (MSV)</label>
                                 <input type="text" name="student_code" id="student_code" class="form-control"
                                        required="required"/>
                             </div>
@@ -321,7 +321,7 @@
                                 <thead>
                                     <tr>
                                         <th>Sinh viên</th>
-                                        <th>MSSV / Lớp / Ngành</th>
+                                        <th>MSV / Lớp / Ngành</th>
                                         <th>Hạn phản hồi</th>
                                         <th>Hành động</th>
                                     </tr>
@@ -367,7 +367,7 @@
                                 <thead>
                                     <tr>
                                         <th>Sinh viên</th>
-                                        <th>MSSV / Lớp / Ngành</th>
+                                        <th>MSV / Lớp / Ngành</th>
                                         <th>Ngày duyệt</th>
                                     </tr>
                                 </thead>
@@ -409,7 +409,7 @@
                                 <thead>
                                     <tr>
                                         <th>Sinh viên</th>
-                                        <th>MSSV / Lớp / Ngành</th>
+                                        <th>MSV / Lớp / Ngành</th>
                                         <th>Trạng thái</th>
                                         <th>Thời gian đã duyệt</th>
                                     </tr>
@@ -585,7 +585,7 @@
 
                 <table class="table table-borderless w-auto">
                     <tr>
-                        <th>MSSV</th>
+                        <th>MSV</th>
                         <td t-esc="line.student_id.showcase_student_code"/>
                     </tr>
                     <tr>
