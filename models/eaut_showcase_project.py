@@ -38,7 +38,7 @@ class ShowcaseProject(models.Model):
     )
 
     views = fields.Integer(string='View Count', default=0)
-    image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920,tracking=True)
+    image = fields.Image(string='Ảnh thumbnail', max_width=1920, max_height=1920)
     video_url = fields.Char(string='Video URL')
     video_embed_url = fields.Char(
         string='Video Embed URL', compute='_compute_video_embed_url',
