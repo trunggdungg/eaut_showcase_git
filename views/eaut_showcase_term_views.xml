@@ -16,6 +16,37 @@
             </list>
         </field>
     </record>
+     <record id="view_eaut_showcase_term_add_department_wizard_form" model="ir.ui.view">
+        <field name="name">eaut_showcase.term.add_department.wizard.form</field>
+        <field name="model">eaut_showcase.term.add_department.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Thêm giảng viên từ khoa">
+                <field name="term_id" invisible="1"/>
+                <p class="text-muted">
+                    Thêm toàn bộ giảng viên thuộc khoa đã chọn vào kỳ này, dùng "Sức
+                    chứa mặc định" của từng giảng viên (cấu hình ở form Tác giả hoặc
+                    form Khoa) làm số sinh viên tối đa khởi tạo — giảng viên đã có
+                    sẵn trong kỳ sẽ được bỏ qua, không tạo trùng.
+                </p>
+                <group>
+                    <field name="department_id"/>
+                </group>
+                <footer>
+                    <button string="Thêm" name="action_add" type="object" class="btn-primary"/>
+                    <button string="Huỷ" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_eaut_showcase_term_add_department_wizard" model="ir.actions.act_window">
+        <field name="name">Thêm giảng viên từ khoa</field>
+        <field name="res_model">eaut_showcase.term.add_department.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_term_id': active_id}</field>
+    </record>
+
     <record id="view_eaut_showcase_term_list" model="ir.ui.view">
         <field name="name">eaut_showcase.term.list</field>
         <field name="model">eaut_showcase.term</field>
@@ -82,6 +113,11 @@
                             <!--                                <button name="action_assign_creators_kanban" type="object"-->
                             <!--                                        string="Phân bổ nhanh (kéo-thả)" class="btn-secondary"/>-->
                             <!--                            </div>-->
+                              <div class="mb-2">
+                                <button name="%(action_eaut_showcase_term_add_department_wizard)d"
+                                        type="action" string="Thêm giảng viên từ khoa"
+                                        class="btn-secondary"/>
+                            </div>
                             <field name="capacity_ids">
                                 <list editable="bottom">
                                     <field name="creator_id"/>
@@ -144,6 +180,37 @@
             </p>
         </field>
     </record>
+
+<!--    <record id="view_eaut_showcase_term_add_department_wizard_form" model="ir.ui.view">-->
+<!--        <field name="name">eaut_showcase.term.add_department.wizard.form</field>-->
+<!--        <field name="model">eaut_showcase.term.add_department.wizard</field>-->
+<!--        <field name="arch" type="xml">-->
+<!--            <form string="Thêm giảng viên từ khoa">-->
+<!--                <field name="term_id" invisible="1"/>-->
+<!--                <p class="text-muted">-->
+<!--                    Thêm toàn bộ giảng viên thuộc khoa đã chọn vào kỳ này, dùng "Sức-->
+<!--                    chứa mặc định" của từng giảng viên (cấu hình ở form Tác giả hoặc-->
+<!--                    form Khoa) làm số sinh viên tối đa khởi tạo — giảng viên đã có-->
+<!--                    sẵn trong kỳ sẽ được bỏ qua, không tạo trùng.-->
+<!--                </p>-->
+<!--                <group>-->
+<!--                    <field name="department_id"/>-->
+<!--                </group>-->
+<!--                <footer>-->
+<!--                    <button string="Thêm" name="action_add" type="object" class="btn-primary"/>-->
+<!--                    <button string="Huỷ" class="btn-secondary" special="cancel"/>-->
+<!--                </footer>-->
+<!--            </form>-->
+<!--        </field>-->
+<!--    </record>-->
+
+<!--    <record id="action_eaut_showcase_term_add_department_wizard" model="ir.actions.act_window">-->
+<!--        <field name="name">Thêm giảng viên từ khoa</field>-->
+<!--        <field name="res_model">eaut_showcase.term.add_department.wizard</field>-->
+<!--        <field name="view_mode">form</field>-->
+<!--        <field name="target">new</field>-->
+<!--        <field name="context">{'default_term_id': active_id}</field>-->
+<!--    </record>-->
 
     <record id="view_eaut_showcase_term_close_warning_form" model="ir.ui.view">
         <field name="name">eaut_showcase.term.close.warning.form</field>

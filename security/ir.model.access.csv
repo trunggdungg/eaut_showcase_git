@@ -6,6 +6,7 @@ access_eaut_showcase_category_user,eaut_showcase.category.user,model_eaut_showca
 access_eaut_showcase_category_manager,eaut_showcase.category.manager,model_eaut_showcase_category,base.group_system,1,1,1,1
 access_eaut_showcase_department_user,eaut_showcase.department.user,model_eaut_showcase_department,base.group_user,1,0,0,0
 access_eaut_showcase_department_manager,eaut_showcase.department.manager,model_eaut_showcase_department,base.group_system,1,1,1,1
+access_eaut_showcase_department_add_creator_wizard_manager,eaut_showcase.department.add_creator.wizard.manager,model_eaut_showcase_department_add_creator_wizard,base.group_system,1,1,1,1
 access_eaut_showcase_status_user,eaut_showcase.status.user,model_eaut_showcase_status,base.group_user,1,0,0,0
 access_eaut_showcase_status_manager,eaut_showcase.status.manager,model_eaut_showcase_status,base.group_system,1,1,1,1
 access_eaut_showcase_interest_user,eaut_showcase.interest.user,model_eaut_showcase_interest,base.group_user,1,1,1,0
@@ -21,6 +22,7 @@ access_eaut_showcase_comment_manager,eaut_showcase.comment.manager,model_eaut_sh
 access_eaut_showcase_term_user,eaut_showcase.term.user,model_eaut_showcase_term,base.group_user,1,0,0,0
 access_eaut_showcase_term_manager,eaut_showcase.term.manager,model_eaut_showcase_term,base.group_system,1,1,1,1
 access_eaut_showcase_term_close_warning_manager,eaut_showcase.term.close.warning.manager,model_eaut_showcase_term_close_warning,base.group_system,1,1,1,1
+access_eaut_showcase_term_add_department_wizard_manager,eaut_showcase.term.add_department.wizard.manager,model_eaut_showcase_term_add_department_wizard,base.group_system,1,1,1,1
 access_eaut_showcase_term_capacity_user,eaut_showcase.term.capacity.user,model_eaut_showcase_term_capacity,base.group_user,1,1,0,0
 access_eaut_showcase_term_capacity_manager,eaut_showcase.term.capacity.manager,model_eaut_showcase_term_capacity,base.group_system,1,1,1,1
 access_eaut_showcase_advisor_registration_user,eaut_showcase.advisor.registration.user,model_eaut_showcase_advisor_registration,base.group_user,1,1,0,0

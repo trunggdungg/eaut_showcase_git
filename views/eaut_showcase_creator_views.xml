@@ -20,7 +20,7 @@
         <field name="model">eaut_showcase.creator</field>
         <field name="arch" type="xml">
             <form string="Tác giả">
-                 <header>
+                <header>
                     <button name="action_create_portal_user" type="object" string="Tạo tài khoản người dùng"
                             class="btn-primary" invisible="user_id"/>
                 </header>
@@ -43,27 +43,27 @@
                     <group>
                         <group>
                             <field name="location_id"/>
-                              <field name="department_id"/>
+                            <field name="department_id"/>
                             <field name="email"/>
                             <field name="website_url"/>
-                               <field name="user_id"/>
-
-                              <field name="category_ids" widget="many2many_tags"/>
+                            <field name="user_id"/>
+                            <field name="default_max_students"/>
+                            <field name="category_ids" widget="many2many_tags"/>
                         </group>
                     </group>
                     <notebook>
                         <page string="Giới thiệu">
-                           <field name="bio" widget="html" nolabel="1"
+                            <field name="bio" widget="html" nolabel="1"
                                    placeholder="Giới thiệu ngắn về tác giả/nhóm..." style="width: 100%;"/>
                         </page>
-                         <page string="Đề tài gợi ý" name="suggested_topics">
+                        <page string="Đề tài gợi ý" name="suggested_topics">
                             <field name="suggested_topics" widget="html" nolabel="1"
                                    placeholder="Vài đề tài dự kiến để sinh viên tham khảo..." style="width: 100%;"/>
                         </page>
                     </notebook>
-<!--                    <group string="Giới thiệu">-->
-<!--                        <field name="bio" nolabel="1" placeholder="Giới thiệu ngắn về tác giả/nhóm..."/>-->
-<!--                    </group>-->
+                    <!--                    <group string="Giới thiệu">-->
+                    <!--                        <field name="bio" nolabel="1" placeholder="Giới thiệu ngắn về tác giả/nhóm..."/>-->
+                    <!--                    </group>-->
                 </sheet>
             </form>
         </field>
