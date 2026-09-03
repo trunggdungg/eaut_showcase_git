@@ -13,7 +13,10 @@ class ShowcaseDepartmentAddCreatorWizard(models.TransientModel):
     _description = 'Thêm giảng viên có sẵn vào khoa'
 
     department_id = fields.Many2one('eaut_showcase.department', string='Khoa', required=True)
-    creator_ids = fields.Many2many('eaut_showcase.creator', string='Giảng viên')
+    creator_ids = fields.Many2many(
+        'eaut_showcase.creator', 'eaut_showcase_dept_add_creator_wiz_rel',
+        'wizard_id', 'creator_id', string='Giảng viên',
+    )
 
     def action_add(self):
         self.ensure_one()
