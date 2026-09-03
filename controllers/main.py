@@ -198,6 +198,18 @@ class ShowcaseController(http.Controller):
         elif sort == 'Newest':
             capacities = capacities.sorted(key=lambda c: c.creator_id.id, reverse=True)
 
+        # Một giảng viên có thể có nhiều capacity (1 bản ghi / kỳ) nếu đang
+        # active ở nhiều kỳ đồ án cùng lúc; trang công khai chỉ hiển thị mỗi
+        # giảng viên 1 lần nên khử trùng theo creator_id, giữ bản ghi đầu
+        # tiên theo thứ tự đã sort ở trên.
+        seen_creator_ids = set()
+        deduped_capacities = request.env['eaut_showcase.term.capacity']
+        for capacity in capacities:
+            if capacity.creator_id.id in seen_creator_ids:
+                continue
+            seen_creator_ids.add(capacity.creator_id.id)
+            deduped_capacities |= capacity
+        capacities = deduped_capacities
 
         url_args = {'categories_submitted': 1, 'sort': sort, 'section': 'advisors'}
         if selected_categories:
