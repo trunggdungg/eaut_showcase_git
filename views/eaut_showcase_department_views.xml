@@ -39,7 +39,7 @@
         <field name="name">eaut_showcase.department.list</field>
         <field name="model">eaut_showcase.department</field>
         <field name="arch" type="xml">
-            <list string="Khoa" editable="bottom">
+            <list string="Khoa">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
             </list>
