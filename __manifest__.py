@@ -17,7 +17,7 @@
     'data': [
         'security/ir.model.access.csv',
         'data/eaut_showcase_project_sequence_data.xml',
-        # 'data/eaut_showcase_data.xml',
+        'data/eaut_showcase_data.xml',
         'data/eaut_showcase_advisor_config_data.xml',
         # 'data/eaut_showcase_advisor_demo_data.xml',
         'data/eaut_showcase_cron_data.xml',
