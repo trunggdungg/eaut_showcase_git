@@ -211,6 +211,26 @@ class ShowcaseController(http.Controller):
             deduped_capacities |= capacity
         capacities = deduped_capacities
 
+        items = [{'creator': c.creator_id, 'capacity': c} for c in capacities]
+
+        # Khi SV lọc theo khoa, hiện luôn cả GV thuộc khoa đó nhưng CHƯA có
+        # sức chứa ở kỳ nào đang mở (VD: khoa vừa mở kỳ mới, chưa kịp thêm
+        # hết GV) — thẻ của họ không có nút "Chọn làm GVHD" (xem
+        # advisor_card), chỉ để SV biết GV này thuộc khoa nhưng chưa nhận
+        # đăng ký. Bộ lọc "Còn nhận"/"Đã đầy" không áp dụng được cho nhóm
+        # này (không có sức chứa nào để so sánh) nên chỉ thêm khi SV không
+        # chọn bộ lọc trạng thái nhận SV.
+        if selected_department_ids and not slot_filters:
+            no_capacity_creators = request.env['eaut_showcase.creator'].sudo().search([
+                ('department_id', 'in', selected_department_ids),
+                ('id', 'not in', list(seen_creator_ids)),
+            ], order='name')
+            if selected_categories:
+                wanted = set(selected_categories)
+                no_capacity_creators = no_capacity_creators.filtered(
+                    lambda c: set(c.category_ids.mapped('name')) & wanted)
+            items += [{'creator': c, 'capacity': False} for c in no_capacity_creators]
+
         url_args = {'categories_submitted': 1, 'sort': sort, 'section': 'advisors'}
         if selected_categories:
             url_args['category'] = selected_categories
@@ -223,11 +243,11 @@ class ShowcaseController(http.Controller):
             url_args['department'] = selected_department_ids
 
         page = int(kw.get('page') or 1)
-        total = len(capacities)
+        total = len(items)
         pager = request.website.pager(
             url='/showcase', total=total, page=page, step=PAGE_SIZE, scope=7, url_args=url_args,
         )
-        capacities_page = capacities[pager['offset']:pager['offset'] + PAGE_SIZE]
+        capacities_page = items[pager['offset']:pager['offset'] + PAGE_SIZE]
 
         if not selected_categories:
             header_label = 'Tất cả giảng viên'
