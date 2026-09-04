@@ -658,7 +658,7 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         truyền tiếp cho _activate_next_line() khi phải dò tiếp, để không mất lý
         do gốc (bị từ chối/hết hạn) khi ghép vào email kết quả cuối cùng.
 
-        Khoá row sức chứa (FOR UPDATE) TRƯỚC khi đọc remaining_slots — đây là
+        Khoá row sức chứa (FOR UPDATE) TRƯỚC khi đếm số chỗ đã dùng — đây là
         nơi DUY NHẤT thật sự chuyển 1 dòng sang 'pending' (điểm chốt cuối
         cùng của luồng nộp/chuyển tiếp nguyện vọng), nên phải cùng mức khoá
         với action_approve()/_admin_assign() để chặn đúng race condition: 2
@@ -666,7 +666,18 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
         TẠI CÙNG 1 THỜI ĐIỂM (2 transaction chạm DB gần như đồng thời) — lúc
         đó việc action_submit_cart() đã tự kiểm tra trước (_is_capacity_full)
         không đủ, vì cả 2 có thể đọc remaining_slots cũ trước khi bên kia
-        commit."""
+         commit.
+
+        Đếm lại số chỗ đã dùng bằng search_count() TRỰC TIẾP thay vì đọc
+        field capacity.remaining_slots — field này compute không stored,
+        chỉ khai @api.depends('term_id', 'creator_id') nên Odoo không biết
+        nó còn phụ thuộc line_ids.state (quan hệ gián tiếp qua search_count,
+        không phải field quan hệ thật). Hậu quả: nếu trong CÙNG 1 transaction
+        có nhiều dòng liên tiếp được _activate() cho cùng 1 giảng viên (VD:
+        cron _cron_expire_pending_lines xử lý nhiều SV hết hạn 1 lượt), dòng
+        xử lý sau sẽ đọc lại giá trị remaining_slots đã cache từ dòng trước
+        đó (chưa được invalidate), không phản ánh đúng số đã pending/approved
+        thật — có thể đẩy nhiều SV hơn sức chứa thật cùng vào 'pending'."""
         self.ensure_one()
         capacity = self._get_capacity()
         if capacity:
@@ -674,7 +685,15 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
                 'SELECT id FROM eaut_showcase_term_capacity WHERE id = %s FOR UPDATE',
                 (capacity.id,),
             )
-        if not capacity or capacity.withdrawn or capacity.remaining_slots <= 0:
+        is_full = False
+        if capacity:
+            used_count = self.env['eaut_showcase.advisor.registration.line'].search_count([
+                ('term_id', '=', capacity.term_id.id),
+                ('creator_id', '=', capacity.creator_id.id),
+                ('state', 'in', ('approved', 'pending')),
+            ])
+            is_full = used_count >= capacity.max_students
+        if not capacity or capacity.withdrawn or is_full:
             reject_reason = 'Giảng viên đã rút khỏi kỳ này.' if (capacity and capacity.withdrawn) \
                 else 'Giảng viên đã hết chỗ nhận sinh viên hướng dẫn.'
             self.write({
@@ -706,6 +725,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
 
     def action_approve(self):
         self.ensure_one()
+        if self.term_id.state == 'closed':
+            raise UserError(
+                'Kỳ đồ án này đã đóng, không thể duyệt yêu cầu hướng dẫn nữa.')
         if self.state == 'pending' and self.deadline and self.deadline < fields.Datetime.now():
             self._expire()
             raise UserError(
@@ -751,6 +773,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
 
     def action_reject(self, reason=None):
         self.ensure_one()
+        if self.term_id.state == 'closed':
+            raise UserError(
+                'Kỳ đồ án này đã đóng, không thể từ chối yêu cầu hướng dẫn nữa.')
         if self.state == 'pending' and self.deadline and self.deadline < fields.Datetime.now():
             self._expire()
             raise UserError(
