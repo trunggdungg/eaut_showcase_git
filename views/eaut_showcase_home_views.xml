@@ -60,9 +60,9 @@
                     <img t-if="creator.avatar"
                          t-att-src="'/showcase/creator/' + str(creator.id) + '/avatar'"
                          t-att-alt="creator.name" class="uikick-card-img"/>
-                    <span t-if="not capacity" class="uikick-badge text-bg-secondary">Chưa mở đăng ký</span>
-                    <span t-elif="capacity.remaining_slots &gt; 0" class="uikick-badge text-bg-success">
-                        Còn <t t-esc="capacity.remaining_slots"/> chỗ
+                    <span t-if="remaining_slots is None" class="uikick-badge text-bg-secondary">Chưa mở đăng ký</span>
+                    <span t-elif="remaining_slots &gt; 0" class="uikick-badge text-bg-success">
+                        Còn <t t-esc="remaining_slots"/> chỗ
                     </span>
                     <span t-else="" class="uikick-badge text-bg-secondary">Đã đầy</span>
                 </div>
@@ -88,7 +88,8 @@
 <!--                    </div>-->
                 </div>
             </a>
-            <a t-if="capacity" href="/my/advisor" class="btn btn-primary btn-sm rounded-pill uikick-btn-block mt-2">
+            <a t-if="remaining_slots is not None" href="/my/advisor"
+               class="btn btn-primary btn-sm rounded-pill uikick-btn-block mt-2">
                 Chọn làm giảng viên hướng dẫn
             </a>
         </div>
@@ -273,7 +274,7 @@
                              <t t-else="">
                                 <t t-foreach="capacities" t-as="item">
                                     <t t-set="creator" t-value="item['creator']"/>
-                                    <t t-set="capacity" t-value="item['capacity']"/>
+                                    <t t-set="remaining_slots" t-value="item['remaining_slots']"/>
                                     <t t-call="eaut_showcase.advisor_card"/>
                                 </t>
                                 <t t-if="not capacities">
