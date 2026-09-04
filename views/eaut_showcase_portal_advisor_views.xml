@@ -8,7 +8,11 @@
         <t t-call="portal.portal_layout">
             <t t-set="breadcrumbs_searchbar" t-value="False"/>
             <div class="container my-4">
-                <h2>Chọn giảng viên hướng dẫn đồ án</h2>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Chọn giảng viên hướng dẫn đồ án</h2>
+                    <a t-if="not lecturer_profile" href="/my/advisor/profile"
+                       class="btn btn-outline-secondary btn-sm">Hồ sơ của tôi</a>
+                </div>
 
                 <t t-if="lecturer_profile">
                     <div class="alert alert-warning">
@@ -45,6 +49,7 @@
                         </div>
                         <form action="/my/advisor/profile" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <input type="hidden" name="next" value="advisor"/>
                             <div class="mb-3" t-if="partner.image_1920">
                                 <img t-att-src="'/web/image/res.partner/%s/image_1920' % partner.id"
                                      style="max-width:120px; max-height:120px; border-radius:8px; object-fit:cover;"
@@ -265,6 +270,64 @@
                 </div>
             </div>
             <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
+        </t>
+    </template>
+
+    <!-- ============================================================ -->
+    <!-- SINH VIÊN: /my/advisor/profile                                -->
+    <!-- ============================================================ -->
+    <template id="portal_my_advisor_student_profile" name="Portal - Hồ sơ sinh viên">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="False"/>
+            <div class="container my-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Hồ sơ của tôi</h2>
+                    <a href="/my/advisor" class="btn btn-outline-secondary btn-sm">Quay lại</a>
+                </div>
+
+                <div t-if="done" class="alert alert-success">Đã lưu hồ sơ.</div>
+                <div t-if="error" class="alert alert-danger">
+                    <t t-if="error != '1'" t-esc="error"/>
+                    <t t-else="">Có lỗi xảy ra hoặc bạn không có quyền thực hiện thao tác này.</t>
+                </div>
+
+                <form action="/my/advisor/profile" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="next" value="profile"/>
+
+                    <div class="mb-3" t-if="partner.image_1920">
+                        <img t-att-src="'/web/image/res.partner/%s/image_1920' % partner.id"
+                             style="max-width:120px; max-height:120px; border-radius:8px; object-fit:cover;"
+                             alt="Ảnh đại diện"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="avatar">Ảnh đại diện</label>
+                        <input type="file" name="avatar" id="avatar" class="form-control" accept="image/*"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="student_code">Mã số sinh viên (MSV)</label>
+                        <input type="text" name="student_code" id="student_code" class="form-control"
+                               t-att-value="partner.showcase_student_code" required="required"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="student_class">Lớp</label>
+                        <input type="text" name="student_class" id="student_class" class="form-control"
+                               t-att-value="partner.showcase_student_class" required="required"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="student_major">Ngành học</label>
+                        <input type="text" name="student_major" id="student_major" class="form-control"
+                               t-att-value="partner.showcase_student_major" required="required"/>
+                    </div>
+                    <div class="mb-3">
+                        <label for="student_phone">Số điện thoại</label>
+                        <input type="tel" name="student_phone" id="student_phone" class="form-control"
+                               t-att-value="partner.phone" required="required"/>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Lưu hồ sơ</button>
+                </form>
+            </div>
         </t>
     </template>
 
