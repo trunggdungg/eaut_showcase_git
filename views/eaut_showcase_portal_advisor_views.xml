@@ -347,7 +347,8 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <form t-attf-action="/my/advisor-requests/#{line.id}/approve"
+                                            <form t-if="line.term_id.state != 'closed'"
+                                                  t-attf-action="/my/advisor-requests/#{line.id}/approve"
                                                   method="post" class="d-inline">
                                                 <input type="hidden" name="csrf_token"
                                                        t-att-value="request.csrf_token()"/>
@@ -640,7 +641,7 @@
                     <p t-esc="line.reject_reason"/>
                 </div>
 
-                <t t-if="line.state == 'pending'">
+                <t t-if="line.state == 'pending' and line.term_id.state != 'closed'">
                     <form t-attf-action="/my/advisor-requests/#{line.id}/approve" method="post" class="d-inline">
                         <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                         <button type="submit" class="btn btn-success">Duyệt</button>
@@ -654,6 +655,9 @@
                         <button type="submit" class="btn btn-outline-danger">Từ chối</button>
                     </form>
                 </t>
+                <p t-if="line.state == 'pending' and line.term_id.state == 'closed'" class="text-muted">
+                    Kỳ đồ án này đã đóng — không thể duyệt/từ chối yêu cầu này nữa.
+                </p>
             </div>
             <script src="/eaut_showcase/static/src/js/portal_advisor.js"></script>
         </t>

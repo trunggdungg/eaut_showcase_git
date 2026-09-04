@@ -706,6 +706,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
 
     def action_approve(self):
         self.ensure_one()
+        if self.term_id.state == 'closed':
+            raise UserError(
+                'Kỳ đồ án này đã đóng — không thể duyệt yêu cầu hướng dẫn nữa.')
         if self.state == 'pending' and self.deadline and self.deadline < fields.Datetime.now():
             self._expire()
             raise UserError(
@@ -751,6 +754,9 @@ class ShowcaseAdvisorRegistrationLine(models.Model):
 
     def action_reject(self, reason=None):
         self.ensure_one()
+        if self.term_id.state == 'closed':
+            raise UserError(
+                'Kỳ đồ án này đã đóng — không thể từ chối yêu cầu hướng dẫn nữa.')
         if self.state == 'pending' and self.deadline and self.deadline < fields.Datetime.now():
             self._expire()
             raise UserError(
