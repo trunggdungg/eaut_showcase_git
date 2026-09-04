@@ -99,13 +99,34 @@ class AdvisorPortalController(http.Controller):
         return request.render('eaut_showcase.portal_my_advisor', values)
 
     @http.route(['/my/advisor/profile'], type='http', auth='user', website=True,
+                methods=['GET'], sitemap=False)
+    def my_advisor_student_profile(self, **kw):
+        """Trang hồ sơ riêng cho SV, xem/sửa lại bất cứ lúc nào (khác với form
+        "hoàn thiện hồ sơ" nhúng trong /my/advisor chỉ hiện đúng 1 lần lúc
+        SV chưa có MSV) — đối xứng với /my/advisor-requests/profile bên GV."""
+        if self._get_creator_for_current_user():
+            return request.redirect('/my/advisor-requests?error=1')
+        values = {
+            'partner': request.env.user.partner_id,
+            'done': kw.get('done'),
+            'error': kw.get('error'),
+        }
+        return request.render('eaut_showcase.portal_my_advisor_student_profile', values)
+
+    @http.route(['/my/advisor/profile'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
     def my_advisor_profile(self, **post):
+        # next='profile' khi SV lưu từ trang Hồ sơ riêng (quay lại đúng trang
+        # đó) — mặc định 'advisor' khi lưu từ form "hoàn thiện hồ sơ" lần đầu
+        # nhúng trong /my/advisor (giữ nguyên hành vi cũ: lưu xong vào thẳng
+        # trang chọn giảng viên).
+        next_page = '/my/advisor/profile?done=1' if post.get('next') == 'profile' else '/my/advisor'
+        error_page = '/my/advisor/profile' if post.get('next') == 'profile' else '/my/advisor'
         if self._get_creator_for_current_user():
             error = urllib.parse.quote(
                 'Tài khoản này đã đăng ký làm giảng viên hướng dẫn, không thể dùng để '
                 'đăng ký chọn giảng viên hướng dẫn.')
-            return request.redirect(f'/my/advisor?error={error}')
+            return request.redirect(f'{error_page}?error={error}')
 
         student_code = (post.get('student_code') or '').strip()
         student_class = (post.get('student_class') or '').strip()
@@ -113,14 +134,21 @@ class AdvisorPortalController(http.Controller):
         student_phone = (post.get('student_phone') or '').strip()
         if not (student_code and student_class and student_major and student_phone):
             error = urllib.parse.quote('Vui lòng điền đầy đủ MSV, lớp, ngành học và số điện thoại.')
-            return request.redirect(f'/my/advisor?error={error}')
-        request.env.user.partner_id.write({
+            return request.redirect(f'{error_page}?error={error}')
+        vals = {
             'showcase_student_code': student_code,
             'showcase_student_class': student_class,
             'showcase_student_major': student_major,
             'phone': student_phone,
-        })
-        return request.redirect('/my/advisor')
+        }
+        avatar_file = request.httprequest.files.get('avatar')
+        if avatar_file and avatar_file.filename:
+            vals['image_1920'] = base64.b64encode(avatar_file.read())
+        try:
+            request.env.user.partner_id.write(vals)
+        except (UserError, ValidationError) as e:
+            return request.redirect(f'{error_page}?error={urllib.parse.quote(str(e))}')
+        return request.redirect(next_page)
 
     @http.route(['/my/advisor/cart/add'], type='http', auth='user', website=True,
                 methods=['POST'], csrf=True)
