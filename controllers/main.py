@@ -215,18 +215,28 @@ class ShowcaseController(http.Controller):
         items = [{'creator': e['creator'], 'remaining_slots': e['remaining_slots']} for e in entries]
         seen_creator_ids = set(creator_entries.keys())
 
-        # Khi SV lọc theo khoa, hiện luôn cả GV thuộc khoa đó nhưng CHƯA có
-        # sức chứa ở kỳ nào đang mở (VD: khoa vừa mở kỳ mới, chưa kịp thêm
-        # hết GV) — thẻ của họ không có nút "Chọn làm GVHD" (xem
-        # advisor_card), chỉ để SV biết GV này thuộc khoa nhưng chưa nhận
-        # đăng ký. Bộ lọc "Còn nhận"/"Đã đầy" không áp dụng được cho nhóm
-        # này (không có sức chứa nào để so sánh) nên chỉ thêm khi SV không
-        # chọn bộ lọc trạng thái nhận SV.
-        if selected_department_ids and not slot_filters:
-            no_capacity_creators = request.env['eaut_showcase.creator'].sudo().search([
-                ('department_id', 'in', selected_department_ids),
+        # Luôn hiện các GV đã được gán Khoa (department_id) dù CHƯA có sức
+        # chứa ở kỳ nào đang mở (VD: chưa có kỳ nào mở, hoặc khoa vừa mở kỳ
+        # mới chưa kịp thêm hết GV) — Creator có Khoa được xem là "giảng
+        # viên thật", khác với Tác giả dự án thông thường (không gán Khoa)
+        # nên không sợ lẫn vào đây. Thẻ của họ không có nút "Chọn làm GVHD"
+        # (xem advisor_card), chỉ để SV biết GV này tồn tại nhưng chưa nhận
+        # đăng ký. CHỈ áp dụng ở view mặc định (SV không chọn kỳ cụ thể,
+        # đang gộp mọi kỳ đang mở) — một khi SV đã lọc đúng 1/nhiều kỳ cụ
+        # thể, danh sách phải khớp chính xác dữ liệu thật của (các) kỳ đó,
+        # không được cộng thêm GV không liên quan tới kỳ đang lọc. Bộ lọc
+        # "Còn nhận"/"Đã đầy" cũng không áp dụng được cho nhóm này (không
+        # có sức chứa nào để so sánh) nên chỉ thêm khi SV không chọn bộ lọc
+        # trạng thái nhận SV.
+        if not slot_filters and not selected_term_ids:
+            no_capacity_domain = [
+                ('department_id', '!=', False),
                 ('id', 'not in', list(seen_creator_ids)),
-            ], order='name')
+            ]
+            if selected_department_ids:
+                no_capacity_domain.append(('department_id', 'in', selected_department_ids))
+            no_capacity_creators = request.env['eaut_showcase.creator'].sudo().search(
+                no_capacity_domain, order='name')
             if selected_categories:
                 wanted = set(selected_categories)
                 no_capacity_creators = no_capacity_creators.filtered(
