@@ -187,17 +187,51 @@ class ShowcaseController(http.Controller):
             capacities = capacities.filtered(
                 lambda c: c.creator_id.department_id.id in selected_department_ids)
 
+        # Một giảng viên có thể có nhiều capacity (1 bản ghi / kỳ) nếu đang
+        # active ở nhiều kỳ đồ án cùng lúc — trang công khai chỉ hiển thị mỗi
+        # giảng viên 1 lần, với số "Còn N chỗ" là TỔNG remaining_slots cộng
+        # dồn từ mọi kỳ đang active của họ (không phải số của riêng 1 kỳ),
+        # để phản ánh đúng tổng khả năng nhận SV hiện tại.
+        creator_entries = {}
+        for capacity in capacities:
+            entry = creator_entries.setdefault(
+                capacity.creator_id.id, {'creator': capacity.creator_id, 'remaining_slots': 0})
+            entry['remaining_slots'] += capacity.remaining_slots
+        entries = list(creator_entries.values())
+
         if slot_filters:
             want_open = 'open' in slot_filters
             want_full = 'full' in slot_filters
-            capacities = capacities.filtered(
-                lambda c: (want_open and c.remaining_slots > 0) or (want_full and c.remaining_slots <= 0))
+            entries = [
+                e for e in entries
+                if (want_open and e['remaining_slots'] > 0) or (want_full and e['remaining_slots'] <= 0)
+            ]
 
         if sort == 'Most slots':
-            capacities = capacities.sorted(key=lambda c: c.remaining_slots, reverse=True)
+            entries.sort(key=lambda e: e['remaining_slots'], reverse=True)
         elif sort == 'Newest':
-            capacities = capacities.sorted(key=lambda c: c.creator_id.id, reverse=True)
+            entries.sort(key=lambda e: e['creator'].id, reverse=True)
 
+        items = [{'creator': e['creator'], 'remaining_slots': e['remaining_slots']} for e in entries]
+        seen_creator_ids = set(creator_entries.keys())
+
+        # Khi SV lọc theo khoa, hiện luôn cả GV thuộc khoa đó nhưng CHƯA có
+        # sức chứa ở kỳ nào đang mở (VD: khoa vừa mở kỳ mới, chưa kịp thêm
+        # hết GV) — thẻ của họ không có nút "Chọn làm GVHD" (xem
+        # advisor_card), chỉ để SV biết GV này thuộc khoa nhưng chưa nhận
+        # đăng ký. Bộ lọc "Còn nhận"/"Đã đầy" không áp dụng được cho nhóm
+        # này (không có sức chứa nào để so sánh) nên chỉ thêm khi SV không
+        # chọn bộ lọc trạng thái nhận SV.
+        if selected_department_ids and not slot_filters:
+            no_capacity_creators = request.env['eaut_showcase.creator'].sudo().search([
+                ('department_id', 'in', selected_department_ids),
+                ('id', 'not in', list(seen_creator_ids)),
+            ], order='name')
+            if selected_categories:
+                wanted = set(selected_categories)
+                no_capacity_creators = no_capacity_creators.filtered(
+                    lambda c: set(c.category_ids.mapped('name')) & wanted)
+            items += [{'creator': c, 'remaining_slots': None} for c in no_capacity_creators]
 
         url_args = {'categories_submitted': 1, 'sort': sort, 'section': 'advisors'}
         if selected_categories:
@@ -211,11 +245,11 @@ class ShowcaseController(http.Controller):
             url_args['department'] = selected_department_ids
 
         page = int(kw.get('page') or 1)
-        total = len(capacities)
+        total = len(items)
         pager = request.website.pager(
             url='/showcase', total=total, page=page, step=PAGE_SIZE, scope=7, url_args=url_args,
         )
-        capacities_page = capacities[pager['offset']:pager['offset'] + PAGE_SIZE]
+        capacities_page = items[pager['offset']:pager['offset'] + PAGE_SIZE]
 
         if not selected_categories:
             header_label = 'Tất cả giảng viên'

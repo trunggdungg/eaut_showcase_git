@@ -61,19 +61,19 @@
                         <field name="sequence"/>
                     </group>
                     <notebook>
-                           <div class="mb-2">
+
+                        <page string="Giảng viên" name="creators">
+                            <div class="mb-2">
                                 <button name="%(action_eaut_showcase_department_add_creator_wizard)d"
                                         type="action" string="Thêm giảng viên có sẵn"
                                         class="btn-secondary"/>
                             </div>
-                        <page string="Giảng viên" name="creators">
                             <p class="text-muted">
                                 Sức chứa mặc định dùng làm giá trị khởi tạo khi thêm giảng
                                 viên vào 1 kỳ đồ án mới bằng nút "Thêm giảng viên từ khoa" —
                                sửa ở đây KHÔNG ảnh hưởng tới các kỳ đã tạo trước đó. Muốn
                                 gỡ 1 giảng viên khỏi khoa này, vào form giảng viên đó và đổi
-                                field "Khoa" (không xoá dòng ở đây — xoá sẽ xoá luôn cả Tác
-                                giả khỏi hệ thống).
+                                field "Khoa".
                             </p>
                             <field name="creator_ids">
                                 <list editable="bottom" create="false" delete="false">

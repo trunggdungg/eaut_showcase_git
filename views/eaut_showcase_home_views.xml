@@ -53,41 +53,45 @@
     </template>
 
 
-     <template id="advisor_card" name="EAUT Showcase - Advisor Card">
+    <template id="advisor_card" name="EAUT Showcase - Advisor Card">
         <div class="uikick-card">
-            <a t-att-href="'/showcase/creator/' + str(capacity.creator_id.id)">
+            <a t-att-href="'/showcase/creator/' + str(creator.id)">
                 <div class="uikick-card-media uikick-card-media-avatar">
-                    <img t-if="capacity.creator_id.avatar"
-                         t-att-src="'/showcase/creator/' + str(capacity.creator_id.id) + '/avatar'"
-                         t-att-alt="capacity.creator_id.name" class="uikick-card-img"/>
-                    <span t-attf-class="uikick-badge #{'text-bg-success' if capacity.remaining_slots &gt; 0 else 'text-bg-secondary'}">
-                        <t t-if="capacity.remaining_slots &gt; 0">Còn <t t-esc="capacity.remaining_slots"/> chỗ</t>
-                        <t t-else="">Đã đầy</t>
+                    <img t-if="creator.avatar"
+                         t-att-src="'/showcase/creator/' + str(creator.id) + '/avatar'"
+                         t-att-alt="creator.name" class="uikick-card-img"/>
+                    <span t-if="remaining_slots is None" class="uikick-badge text-bg-secondary">Chưa mở đăng ký</span>
+                    <span t-elif="remaining_slots &gt; 0" class="uikick-badge text-bg-success">
+                        Còn
+                        <t t-esc="remaining_slots"/>
+                        chỗ
                     </span>
+                    <span t-else="" class="uikick-badge text-bg-secondary">Đã đầy</span>
                 </div>
                 <div class="uikick-card-body">
                     <p class="uikick-card-category">
-                        <t t-esc="', '.join(capacity.creator_id.category_ids.mapped('name')) or 'Chưa khai lĩnh vực'"/>
+                        <t t-esc="', '.join(creator.category_ids.mapped('name')) or 'Chưa khai lĩnh vực'"/>
                     </p>
                     <h3 class="uikick-card-title">
-                        <t t-esc="capacity.creator_id.name"/>
+                        <t t-esc="creator.name"/>
                     </h3>
-                    <p t-if="capacity.creator_id.role" class="uikick-card-creator">
-                        <span t-esc="capacity.creator_id.role"/>
+                    <p t-if="creator.role" class="uikick-card-creator">
+                        <span t-esc="creator.role"/>
                     </p>
-<!--                    <p class="uikick-card-creator text-muted">-->
-<!--                        <t t-esc="capacity.term_id.name"/>-->
-<!--                    </p>-->
-<!--                    <div t-if="capacity.creator_id.location_id" class="uikick-card-location">-->
-<!--                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">-->
-<!--                            <path fill-rule="evenodd" clip-rule="evenodd"-->
-<!--                                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>-->
-<!--                        </svg>-->
-<!--                        <span t-esc="capacity.creator_id.location_id.name"/>-->
-<!--                    </div>-->
+                    <!--                    <p class="uikick-card-creator text-muted">-->
+                    <!--                        <t t-esc="capacity.term_id.name"/>-->
+                    <!--                    </p>-->
+                    <!--                    <div t-if="creator.location_id" class="uikick-card-location">-->
+                    <!--                        <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20">-->
+                    <!--                            <path fill-rule="evenodd" clip-rule="evenodd"-->
+                    <!--                                  d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"/>-->
+                    <!--                        </svg>-->
+                    <!--                        <span t-esc="creator.location_id.name"/>-->
+                    <!--                    </div>-->
                 </div>
             </a>
-            <a href="/my/advisor" class="btn btn-primary btn-sm rounded-pill uikick-btn-block mt-2">
+            <a t-if="remaining_slots is not None" href="/my/advisor"
+               class="btn btn-primary btn-sm rounded-pill uikick-btn-block mt-2">
                 Chọn làm giảng viên hướng dẫn
             </a>
         </div>
@@ -118,7 +122,7 @@
                         <p class="uikick-sidebar-title">Lọc theo</p>
                         <input type="hidden" name="categories_submitted" value="1"/>
 
-                            <div class="uikick-filter-group">
+                        <div class="uikick-filter-group">
                             <h3>Xem theo</h3>
                             <label class="uikick-check-row uikick-check-row-single">
                                 <input type="radio" name="section" value="projects"
@@ -134,7 +138,7 @@
                             </label>
                         </div>
 
-                             <t t-if="section == 'advisors'">
+                        <t t-if="section == 'advisors'">
                             <hr/>
                             <div class="uikick-filter-group">
                                 <h3>Kỳ đồ án</h3>
@@ -149,7 +153,7 @@
                                     Hiện không có kỳ nào đang mở.
                                 </p>
                             </div>
-                                 <hr/>
+                            <hr/>
                             <div class="uikick-filter-group">
                                 <h3>Khoa</h3>
                                 <t t-foreach="departments" t-as="dept">
@@ -185,7 +189,9 @@
                         <hr/>
 
                         <div class="uikick-filter-group">
-                            <h3><t t-esc="'Trạng thái dự án' if section == 'projects' else 'Trạng thái nhận SV'"/></h3>
+                            <h3>
+                                <t t-esc="'Trạng thái dự án' if section == 'projects' else 'Trạng thái nhận SV'"/>
+                            </h3>
                             <t t-if="section == 'projects'">
                                 <t t-foreach="all_statuses" t-as="st">
                                     <label class="uikick-check-row uikick-check-row-single">
@@ -210,11 +216,11 @@
                             </t>
                         </div>
 
-                           <t t-if="section == 'projects'">
+                        <t t-if="section == 'projects'">
                             <hr/>
                             <div class="uikick-filter-group">
                                 <h3>Địa điểm</h3>
-                                 <input type="text" name="location" placeholder="Tìm kiếm theo thành phố, tỉnh..."
+                                <input type="text" name="location" placeholder="Tìm kiếm theo thành phố, tỉnh..."
                                        class="uikick-input" id="uikick-location-input"
                                        t-att-value="filters['location']"/>
                                 <select class="uikick-select" id="uikick-location-select">
@@ -242,7 +248,7 @@
                                     <t t-esc="header_label"/>
                                 </h1>
                                 <p>
-                                  <t t-esc="items_count"/>
+                                    <t t-esc="items_count"/>
                                     <t t-esc="' ' + items_label"/>
                                 </p>
                             </div>
@@ -253,7 +259,7 @@
                                     <t t-foreach="sort_options" t-as="opt">
                                         <option t-att-value="opt"
                                                 t-att-selected="'selected' if filters['sort'] == opt else None">
-                                        <t t-esc="sort_labels.get(opt, opt)"/>
+                                            <t t-esc="sort_labels.get(opt, opt)"/>
                                         </option>
                                     </t>
                                 </select>
@@ -261,7 +267,7 @@
                         </div>
 
                         <div class="uikick-grid">
-                             <t t-if="section == 'projects'">
+                            <t t-if="section == 'projects'">
                                 <t t-foreach="projects" t-as="project">
                                     <t t-call="eaut_showcase.project_card"/>
                                 </t>
@@ -269,19 +275,23 @@
                                     <p class="uikick-empty">Không có dự án nào phù hợp với các bộ lọc này.</p>
                                 </t>
                             </t>
-                             <t t-else="">
-                                <t t-foreach="capacities" t-as="capacity">
+                            <t t-else="">
+                                <t t-foreach="capacities" t-as="item">
+                                    <t t-set="creator" t-value="item['creator']"/>
+                                    <t t-set="remaining_slots" t-value="item['remaining_slots']"/>
                                     <t t-call="eaut_showcase.advisor_card"/>
                                 </t>
                                 <t t-if="not capacities">
                                     <p class="uikick-empty">
-                                           <t t-if="not open_terms">Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng viên hướng dẫn.</t>
+                                        <t t-if="not open_terms">Hiện không có kỳ đồ án nào đang mở đăng ký chọn giảng
+                                            viên hướng dẫn.
+                                        </t>
                                         <t t-else="">Không có giảng viên nào phù hợp với các bộ lọc này.</t>
                                     </p>
                                 </t>
                             </t>
                         </div>
-                         <t t-if="pager['page_count'] &gt; 1">
+                        <t t-if="pager['page_count'] &gt; 1">
                             <div class="uikick-pager">
                                 <t t-call="website.pager"/>
                             </div>
