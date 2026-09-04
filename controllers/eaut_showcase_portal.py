@@ -43,12 +43,27 @@ class AdvisorPortalController(http.Controller):
                 'lecturer_profile': lecturer_profile,
             })
 
+        partner = request.env.user.partner_id
         term = self._get_open_term()
+        registration = self._get_registration(term) if term else None
+        if not registration:
+            # Kỳ của SV đã Chốt danh sách/Đã đóng (không còn 'open') nhưng
+            # hồ sơ đăng ký thật sự đã nộp/được xử lý (in_progress/approved/
+            # unassigned) — vẫn cho SV xem lại trạng thái, không để "biến
+            # mất" khỏi portal chỉ vì kỳ đổi trạng thái trong lúc GV chưa xử
+            # lý xong (GV vẫn duyệt/từ chối được tới khi kỳ thật sự "Đã
+            # đóng" — xem action_approve/action_reject). Loại 'draft' vì đó
+            # là hồ sơ chưa từng nộp gì, không có ý nghĩa để xem lại.
+            fallback_registration = request.env['eaut_showcase.advisor.registration'].sudo().search([
+                ('student_id', '=', partner.id), ('state', '!=', 'draft'),
+            ], order='create_date desc', limit=1)
+            if fallback_registration:
+                term = fallback_registration.term_id
+                registration = fallback_registration
         # Phân biệt 2 trường hợp trả về rỗng — không thì SV không đủ điều
         # kiện dễ tưởng nhầm là "chưa tới đợt đăng ký" (xem template).
         not_eligible = not term and bool(
             request.env['eaut_showcase.term'].sudo().search_count([('state', '=', 'open')]))
-        registration = self._get_registration(term) if term else None
         capacities = request.env['eaut_showcase.term.capacity']
         if term:
             capacities = request.env['eaut_showcase.term.capacity'].sudo().search([
@@ -76,7 +91,7 @@ class AdvisorPortalController(http.Controller):
             'submitted_lines': submitted_lines,
             'cart_full': len(cart_lines) >= max_preferences,
             'has_submitted': has_submitted,
-            'partner': request.env.user.partner_id,
+            'partner': partner,
             'submitted': kw.get('submitted'),
             'error': kw.get('error'),
         }
