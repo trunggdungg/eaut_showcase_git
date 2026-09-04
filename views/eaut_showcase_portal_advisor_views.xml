@@ -43,8 +43,17 @@
                         <div class="alert alert-info">
                             Vui lòng hoàn thiện hồ sơ trước khi chọn giảng viên hướng dẫn.
                         </div>
-                        <form action="/my/advisor/profile" method="post">
+                        <form action="/my/advisor/profile" method="post" enctype="multipart/form-data">
                             <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                            <div class="mb-3" t-if="partner.image_1920">
+                                <img t-att-src="'/web/image/res.partner/%s/image_1920' % partner.id"
+                                     style="max-width:120px; max-height:120px; border-radius:8px; object-fit:cover;"
+                                     alt="Ảnh đại diện"/>
+                            </div>
+                            <div class="mb-3">
+                                <label for="avatar">Ảnh đại diện</label>
+                                <input type="file" name="avatar" id="avatar" class="form-control" accept="image/*"/>
+                            </div>
                             <div class="mb-3">
                                 <label for="student_code">Mã số sinh viên (MSV)</label>
                                 <input type="text" name="student_code" id="student_code" class="form-control"

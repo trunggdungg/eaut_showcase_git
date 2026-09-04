@@ -113,12 +113,16 @@ class AdvisorPortalController(http.Controller):
         if not (student_code and student_class and student_major and student_phone):
             error = urllib.parse.quote('Vui lòng điền đầy đủ MSV, lớp, ngành học và số điện thoại.')
             return request.redirect(f'/my/advisor?error={error}')
-        request.env.user.partner_id.write({
+        vals = {
             'showcase_student_code': student_code,
             'showcase_student_class': student_class,
             'showcase_student_major': student_major,
             'phone': student_phone,
-        })
+        }
+        avatar_file = request.httprequest.files.get('avatar')
+        if avatar_file and avatar_file.filename:
+            vals['image_1920'] = base64.b64encode(avatar_file.read())
+        request.env.user.partner_id.write(vals)
         return request.redirect('/my/advisor')
 
     @http.route(['/my/advisor/cart/add'], type='http', auth='user', website=True,
