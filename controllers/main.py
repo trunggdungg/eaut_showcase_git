@@ -221,10 +221,14 @@ class ShowcaseController(http.Controller):
         # viên thật", khác với Tác giả dự án thông thường (không gán Khoa)
         # nên không sợ lẫn vào đây. Thẻ của họ không có nút "Chọn làm GVHD"
         # (xem advisor_card), chỉ để SV biết GV này tồn tại nhưng chưa nhận
-        # đăng ký. Bộ lọc "Còn nhận"/"Đã đầy" không áp dụng được cho nhóm
-        # này (không có sức chứa nào để so sánh) nên chỉ thêm khi SV không
-        # chọn bộ lọc trạng thái nhận SV.
-        if not slot_filters:
+        # đăng ký. CHỈ áp dụng ở view mặc định (SV không chọn kỳ cụ thể,
+        # đang gộp mọi kỳ đang mở) — một khi SV đã lọc đúng 1/nhiều kỳ cụ
+        # thể, danh sách phải khớp chính xác dữ liệu thật của (các) kỳ đó,
+        # không được cộng thêm GV không liên quan tới kỳ đang lọc. Bộ lọc
+        # "Còn nhận"/"Đã đầy" cũng không áp dụng được cho nhóm này (không
+        # có sức chứa nào để so sánh) nên chỉ thêm khi SV không chọn bộ lọc
+        # trạng thái nhận SV.
+        if not slot_filters and not selected_term_ids:
             no_capacity_domain = [
                 ('department_id', '!=', False),
                 ('id', 'not in', list(seen_creator_ids)),
