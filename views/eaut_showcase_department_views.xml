@@ -81,8 +81,8 @@
                                     <field name="email" readonly="1"/>
                                     <field name="default_max_students" string="Sức chứa mặc định"/>
                                     <button name="action_remove_from_department" type="object"
-                                            string="Gỡ khỏi khoa" icon="fa-times" title="Gỡ khỏi khoa"
-                                            class="btn-link text-danger" confirm="Gỡ giảng viên này khỏi khoa hiện tại? (Không xoá Tác giả, chỉ bỏ liên kết Khoa.)"/>
+                                            icon="fa-trash-o" title="Gỡ khỏi khoa"
+                                            class="text-danger" confirm="Gỡ giảng viên này khỏi khoa hiện tại? (Không xoá Tác giả, chỉ bỏ liên kết Khoa.)"/>
                                 </list>
                             </field>
                         </page>
