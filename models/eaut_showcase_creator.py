@@ -271,6 +271,12 @@ class ShowcaseCreator(models.Model):
         elif existing.withdrawn:
             existing.write({'withdrawn': False, 'pending_action': 'none'})
 
+    def action_remove_from_department(self):
+        """Gỡ Tác giả khỏi Khoa hiện tại (chỉ set department_id = False) —
+        không đụng tới dữ liệu khác (dự án, chỉ tiêu kỳ...) của Tác giả,
+        khác với xoá dòng trong list One2many (sẽ unlink() thẳng bản ghi)."""
+        self.write({'department_id': False})
+
     def action_view_projects(self):
         self.ensure_one()
         action = self.env['ir.actions.act_window']._for_xml_id(
