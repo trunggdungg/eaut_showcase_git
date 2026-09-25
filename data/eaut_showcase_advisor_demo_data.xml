@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <!-- noupdate="1": đây là dữ liệu demo minh hoạ 1 lần lúc cài đặt —
+         đóng băng để Update Module về sau KHÔNG đụng lại (không update,
+         không tự dọn/xoá) các bản ghi này nữa, tránh lỗi FK khi giảng viên
+         demo đã có Chỉ tiêu kỳ/Đăng ký thật trỏ vào. -->
+    <data noupdate="1">
 
     <!-- ============================================================ -->
     <!-- DEMO: Chọn giảng viên hướng dẫn đồ án                          -->
@@ -111,4 +116,5 @@
         <field name="state">waiting</field>
     </record>
 
+    </data>
 </odoo>
