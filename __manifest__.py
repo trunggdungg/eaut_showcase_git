@@ -15,6 +15,7 @@
     'author': 'Trugn Dugn',
     'depends': ['website', 'mail', 'portal'],
     'data': [
+        'security/eaut_showcase_security.xml',
         'security/ir.model.access.csv',
         'data/eaut_showcase_project_sequence_data.xml',
 
