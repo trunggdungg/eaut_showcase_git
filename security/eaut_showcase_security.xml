@@ -7,15 +7,20 @@
         <field name="sequence">20</field>
     </record>
 
+    <record id="privilege_eaut_showcase" model="res.groups.privilege">
+        <field name="name">EAUT Showcase</field>
+        <field name="category_id" ref="module_category_eaut_showcase"/>
+    </record>
+
     <record id="group_eaut_showcase_user" model="res.groups">
         <field name="name">Người dùng</field>
-        <field name="category_id" ref="module_category_eaut_showcase"/>
+        <field name="privilege_id" ref="privilege_eaut_showcase"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
 
     <record id="group_eaut_showcase_manager" model="res.groups">
         <field name="name">Quản lý</field>
-        <field name="category_id" ref="module_category_eaut_showcase"/>
+        <field name="privilege_id" ref="privilege_eaut_showcase"/>
         <field name="implied_ids" eval="[(4, ref('group_eaut_showcase_user'))]"/>
     </record>
 
