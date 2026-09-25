@@ -135,7 +135,7 @@
     <!-- ============================================================ -->
     <menuitem id="menu_uikick_root" name="Eaut Showcase" sequence="100"
               web_icon="eaut_showcase,static/description/icon.png"
-              groups="eaut_showcase.group_eaut_showcase_manager"/>
+              groups="eaut_showcase.group_eaut_showcase_user"/>
 
     <menuitem id="menu_uikick_creator" name="Tác giả" parent="menu_uikick_root"
               action="action_eaut_showcase_creator" sequence="10"/>
