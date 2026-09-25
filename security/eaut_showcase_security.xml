@@ -12,10 +12,12 @@
         <field name="category_id" ref="module_category_eaut_showcase"/>
     </record>
 
-    <!-- Nhóm trống — chỉ để dropdown "EAUT Showcase" trong form User có 3 mức
-         rõ ràng: Không có quyền / Người dùng / Quản lý — bản thân nhóm này
-         KHÔNG cấp thêm quyền dữ liệu hay quyền thấy app (những cái đó vẫn chỉ
-         dành riêng cho nhóm Quản lý bên dưới). -->
+    <!-- Tầng thấp hơn Quản lý — có quyền đọc (và 1 số model được sửa/tạo)
+         trên dữ liệu của app, xem chi tiết trong ir.model.access.csv. Không
+         gắn quyền thấy menu app trong backend (menu vẫn chỉ dành cho Quản
+         lý) — nhóm này chủ yếu phục vụ truy cập dữ liệu qua nơi khác
+         (Portal/API) và để dropdown "EAUT Showcase" ở form User hiển thị
+         đúng tên "Người dùng" thay vì nhãn "View" chung chung. -->
     <record id="group_eaut_showcase_user" model="res.groups">
         <field name="name">Người dùng</field>
         <field name="privilege_id" ref="privilege_eaut_showcase"/>
